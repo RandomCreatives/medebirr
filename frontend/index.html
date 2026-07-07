@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>e-Merkato | Ethiopia's Telegram Marketplace</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     LOADING SCREEN
+═══════════════════════════════════════════════════ -->
+<div id="loadingScreen" class="loading-screen">
+  <div class="loading-logo">
+    <div class="logo-mark">eM</div>
+    <div class="logo-text">e-Merkato</div>
+    <div class="logo-sub">Ethiopia's Free Shopping Experience</div>
+  </div>
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     APP SHELL
+═══════════════════════════════════════════════════ -->
+<div id="app" class="app-shell" style="display:none;">
+
+  <!-- Top Header -->
+  <header class="app-header" id="appHeader">
+    <div class="header-left">
+      <div class="user-avatar" id="userAvatar">M</div>
+      <div class="header-user-info">
+        <div class="header-username" id="headerUsername">Loading...</div>
+        <div class="header-location" id="headerLocation">e-Merkato Hub</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge">
+        <div class="pulse-dot"></div>
+        <span id="liveCount">1,000+ Shops</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Role Switcher Bar -->
+  <div class="role-bar" id="roleBar">
+    <div class="role-info">
+      <span class="role-badge buyer-badge" id="roleBadge">🛒 Buyer Hub</span>
+      <div class="role-sub" id="roleSub">1,000+ Verified Ethiopian Shops</div>
+    </div>
+    <button class="role-switch-btn" id="roleSwitchBtn" onclick="App.toggleRole()">
+      Seller Studio
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="app-body" id="appBody">
+    <!-- Rendered dynamically by JS -->
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" id="bottomNav">
+    <!-- Rendered dynamically -->
+  </nav>
+
+  <!-- Modal Sheet -->
+  <div class="modal-backdrop" id="modalBackdrop" onclick="App.closeModalOnBg(event)">
+    <div class="modal-sheet" id="modalSheet"></div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<!-- Core app logic -->
+<script src="js/api.js"></script>
+<script src="js/state.js"></script>
+<script src="js/views/buyer.js"></script>
+<script src="js/views/seller.js"></script>
+<script src="js/views/modals.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

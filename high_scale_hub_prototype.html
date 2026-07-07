@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>e-Merkato | Your Free Shopping Experience</title>
+<style>
+  :root {
+    --bg-main: #0B0C0E;
+    --bg-surface: #15171C;
+    --bg-card: #1E2027;
+    --bg-hover: #282B34;
+    --text-primary: #FFFFFF;
+    --text-secondary: #9DA3AE;
+    --text-muted: #646A78;
+    --accent: #FCCD04;
+    --accent-hover: #E5B900;
+    --accent-text: #111216;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --info: #3B82F6;
+    --border: #2D303A;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 8px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: #050507;
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 12px;
+  }
+
+  /* App Device Frame */
+  .device-shell {
+    width: 100%;
+    max-width: 480px;
+    background-color: var(--bg-main);
+    border-radius: 32px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.8);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    max-height: 96vh;
+  }
+
+  /* Telegram Header & Live Traffic Ticker */
+  .tg-header {
+    background: #121419;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 20;
+  }
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FCCD04, #F59E0B);
+    color: var(--accent-text);
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+  .live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+  }
+
+  /* Unified Workspace Role Switcher */
+  .role-bar {
+    background: var(--bg-surface);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .mode-tag {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mode-buyer { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+  .mode-seller { background: rgba(252, 205, 4, 0.2); color: var(--accent); }
+
+  .role-switch-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .role-switch-btn:hover { border-color: var(--accent); background: var(--bg-hover); }
+
+  /* Scrollable Body */
+  .app-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 84px;
+  }
+  .app-body::-webkit-scrollbar { width: 4px; }
+  .app-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Discovery Search & Advanced Filters */
+  .search-box {
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .search-input {
+    width: 100%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px 12px 40px;
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+  }
+
+  /* Filter Pills */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scrollbar-width: none;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-pill {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .filter-pill.active {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
+  }
+
+  /* Marketplace Item Grid */
+  .item-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .item-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, border-color 0.2s;
+    position: relative;
+  }
+  .item-card:hover { border-color: #4A4E5A; }
+  .item-img {
+    height: 140px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+  }
+  .store-badge {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(11, 12, 14, 0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .policy-tag {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(16, 185, 129, 0.9);
+    color: #000;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+  .item-body {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+  }
+  .item-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .item-location {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .item-price {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .btn-action {
+    width: 100%;
+    padding: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: white;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-action:hover { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+  /* Store-Grouped Cart Packages */
+  .store-package {
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .package-header {
+    background: var(--bg-surface);
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .store-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .package-item {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .package-footer {
+    padding: 12px 14px;
+    background: rgba(252, 205, 4, 0.04);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .btn-checkout-store {
+    background: var(--accent);
+    color: var(--accent-text);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 12px;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Bottom Navigation */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #101217;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 30;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 11px;
+    cursor: pointer;
+    position: relative;
+  }
+  .nav-item.active { color: var(--accent); font-weight: 700; }
+  .badge {
+    position: absolute;
+    top: -4px;
+    right: 10px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+
+  /* Seller Studio Cards */
+  .seller-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .seller-stat {
+    background: var(--bg-card);
+    padding: 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+  }
+  .policy-config-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .form-select, .form-input {
+    width: 100%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: white;
+    font-size: 13px;
+    outline: none;
+  }
+
+  /* Modal Sheet */
+  .modal-backdrop {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    display: none;
+    align-items: flex-end;
+    z-index: 50;
+  }
+  .modal-backdrop.active { display: flex; }
+  .modal-box {
+    background: var(--bg-card);
+    width: 100%;
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+    max-height: 88vh;
+    overflow-y: auto;
+    border-top: 1px solid var(--border);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="device-shell">
+  <!-- Top Bar -->
+  <div class="tg-header">
+    <div class="user-badge">
+      <div class="avatar">M</div>
+      <div>
+        <div style="font-weight: 800; font-size: 14px;">Mike Fikadu</div>
+        <div style="font-size: 11px; color: var(--text-secondary);">@Mike_Fikadu • Addis Ababa</div>
+      </div>
+    </div>
+    <div class="live-indicator">
+      <div class="pulse-dot"></div>
+      <span>98.4k Buyers Live</span>
+    </div>
+  </div>
+
+  <!-- Role Switcher (Buyer Discovery vs Seller Studio) -->
+  <div class="role-bar">
+    <div>
+      <span id="roleBadge" class="mode-tag mode-buyer">🛒 e-Merkato Discovery Hub</span>
+      <div style="font-size: 11px; color: var(--text-secondary); margin-top: 3px;" id="roleSubtext">Navigating 1,000+ Verified Ethiopian Shops</div>
+    </div>
+    <button class="role-switch-btn" onclick="toggleRole()">
+      <span id="switchBtnText">Open Seller Studio</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <!-- Main Scrollable App Content -->
+  <div class="app-body" id="appContent">
+    <!-- Dynamic Content -->
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav" id="bottomNav">
+    <!-- Rendered Dynamically -->
+  </div>
+
+  <!-- Modal Sheet for Checkout/Add Product -->
+  <div class="modal-backdrop" id="modalBackdrop" onclick="closeModalOnBg(event)">
+    <div class="modal-box" id="modalBox"></div>
+  </div>
+</div>
+
+<script>
+  // State
+  let currentRole = 'buyer'; // 'buyer' or 'seller'
+  let currentTab = 'explore';
+  let activeFilter = 'all';
+  let searchQuery = '';
+
+  // 1,000 Shops Simulated Sample Data with distinct policies & locations
+  let catalog = [
+    {
+      id: 101,
+      title: "Apple iPhone 15 Pro Max (256GB - Titanium)",
+      price: 165000,
+      shopId: "shop_bole_gadgets",
+      shopName: "Bole Apple & Tech Hub",
+      shopRating: "4.9 ★ (1.2k orders)",
+      location: "📍 Bole Sub-City (Near Edna Mall)",
+      returnPolicy: "3-Day Replacement Warranty",
+      policyTag: "Verified Warranty",
+      deliveryFee: 200,
+      paymentAccounts: { telebirr: "891204", cbe: "100023491823" },
+      image: "linear-gradient(135deg, #1f4037 0%, #99f2c8 100%)",
+      category: "electronics"
+    },
+    {
+      id: 102,
+      title: "Traditional Ethiopian Men's Linen Suit (Habesha Kemis)",
+      price: 4500,
+      shopId: "shop_shio_fashion",
+      shopName: "Shiro Meda Heritage Textile",
+      shopRating: "4.8 ★ (850 orders)",
+      location: "📍 Gulele Sub-City (Shiro Meda)",
+      returnPolicy: "Free Return & Exchange within 7 Days",
+      policyTag: "Free Returns",
+      deliveryFee: 150,
+      paymentAccounts: { telebirr: "772101", cbe: "100099182731" },
+      image: "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)",
+      category: "fashion"
+    },
+    {
+      id: 103,
+      title: "Nike Air Zoom Pegasus 40 Running Shoes",
+      price: 6800,
+      shopId: "shop_merkato_kicks",
+      shopName: "Merkato Premium Footwear",
+      shopRating: "4.7 ★ (3.4k orders)",
+      location: "📍 Addis Ketema (Merkato Tana Mall)",
+      returnPolicy: "Size Exchange Allowed (24 Hours)",
+      policyTag: "Size Exchange",
+      deliveryFee: 150,
+      paymentAccounts: { telebirr: "661290", cbe: "100044192834" },
+      image: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+      category: "fashion"
+    },
+    {
+      id: 104,
+      title: "Sony WH-1000XM5 Wireless Noise Cancelling Headphones",
+      price: 28500,
+      shopId: "shop_bole_gadgets",
+      shopName: "Bole Apple & Tech Hub",
+      shopRating: "4.9 ★ (1.2k orders)",
+      location: "📍 Bole Sub-City (Near Edna Mall)",
+      returnPolicy: "3-Day Replacement Warranty",
+      policyTag: "Verified Warranty",
+      deliveryFee: 200,
+      paymentAccounts: { telebirr: "891204", cbe: "100023491823" },
+      image: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+      category: "electronics"
+    },
+    {
+      id: 105,
+      title: "Organic Sidama Roasted Coffee Beans (1kg Premium Grade)",
+      price: 950,
+      shopId: "shop_kaffa_roastery",
+      shopName: "Kaffa & Sidama Direct Roastery",
+      shopRating: "5.0 ★ (5.1k orders)",
+      location: "📍 Kirkos Sub-City (Kasanchis)",
+      returnPolicy: "Freshness Guaranteed or Money Back",
+      policyTag: "Fresh Guarantee",
+      deliveryFee: 100,
+      paymentAccounts: { telebirr: "551203", cbe: "100077182931" },
+      image: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+      category: "groceries"
+    }
+  ];
+
+  // Cart grouped by seller/shop
+  let cart = [
+    {
+      item: catalog[0], // iPhone from Bole Tech
+      qty: 1
+    },
+    {
+      item: catalog[3], // Headphones from Bole Tech
+      qty: 1
+    },
+    {
+      item: catalog[1], // Suit from Shiro Meda
+      qty: 1
+    }
+  ];
+
+  function toggleRole() {
+    currentRole = currentRole === 'buyer' ? 'seller' : 'buyer';
+    const badge = document.getElementById('roleBadge');
+    const subtext = document.getElementById('roleSubtext');
+    const switchBtn = document.getElementById('switchBtnText');
+
+    if (currentRole === 'buyer') {
+      badge.className = 'mode-tag mode-buyer';
+      badge.innerHTML = '🛒 e-Merkato Discovery Hub';
+      subtext.innerText = 'Navigating 1,000+ Verified Ethiopian Shops';
+      switchBtn.innerText = 'Open Seller Studio';
+      currentTab = 'explore';
+    } else {
+      badge.className = 'mode-tag mode-seller';
+      badge.innerHTML = '🏬 Verified Seller Studio';
+      subtext.innerText = 'Store ID: #892 • Bole Apple & Tech Hub';
+      switchBtn.innerText = 'Switch to Buyer Hub';
+      currentTab = 'dashboard';
+    }
+    renderApp();
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    renderApp();
+  }
+
+  function filterCatalog(filter) {
+    activeFilter = filter;
+    renderApp();
+  }
+
+  function handleSearch(val) {
+    searchQuery = val.toLowerCase();
+    renderApp();
+  }
+
+  function renderApp() {
+    renderBottomNav();
+    const content = document.getElementById('appContent');
+
+    if (currentRole === 'buyer') {
+      if (currentTab === 'explore') renderBuyerExplore(content);
+      else if (currentTab === 'cart') renderBuyerCart(content);
+      else if (currentTab === 'wishlist') renderBuyerWishlist(content);
+      else if (currentTab === 'orders') renderBuyerOrders(content);
+    } else {
+      if (currentTab === 'dashboard') renderSellerDashboard(content);
+      else if (currentTab === 'inventory') renderSellerInventory(content);
+      else if (currentTab === 'policies') renderSellerPolicies(content);
+      else if (currentTab === 'dispatch') renderSellerDispatch(content);
+    }
+  }
+
+  function renderBottomNav() {
+    const nav = document.getElementById('bottomNav');
+    if (currentRole === 'buyer') {
+      const cartCount = cart.reduce((sum, c) => sum + c.qty, 0);
+      nav.innerHTML = `
+        <button class="nav-item ${currentTab === 'explore' ? 'active' : ''}" onclick="switchTab('explore')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Explore Hub</span>
+        </button>
+        <button class="nav-item ${currentTab === 'cart' ? 'active' : ''}" onclick="switchTab('cart')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          ${cartCount > 0 ? `<span class="badge">${cartCount}</span>` : ''}
+          <span>Multi-Cart</span>
+        </button>
+        <button class="nav-item ${currentTab === 'wishlist' ? 'active' : ''}" onclick="switchTab('wishlist')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+          <span>Saved</span>
+        </button>
+        <button class="nav-item ${currentTab === 'orders' ? 'active' : ''}" onclick="switchTab('orders')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>Deliveries</span>
+        </button>
+      `;
+    } else {
+      nav.innerHTML = `
+        <button class="nav-item ${currentTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Sales Hub</span>
+        </button>
+        <button class="nav-item ${currentTab === 'inventory' ? 'active' : ''}" onclick="switchTab('inventory')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+          <span>My Items</span>
+        </button>
+        <button class="nav-item ${currentTab === 'policies' ? 'active' : ''}" onclick="switchTab('policies')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Store Policy</span>
+        </button>
+        <button class="nav-item ${currentTab === 'dispatch' ? 'active' : ''}" onclick="switchTab('dispatch')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <span class="badge">2</span>
+          <span>Dispatch</span>
+        </button>
+      `;
+    }
+  }
+
+  /* --- BUYER VIEWS --- */
+  function renderBuyerExplore(container) {
+    let filtered = catalog.filter(item => {
+      if (activeFilter !== 'all' && item.category !== activeFilter) return false;
+      if (searchQuery && !item.title.toLowerCase().includes(searchQuery) && !item.shopName.toLowerCase().includes(searchQuery)) return false;
+      return true;
+    });
+
+    let html = `
+      <!-- Discovery Search Bar -->
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" placeholder="Search 1,000+ shops by item, sub-city, or return policy..." oninput="handleSearch(this.value)" value="${searchQuery}" />
+      </div>
+
+      <!-- Faceted Filtering Bar -->
+      <div class="filter-bar">
+        <button class="filter-pill ${activeFilter === 'all' ? 'active' : ''}" onclick="filterCatalog('all')">🌐 All Shops Feed</button>
+        <button class="filter-pill ${activeFilter === 'electronics' ? 'active' : ''}" onclick="filterCatalog('electronics')">📱 Electronics & Phones</button>
+        <button class="filter-pill ${activeFilter === 'fashion' ? 'active' : ''}" onclick="filterCatalog('fashion')">👗 Habesha & Fashion</button>
+        <button class="filter-pill ${activeFilter === 'groceries' ? 'active' : ''}" onclick="filterCatalog('groceries')">☕ Coffee & Direct Farm</button>
+      </div>
+
+      <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; display: flex; justify-content: space-between;">
+        <span>Showing <strong>${filtered.length} items</strong> from verified sellers</span>
+        <span style="color: var(--accent); cursor: pointer;">⚡ Sub-City Sort: Bole ↓</span>
+      </div>
+
+      <!-- Item Grid -->
+      <div class="item-grid">
+    `;
+
+    filtered.forEach(item => {
+      html += `
+        <div class="item-card">
+          <div class="item-img" style="background: ${item.image}">
+            <span class="policy-tag">${item.policyTag}</span>
+            <div class="store-badge">🏪 ${item.shopName}</div>
+          </div>
+          <div class="item-body">
+            <div>
+              <div class="item-title">${item.title}</div>
+              <div class="item-location">${item.location} • ${item.shopRating}</div>
+            </div>
+            <div>
+              <div class="item-price">Br ${item.price.toLocaleString()}</div>
+              <button class="btn-action" onclick="addToCart(${item.id})">+ Add to Shop Cart</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+
+  function addToCart(id) {
+    const item = catalog.find(i => i.id === id);
+    const existing = cart.find(c => c.item.id === id);
+    if (existing) existing.qty++;
+    else cart.push({ item, qty: 1 });
+    renderBottomNav();
+    alert(`Added "${item.title}" to cart!\nNote: In our 1,000-seller model, carts are cleanly organized by shop so you pay merchants directly.`);
+  }
+
+  function renderBuyerCart(container) {
+    if (cart.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 60px 20px;">
+          <div style="font-size: 48px; margin-bottom: 14px;">🛍️</div>
+          <h3 style="font-size: 18px; margin-bottom: 6px;">Your Multi-Store Cart is Empty</h3>
+          <p style="color: var(--text-secondary); font-size: 13px;">Explore items across 1,000 Ethiopian shops and add them to order.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Group items by shopId
+    const groups = {};
+    cart.forEach(c => {
+      if (!groups[c.item.shopId]) {
+        groups[c.item.shopId] = {
+          shopName: c.item.shopName,
+          location: c.item.location,
+          returnPolicy: c.item.returnPolicy,
+          deliveryFee: c.item.deliveryFee,
+          paymentAccounts: c.item.paymentAccounts,
+          items: []
+        };
+      }
+      groups[c.item.shopId].items.push(c);
+    });
+
+    let html = `
+      <div style="margin-bottom: 14px;">
+        <h3 style="font-size: 18px;">Direct Store-by-Store Checkout</h3>
+        <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.4; margin-top: 4px;">
+          You selected items from <strong>${Object.keys(groups).length} distinct shops</strong>. To ensure direct, zero-escrow settlement, you check out and assign delivery location per merchant.
+        </p>
+      </div>
+    `;
+
+    Object.keys(groups).forEach(shopId => {
+      const g = groups[shopId];
+      const subtotal = g.items.reduce((sum, c) => sum + (c.item.price * c.qty), 0);
+      const total = subtotal + g.deliveryFee;
+
+      html += `
+        <div class="store-package">
+          <div class="package-header">
+            <div>
+              <div class="store-info">🏪 ${g.shopName}</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">${g.location}</div>
+            </div>
+            <span style="font-size: 11px; background: rgba(16, 185, 129, 0.15); color: var(--success); padding: 4px 8px; border-radius: 8px; font-weight: 700;">
+              ${g.returnPolicy}
+            </span>
+          </div>
+      `;
+
+      g.items.forEach(c => {
+        html += `
+          <div class="package-item">
+            <div style="flex: 1;">
+              <div style="font-weight: 700; font-size: 13px;">${c.item.title}</div>
+              <div style="font-size: 12px; color: var(--accent); font-weight: 800; margin-top: 4px;">Br ${c.item.price.toLocaleString()} x ${c.qty}</div>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+          <div class="package-footer">
+            <div>
+              <div style="font-size: 11px; color: var(--text-secondary);">Subtotal: Br ${subtotal.toLocaleString()} + Delivery: Br ${g.deliveryFee}</div>
+              <div style="font-size: 15px; font-weight: 800; color: white;">Total: <span style="color: var(--accent);">Br ${total.toLocaleString()}</span></div>
+            </div>
+            <button class="btn-checkout-store" onclick="openDirectCheckout('${shopId}', '${g.shopName}', ${total}, '${g.returnPolicy}', '${g.paymentAccounts.telebirr}')">
+              Checkout & Pay Store →
+            </button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function openDirectCheckout(shopId, shopName, total, policy, telebirrCode) {
+    const box = document.getElementById('modalBox');
+    box.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div>
+          <h3 style="font-size: 17px;">Direct Order: ${shopName}</h3>
+          <div style="font-size: 11px; color: var(--success); font-weight: 700;">Seller Policy: ${policy}</div>
+        </div>
+        <button onclick="closeModal()" style="background: none; border: none; color: white; font-size: 22px;">×</button>
+      </div>
+
+      <div style="background: var(--bg-surface); padding: 12px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px;">
+        <label class="form-label">📍 ASSIGN DELIVERY DESTINATION (FOR THIS SELLER'S RIDER)</label>
+        <select class="form-select" style="margin-bottom: 8px;">
+          <option>📍 Bole Sub-City, Woreda 03 (Saved Home)</option>
+          <option>📍 Kasanchis, Jupiter Hotel Area (Saved Work)</option>
+          <option>📍 Piassa / Merkato Delivery Point</option>
+        </select>
+        <input type="text" class="form-input" placeholder="Specific House No / Phone (+251...)" value="+251 911 234 567" />
+      </div>
+
+      <div style="background: var(--bg-surface); padding: 12px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 16px;">
+        <label class="form-label">💳 DIRECT SELLER PAYMENT METHOD</label>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;">
+          Money settles instantly to <strong>${shopName}</strong> verified Telebirr account without marketplace delay.
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="background: var(--bg-card); padding: 10px; border-radius: 8px; border: 1px solid var(--accent); display: flex; align-items: center; gap: 10px;">
+            <input type="radio" name="paym" checked />
+            <div>
+              <div style="font-weight: 800; font-size: 13px;">📱 Telebirr SuperApp Push (Shortcode: ${telebirrCode})</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">Direct API push notification to your phone</div>
+            </div>
+          </label>
+          <label style="background: var(--bg-card); padding: 10px; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; gap: 10px;">
+            <input type="radio" name="paym" />
+            <div>
+              <div style="font-weight: 800; font-size: 13px;">💵 Cash to Seller's Delivery Rider</div>
+              <div style="font-size: 11px; color: var(--text-secondary);">Pay cash upon verifying item at your door</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <button class="btn-action" style="background: var(--accent); color: var(--accent-text); padding: 14px; font-size: 15px;" onclick="confirmStoreOrder('${shopName}', ${total})">
+        Confirm Order & Pay Br ${total.toLocaleString()}
+      </button>
+    `;
+    document.getElementById('modalBackdrop').classList.add('active');
+  }
+
+  function confirmStoreOrder(shopName, total) {
+    closeModal();
+    alert(`🎉 Order Confirmed directly with ${shopName}!\nThe seller's management studio has received your delivery pin and order details.`);
+    switchTab('orders');
+  }
+
+  function renderBuyerWishlist(container) {
+    container.innerHTML = `
+      <h3 style="font-size: 18px; margin-bottom: 14px;">Organized Wishlist Folders</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div style="background: var(--bg-card); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+          <div style="font-size: 24px; margin-bottom: 6px;">📱</div>
+          <div style="font-weight: 800; font-size: 14px;">Tech Upgrades</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">2 items saved from Bole Tech</div>
+        </div>
+        <div style="background: var(--bg-card); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+          <div style="font-size: 24px; margin-bottom: 6px;">👘</div>
+          <div style="font-weight: 800; font-size: 14px;">Holiday Habesha Wear</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">1 item saved from Shiro Meda</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderBuyerOrders(container) {
+    container.innerHTML = `
+      <h3 style="font-size: 18px; margin-bottom: 14px;">Active Deliveries from Shops</h3>
+      
+      <div style="background: var(--bg-card); border-radius: var(--radius-md); padding: 14px; border: 1px solid var(--border); margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px;">
+          <span style="font-weight: 800; font-size: 13px;">Store: Bole Apple & Tech Hub</span>
+          <span style="font-size: 11px; background: rgba(59, 130, 246, 0.2); color: #60A5FA; padding: 3px 8px; border-radius: 6px; font-weight: 700;">Rider Dispatched</span>
+        </div>
+        <div style="font-size: 13px; margin-bottom: 6px;">1x Apple iPhone 15 Pro Max (256GB)</div>
+        <div style="font-size: 12px; color: var(--text-secondary);">Delivery Pin: Bole Woreda 03 • Paid Br 165,200 via Telebirr</div>
+        <div style="margin-top: 10px; padding: 8px; background: var(--bg-surface); border-radius: 8px; font-size: 11px; color: var(--accent); margin-bottom: 10px;">
+          📞 Store Rider Contact: +251 911 889 231 (Arriving in ~20 mins)
+        </div>
+        <button class="btn-action" style="background: rgba(252, 205, 4, 0.15); border-color: var(--accent); color: var(--accent); padding: 10px; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="openReceiptPreview()">
+          📄 View Verified Purchase PDF & QR Code
+        </button>
+      </div>
+    `;
+  }
+
+  function openReceiptPreview() {
+    const box = document.getElementById('modalBox');
+    box.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div>
+          <h3 style="font-size: 17px;">Official Purchase Receipt</h3>
+          <div style="font-size: 11px; color: var(--success); font-weight: 700;">Receipt #: INV-20260706-10245</div>
+        </div>
+        <button onclick="closeModal()" style="background: none; border: none; color: white; font-size: 22px;">×</button>
+      </div>
+
+      <div style="background: var(--bg-surface); padding: 14px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 14px; font-size: 12px; line-height: 1.6;">
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px;">
+          <span><strong>Merchant Seller:</strong> Bole Tech Hub</span>
+          <span style="color: var(--success); font-weight: 800;">PAID DIRECT</span>
+        </div>
+        <div><strong>Item:</strong> Apple iPhone 15 Pro Max (256GB - Titanium)</div>
+        <div><strong>Warranty:</strong> 3-Day Replacement Warranty</div>
+        <div><strong>Total Settled:</strong> Br 165,200.00 (Telebirr Code: 891204)</div>
+        <div><strong>Transaction Ref:</strong> TBX-891204-99218401</div>
+      </div>
+
+      <div style="background: #111216; border: 1px dashed var(--accent); border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 16px;">
+        <div style="font-size: 11px; font-weight: 800; color: var(--accent); letter-spacing: 1px; margin-bottom: 10px;">CRYPTOGRAPHIC VERIFICATION QR CODE</div>
+        <div style="width: 140px; height: 140px; background: white; margin: 0 auto; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 10px;">
+          <svg viewBox="0 0 100 100" width="120" height="120">
+            <rect x="5" y="5" width="30" height="30" fill="#111" rx="4"/><rect x="10" y="10" width="20" height="20" fill="white"/><rect x="15" y="15" width="10" height="10" fill="#111"/>
+            <rect x="65" y="5" width="30" height="30" fill="#111" rx="4"/><rect x="70" y="10" width="20" height="20" fill="white"/><rect x="75" y="15" width="10" height="10" fill="#111"/>
+            <rect x="5" y="65" width="30" height="30" fill="#111" rx="4"/><rect x="10" y="70" width="20" height="20" fill="white"/><rect x="15" y="75" width="10" height="10" fill="#111"/>
+            <rect x="42" y="10" width="15" height="15" fill="#111"/><rect x="42" y="42" width="18" height="18" fill="#111"/><rect x="70" y="45" width="22" height="22" fill="#111"/><rect x="45" y="70" width="20" height="20" fill="#111"/><rect x="75" y="75" width="15" height="15" fill="#111"/>
+          </svg>
+        </div>
+        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 10px;">Scan to independently verify purchase authenticity & seller warranty rules.</div>
+      </div>
+
+      <button class="btn-action" style="background: var(--accent); color: var(--accent-text); padding: 14px; font-size: 14px;" onclick="alert('Downloading high-resolution PDF document: receipt_order_10245.pdf...')">
+        📥 Download Official PDF Receipt (receipt_order_10245.pdf)
+      </button>
+    `;
+    document.getElementById('modalBackdrop').classList.add('active');
+  }
+
+  /* --- SELLER STUDIO VIEWS --- */
+  function renderSellerDashboard(container) {
+    container.innerHTML = `
+      <div style="background: linear-gradient(135deg, rgba(252,205,4,0.15) 0%, rgba(252,205,4,0.02) 100%); border: 1px solid var(--accent); padding: 14px; border-radius: var(--radius-md); margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: var(--accent);">SELLER STUDIO MODE</div>
+            <div style="font-size: 16px; font-weight: 800;">Bole Apple & Tech Hub</div>
+          </div>
+          <span style="background: var(--accent); color: var(--accent-text); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800;">Verified Store #892</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 6px;">
+          Linked to Telegram Group: <code>@BoleAppleDeals (-100189233)</code> • Daily Traffic Share: ~4.2% of 100k buyers
+        </div>
+      </div>
+
+      <div class="seller-stat-grid">
+        <div class="seller-stat">
+          <div style="font-size: 11px; color: var(--text-secondary);">Direct Store Revenue</div>
+          <div style="font-size: 20px; font-weight: 800; color: white;">Br 328,500</div>
+          <div style="font-size: 11px; color: var(--success); margin-top: 4px;">Direct to your Telebirr</div>
+        </div>
+        <div class="seller-stat">
+          <div style="font-size: 11px; color: var(--text-secondary);">Pending Dispatch</div>
+          <div style="font-size: 20px; font-weight: 800; color: var(--accent);">2 Orders</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">Requires store rider</div>
+        </div>
+      </div>
+
+      <h4 style="font-size: 15px; margin: 16px 0 10px 0;">Publish Item to Global Hub + Telegram Group</h4>
+      <button class="btn-action" style="background: var(--accent); color: var(--accent-text); padding: 14px; font-size: 14px;" onclick="switchTab('inventory')">
+        + Post New Product to 100k Buyer Pool
+      </button>
+    `;
+  }
+
+  function renderSellerInventory(container) {
+    container.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="font-size: 18px;">My Active Store Catalog</h3>
+        <button class="btn-action" style="width: auto; padding: 6px 12px; background: var(--accent); color: var(--accent-text);" onclick="alert('Opening item creator modal...')">+ New Item</button>
+      </div>
+
+      <div style="background: var(--bg-card); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+        <div>
+          <div style="font-weight: 800; font-size: 13px;">Apple iPhone 15 Pro Max (256GB)</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Price: Br 165,000 • Stock: 8 units</div>
+        </div>
+        <span style="font-size: 11px; background: rgba(16,185,129,0.2); color: var(--success); padding: 4px 8px; border-radius: 6px; font-weight: 700;">Live on Hub</span>
+      </div>
+
+      <div style="background: var(--bg-card); padding: 12px; border-radius: var(--radius-md); border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font-weight: 800; font-size: 13px;">Sony WH-1000XM5 Headphones</div>
+          <div style="font-size: 11px; color: var(--text-secondary);">Price: Br 28,500 • Stock: 14 units</div>
+        </div>
+        <span style="font-size: 11px; background: rgba(16,185,129,0.2); color: var(--success); padding: 4px 8px; border-radius: 6px; font-weight: 700;">Live on Hub</span>
+      </div>
+    `;
+  }
+
+  function renderSellerPolicies(container) {
+    container.innerHTML = `
+      <h3 style="font-size: 18px; margin-bottom: 14px;">Autonomous Store Management & Rules</h3>
+      <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">
+        In our 1,000-seller architecture, every shop enforces its own return policy, delivery fees, and direct settlement accounts.
+      </p>
+
+      <div class="policy-config-box">
+        <label class="form-label">🛡️ YOUR STORE RETURN & WARRANTY POLICY</label>
+        <select class="form-select" style="margin-bottom: 10px;">
+          <option selected>3-Day Replacement Warranty (Current)</option>
+          <option>Free Return & Exchange within 7 Days</option>
+          <option>No Returns Accepted (Inspect at Delivery)</option>
+        </select>
+        <div style="font-size: 11px; color: var(--text-muted);">This badge is prominently displayed to buyers before they checkout from your store.</div>
+      </div>
+
+      <div class="policy-config-box">
+        <label class="form-label">🛵 YOUR STORE LOGISTICS & DELIVERY FEES</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+          <div>
+            <span style="font-size: 11px; color: var(--text-secondary);">Addis Bole / Kasanchis Fee</span>
+            <input type="number" class="form-input" value="200" />
+          </div>
+          <div>
+            <span style="font-size: 11px; color: var(--text-secondary);">Regional Bus Dispatch Fee</span>
+            <input type="number" class="form-input" value="400" />
+          </div>
+        </div>
+      </div>
+
+      <div class="policy-config-box">
+        <label class="form-label">💰 DIRECT PAYMENT ACCOUNTS (ZERO ESCROW)</label>
+        <div style="margin-bottom: 8px;">
+          <span style="font-size: 11px; color: var(--text-secondary);">Your Telebirr Merchant Shortcode</span>
+          <input type="text" class="form-input" value="891204" />
+        </div>
+        <div>
+          <span style="font-size: 11px; color: var(--text-secondary);">Your CBE Birr / Chapa Account</span>
+          <input type="text" class="form-input" value="100023491823" />
+        </div>
+      </div>
+
+      <button class="btn-action" style="background: var(--accent); color: var(--accent-text); padding: 12px;" onclick="alert('Store autonomous policies updated successfully!')">
+        Save Store Configuration
+      </button>
+    `;
+  }
+
+  function renderSellerDispatch(container) {
+    container.innerHTML = `
+      <h3 style="font-size: 18px; margin-bottom: 14px;">Store Rider Dispatch Center (2)</h3>
+      
+      <div style="background: var(--bg-card); border-radius: var(--radius-md); padding: 14px; border: 1px solid var(--border); margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px;">
+          <span style="font-weight: 800; font-size: 13px;">Order #9921 • Buyer: Sara T.</span>
+          <span style="font-size: 11px; background: rgba(245, 158, 11, 0.2); color: var(--warning); padding: 3px 8px; border-radius: 6px; font-weight: 700;">Paid Telebirr (Br 165,200)</span>
+        </div>
+        <div style="font-size: 12px; margin-bottom: 4px;"><strong>Item:</strong> 1x iPhone 15 Pro Max (256GB)</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px;"><strong>Destination:</strong> Bole Woreda 03, House 412</div>
+        <button class="btn-action" style="background: var(--success); color: white; padding: 10px;" onclick="alert('Store rider dispatched!')">
+          🛵 Dispatch Store Courier Rider
+        </button>
+      </div>
+    `;
+  }
+
+  function closeModal() { document.getElementById('modalBackdrop').classList.remove('active'); }
+  function closeModalOnBg(e) { if (e.target.id === 'modalBackdrop') closeModal(); }
+
+  // Init
+  renderApp();
+</script>
+</body>
+</html>

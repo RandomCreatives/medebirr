@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>e-Merkato Ultimate Hub | Multilingual & Viral Social Commerce</title>
+<style>
+  :root {
+    --bg-main: #0B0C0E;
+    --bg-surface: #15171C;
+    --bg-card: #1E2027;
+    --bg-hover: #282B34;
+    --text-primary: #FFFFFF;
+    --text-secondary: #9DA3AE;
+    --accent: #FCCD04;
+    --accent-text: #111216;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --info: #3B82F6;
+    --border: #2D303A;
+    --radius-md: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+  body { background: #050507; color: var(--text-primary); display: flex; justify-content: center; min-height: 100vh; padding: 12px; }
+
+  .device-shell {
+    width: 100%; max-width: 480px; background: var(--bg-main); border-radius: 32px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.8); border: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden; position: relative; max-height: 96vh;
+  }
+
+  /* Header with Multi-Language Switcher */
+  .tg-header {
+    background: #121419; padding: 10px 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; z-index: 20;
+  }
+  .lang-select {
+    background: var(--bg-card); color: var(--accent); border: 1px solid var(--border);
+    padding: 5px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; cursor: pointer; outline: none;
+  }
+
+  /* Role & Feature Bar */
+  .role-bar {
+    background: var(--bg-surface); padding: 10px 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .mode-tag {
+    font-size: 11px; font-weight: 800; text-transform: uppercase; padding: 4px 10px; border-radius: 6px;
+    background: rgba(252, 205, 4, 0.2); color: var(--accent);
+  }
+  .btn-switch {
+    background: var(--bg-card); border: 1px solid var(--border); color: white;
+    padding: 6px 12px; border-radius: 16px; font-size: 11px; font-weight: 700; cursor: pointer;
+  }
+
+  .app-body { flex: 1; overflow-y: auto; padding: 14px; padding-bottom: 80px; }
+  .app-body::-webkit-scrollbar { width: 4px; }
+  .app-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Feature Banner: Social Group Buy */
+  .social-banner {
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    border: 1px solid #3B82F6; border-radius: 16px; padding: 14px; margin-bottom: 14px; position: relative;
+  }
+  .social-badge {
+    background: #3B82F6; color: white; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 6px;
+    text-transform: uppercase; margin-bottom: 6px; display: inline-block;
+  }
+
+  /* Item Cards */
+  .item-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  .item-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 14px; display: flex; flex-direction: column; gap: 10px; position: relative;
+  }
+  .item-header { display: flex; justify-content: space-between; align-items: flex-start; }
+  .item-title { font-size: 14px; font-weight: 800; }
+  .item-price { font-size: 16px; font-weight: 900; color: var(--accent); }
+  
+  /* Group Share Deal Box */
+  .share-deal-box {
+    background: rgba(59, 130, 246, 0.1); border: 1px dashed #3B82F6; border-radius: 10px; padding: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .btn-share {
+    background: #3B82F6; color: white; border: none; padding: 6px 12px; border-radius: 8px;
+    font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px;
+  }
+
+  /* Buyer Protection Handshake Card */
+  .handshake-card {
+    background: rgba(16, 185, 129, 0.08); border: 1px solid var(--success); border-radius: var(--radius-md);
+    padding: 14px; margin-top: 16px;
+  }
+
+  .bottom-nav {
+    position: absolute; bottom: 0; left: 0; right: 0; background: #101217; border-top: 1px solid var(--border);
+    display: flex; justify-content: space-around; padding: 10px 0; z-index: 30;
+  }
+  .nav-btn { background: none; border: none; color: var(--text-secondary); font-size: 11px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .nav-btn.active { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="device-shell">
+  <!-- Top Bar with Language Selector -->
+  <div class="tg-header">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <div style="width: 32px; height: 32px; border-radius: 8px; background: var(--accent); color: var(--accent-text); font-weight: 900; display: flex; align-items: center; justify-content: center;">eM</div>
+      <div>
+        <div style="font-weight: 800; font-size: 13px;" id="txt_appTitle">e-Merkato Hub</div>
+        <div style="font-size: 10px; color: var(--success); font-weight: 700;">● 1,000+ Shops Live</div>
+      </div>
+    </div>
+    <select class="lang-select" id="langSelect" onchange="switchLanguage()">
+      <option value="en">🇺🇸 English</option>
+      <option value="am">🇪🇹 አማርኛ (Amharic)</option>
+      <option value="or">🇪🇹 Afaan Oromoo</option>
+    </select>
+  </div>
+
+  <div class="role-bar">
+    <span class="mode-tag" id="txt_modeBadge">🛒 Buyer Discovery Hub</span>
+    <button class="btn-switch" onclick="alert('Switching between Buyer Hub & Seller Studio...')">⚙️ Studio Mode</button>
+  </div>
+
+  <div class="app-body">
+    <!-- Recommendation 1: Viral Social Group Buy Feature -->
+    <div class="social-banner">
+      <span class="social-badge">🔥 TELEGRAM VIRAL DEAL</span>
+      <div style="font-size: 14px; font-weight: 800; color: white;" id="txt_socialTitle">Group Buy & Equb Discount</div>
+      <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;" id="txt_socialDesc">
+        Share any deal to your Telegram sell/buy group. If 3 friends buy together via your link, everyone unlocks an extra 15% discount!
+      </div>
+    </div>
+
+    <!-- Recommendation 2: Buyer Protection Shield Handshake -->
+    <div class="handshake-card">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <span style="font-size: 18px;">🛡️</span>
+        <span style="font-weight: 800; font-size: 13px; color: var(--success);" id="txt_shieldTitle">e-Merkato QR Delivery Handshake</span>
+      </div>
+      <div style="font-size: 12px; color: var(--text-secondary); line-height: 1.5;" id="txt_shieldDesc">
+        Even with zero-escrow direct payments, you are protected. When your store courier arrives, scan their Delivery Handshake QR code to verify item condition.
+      </div>
+      <button onclick="simulateHandshake()" style="width: 100%; margin-top: 10px; background: var(--success); color: white; border: none; padding: 8px; border-radius: 8px; font-weight: 800; font-size: 11px; cursor: pointer;">
+        🤳 Simulate Courier QR Handshake Check-In
+      </button>
+    </div>
+
+    <!-- Catalog Feed -->
+    <h3 style="font-size: 15px; margin: 16px 0 10px 0;" id="txt_feedTitle">Featured Store Items</h3>
+
+    <div class="item-grid">
+      <!-- Item 1 -->
+      <div class="item-card">
+        <div class="item-header">
+          <div>
+            <div class="item-title" id="txt_prod1">iPhone 15 Pro Max (256GB)</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">🏪 Bole Apple & Tech Hub (#892)</div>
+          </div>
+          <div class="item-price">Br 165,000</div>
+        </div>
+        <div class="share-deal-box">
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: #60A5FA;">Group Buy Price: Br 148,500</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">Save Br 16,500 with 2 friends</div>
+          </div>
+          <button class="btn-share" onclick="shareToTelegram('iPhone 15 Pro Max', 148500)">
+            📢 Share to Group
+          </button>
+        </div>
+      </div>
+
+      <!-- Item 2 -->
+      <div class="item-card">
+        <div class="item-header">
+          <div>
+            <div class="item-title" id="txt_prod2">Habesha Men's Traditional Linen Suit</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">🏪 Shiro Meda Heritage Textile</div>
+          </div>
+          <div class="item-price">Br 4,500</div>
+        </div>
+        <div class="share-deal-box">
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: #60A5FA;">Group Buy Price: Br 3,825</div>
+            <div style="font-size: 10px; color: var(--text-secondary);">Save Br 675 with 2 friends</div>
+          </div>
+          <button class="btn-share" onclick="shareToTelegram('Habesha Suit', 3825)">
+            📢 Share to Group
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="nav-btn active"><span>🛒 Explore</span></button>
+    <button class="nav-btn"><span>📢 Viral Deals</span></button>
+    <button class="nav-btn"><span>🛡️ Protection</span></button>
+    <button class="nav-btn"><span>📦 Orders</span></button>
+  </div>
+</div>
+
+<script>
+  const i18n = {
+    en: {
+      appTitle: "e-Merkato Hub",
+      modeBadge: "🛒 Buyer Discovery Hub",
+      socialTitle: "Group Buy & Equb Discount",
+      socialDesc: "Share any deal to your Telegram sell/buy group. If 3 friends buy together via your link, everyone unlocks an extra 15% discount!",
+      shieldTitle: "e-Merkato QR Delivery Handshake",
+      shieldDesc: "Even with zero-escrow direct payments, you are protected. When your store courier arrives, scan their Delivery Handshake QR code to verify item condition.",
+      feedTitle: "Featured Store Items",
+      prod1: "iPhone 15 Pro Max (256GB)",
+      prod2: "Habesha Men's Traditional Linen Suit"
+    },
+    am: {
+      appTitle: "ኢ-መርካቶ ቴሌግራም",
+      modeBadge: "🛒 የገዢዎች ገበያ",
+      socialTitle: "የቡድን ግዢና እቁብ ቅናሽ",
+      socialDesc: "ይህን ምርት በቴሌግራም ግሩፕዎ ያጋሩ! 3 ጓደኞች አብረው ሲገዙ ሁሉም 15% ልዩ ቅናሽ ያገኛሉ!",
+      shieldTitle: "የኢ-መርካቶ የደህንነት ማረጋገጫ (QR Handshake)",
+      shieldDesc: "ክፍያ በቀጥታ ለነጋዴው ቢፈጸምም መብትዎ የተጠበቀ ነው። መልክተኛው ሲደርስ የQR ኮዱን ስካን በማድረግ ምርቱን ያረጋግጡ።",
+      feedTitle: "ተወዳጅ የሱቅ ምርቶች",
+      prod1: "አይፎን 15 ፕሮ ማክስ (256GB)",
+      prod2: "የባህል ሀበሻ ልብስ (የወንዶች)"
+    },
+    or: {
+      appTitle: "Gabaa e-Merkato",
+      modeBadge: "🛒 Gabaa Bittootaa",
+      socialTitle: "Bittaa Garee & Hir'ina Equbii",
+      socialDesc: "Oomisha kana garee Telegram keessatti qoodaa! Hiriyeen 3 wajjin yoo bittan hir'ina dabalataa 15% argattu!",
+      shieldTitle: "Nageenya Bittaa e-Merkato (QR Handshake)",
+      shieldDesc: "Kaffaltiin kallattiin gurguraaf ta'us nageenyi keessan eeggamaadha. Yeroo geejjibni dhufu QR koodii isaanii skaan godhaa.",
+      feedTitle: "Oomishoota Beekamoo",
+      prod1: "iPhone 15 Pro Max (256GB)",
+      prod2: "Uffata Aadaa Dhiiraa Habashaa"
+    }
+  };
+
+  function switchLanguage() {
+    const lang = document.getElementById('langSelect').value;
+    const t = i18n[lang];
+    document.getElementById('txt_appTitle').innerText = t.appTitle;
+    document.getElementById('txt_modeBadge').innerText = t.modeBadge;
+    document.getElementById('txt_socialTitle').innerText = t.socialTitle;
+    document.getElementById('txt_socialDesc').innerText = t.socialDesc;
+    document.getElementById('txt_shieldTitle').innerText = t.shieldTitle;
+    document.getElementById('txt_shieldDesc').innerText = t.shieldDesc;
+    document.getElementById('txt_feedTitle').innerText = t.feedTitle;
+    document.getElementById('txt_prod1').innerText = t.prod1;
+    document.getElementById('txt_prod2').innerText = t.prod2;
+  }
+
+  function shareToTelegram(itemName, price) {
+    alert(`📢 Telegram Share Simulator:\n\nBroadcasting interactive invite card to your Telegram Group:\n"🔥 Unlock ${itemName} for only Br ${price.toLocaleString()} on e-Merkato! Click below to join my Group Buy link!"`);
+  }
+
+  function simulateHandshake() {
+    alert(`🤳 Courier QR Handshake Verified!\n\n✅ Item inspected at door.\n✅ Courier Abebe confirmed receipt.\n✅ Seller warranty window (3 Days) initiated on blockchain registry.`);
+  }
+</script>
+</body>
+</html>

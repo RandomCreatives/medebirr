@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive System Lifecycle Visualizer</title>
+<style>
+  :root {
+    --bg-main: #0B0C0E;
+    --bg-surface: #15171C;
+    --bg-card: #1E2027;
+    --bg-hover: #282B34;
+    --text-primary: #FFFFFF;
+    --text-secondary: #9DA3AE;
+    --accent: #FCCD04;
+    --accent-text: #111216;
+    --success: #10B981;
+    --info: #3B82F6;
+    --warning: #F59E0B;
+    --border: #2D303A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background: var(--bg-main); color: var(--text-primary); padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+  
+  .container { width: 100%; max-width: 900px; }
+  .header { text-align: center; margin-bottom: 24px; }
+  .header h1 { font-size: 26px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+  .header p { font-size: 14px; color: var(--text-secondary); max-width: 650px; margin: 0 auto; line-height: 1.5; }
+
+  /* Pillar Tabs */
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 24px; }
+  .tab-btn {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tab-btn:hover { border-color: var(--accent); color: white; }
+  .tab-btn.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+  /* Content Panel */
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 28px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  }
+  .panel-title { font-size: 20px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+  .panel-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px; }
+
+  /* Flow Steps Grid */
+  .flow-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .step-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    position: relative;
+  }
+  .step-num {
+    position: absolute;
+    top: -12px;
+    left: 18px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .step-title { font-size: 15px; font-weight: 700; margin: 8px 0; color: white; }
+  .step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+  
+  /* Code / Payload Preview Box */
+  .code-box {
+    background: #0E0F12;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    font-family: monospace;
+    font-size: 12px;
+    color: #A7F3D0;
+    overflow-x: auto;
+    line-height: 1.5;
+  }
+  .code-label { font-size: 11px; font-family: sans-serif; font-weight: 700; color: var(--accent); text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+
+  .interactive-demo {
+    background: rgba(252, 205, 4, 0.05);
+    border: 1px dashed var(--accent);
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .demo-btn {
+    background: var(--accent);
+    color: var(--accent-text);
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>Architecture & Lifecycle Visualizer</h1>
+    <p>Interactive step-by-step breakdown of how 1,000 sellers and 100,000 buyers operate securely across Sign Up, Verification, Multi-Cart, Payments, Delivery, and Inventory.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showPillar('auth')">🔐 1. Sign In & Auth</button>
+    <button class="tab-btn" onclick="showPillar('verify')">🏬 2. Seller Verification</button>
+    <button class="tab-btn" onclick="showPillar('cart')">🛍️ 3. Cart Management</button>
+    <button class="tab-btn" onclick="showPillar('pay')">💳 4. Payment Management</button>
+    <button class="tab-btn" onclick="showPillar('delivery')">🛵 5. Delivery Logistics</button>
+    <button class="tab-btn" onclick="showPillar('inventory')">📦 6. Inventory & Drops</button>
+  </div>
+
+  <div class="panel" id="panelContent">
+    <!-- Dynamic Content -->
+  </div>
+</div>
+
+<script>
+  const pillars = {
+    auth: {
+      title: "🔐 Sign Up / Sign In & Cryptographic Authentication",
+      desc: "Unlike traditional web apps requiring email/password friction, Telegram Mini Apps achieve instant 1-tap onboarding by leveraging Telegram's cryptographic identity signature.",
+      steps: [
+        {
+          num: "Step 1",
+          title: "App Launch via Group Button",
+          desc: "A buyer taps the [🛍️ Shop Now] inline button inside an Ethiopian Telegram channel or buy/sell group."
+        },
+        {
+          num: "Step 2",
+          title: "initData Injection",
+          desc: "Telegram injects `window.Telegram.WebApp.initData` into the WebView containing user ID, username, and a SHA256 data hash."
+        },
+        {
+          num: "Step 3",
+          title: "HMAC-SHA256 Backend Verification",
+          desc: "Your Node.js/FastAPI gateway verifies the hash using your Bot Token. Once verified, a JWT session token is issued."
+        }
+      ],
+      codeLabel: "Backend HMAC Verification Payload Example",
+      code: `POST /api/v1/auth/telegram
+Payload: {
+  "initData": "query_id=AAH...&user=%7B%22id%22%3A12893412%2C%22first_name%22%3A%22Mike%22%7D&auth_date=1719000000&hash=8a9c2d..."
+}
+Response (200 OK): {
+  "status": "authenticated",
+  "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": { "id": 12893412, "tier": "Gold" }
+}`
+    },
+    verify: {
+      title: "🏬 Seller Verification & Autonomous Onboarding",
+      desc: "To prevent fraud across 1,000 independent shops, sellers must complete automated KYC verification inside Telegram before items go live in the global 100k buyer feed.",
+      steps: [
+        {
+          num: "Step 1",
+          title: "Link Telegram Group / Channel",
+          desc: "Seller adds `@ShopGramEtBot` as an Administrator to their Telegram buy/sell group and types `/register_shop`."
+        },
+        {
+          num: "Step 2",
+          title: "Submit Shop KYC inside Mini App",
+          desc: "Seller inputs store name, physical Addis Ababa address (e.g. Bole Woreda 03), and uploads Trade License / Kebele ID."
+        },
+        {
+          num: "Step 3",
+          title: "Verify Direct Payment Account",
+          desc: "Seller inputs their Telebirr Merchant Shortcode (e.g. 891204) or CBE bank account number for direct settlement."
+        }
+      ],
+      codeLabel: "Seller Verification SQL Schema Status",
+      code: `UPDATE stores 
+SET status = 'VERIFIED', verified_badge = TRUE, telebirr_code = '891204'
+WHERE store_id = 'shop_bole_gadgets' AND admin_tg_id = 9918234;`
+    },
+    cart: {
+      title: "🛍️ Cart Management (Store-Isolated Partitioning)",
+      desc: "When a buyer adds items from multiple independent sellers (e.g., shoes from Shop A and phone from Shop B), our platform partitions the cart into clean store packages.",
+      steps: [
+        {
+          num: "Step 1",
+          title: "Client + Redis Sync",
+          desc: "Cart items are saved locally in `localStorage` and backed up to Redis (`HSET cart:user_128934`) for multi-device sync."
+        },
+        {
+          num: "Step 2",
+          title: "Automatic Store Partitioning",
+          desc: "Items are dynamically grouped by `shop_id`. Each package calculates its own subtotal and specific store delivery fee."
+        },
+        {
+          num: "Step 3",
+          title: "Independent Store Checkout",
+          desc: "Buyers click 'Checkout Store' individually per package, ensuring they agree directly to that specific seller's return rules."
+        }
+      ],
+      codeLabel: "Partitioned Cart JSON Structure",
+      code: `{
+  "shop_bole_gadgets": {
+    "shopName": "Bole Apple & Tech Hub",
+    "deliveryFee": 200, "returnPolicy": "3-Day Warranty",
+    "items": [ { "id": 101, "title": "iPhone 15 Pro Max", "price": 165000, "qty": 1 } ],
+    "totalToPay": 165200
+  }
+}`
+    },
+    pay: {
+      title: "💳 Payment Management (Zero-Escrow Direct Settlement)",
+      desc: "To eliminate escrow liability and delayed payouts, money flows directly from the buyer's Telebirr SuperApp into the specific seller's merchant account.",
+      steps: [
+        {
+          num: "Step 1",
+          title: "Construct Direct Pre-Order",
+          desc: "Platform API initiates a Telebirr request configured specifically with `merchantCode = 891204` (The seller's account)."
+        },
+        {
+          num: "Step 2",
+          title: "Mobile Push Authorization",
+          desc: "Buyer receives an instant USSD/SuperApp push notification on their phone and inputs their 4-digit Telebirr PIN."
+        },
+        {
+          num: "Step 3",
+          title: "Instant Settlement & Webhook",
+          desc: "Funds deposit 100% into seller's account. Telebirr webhook notifies platform API, which alerts the seller via Telegram Bot."
+        }
+      ],
+      codeLabel: "Direct Telebirr API Payload",
+      code: `POST https://api.telebirr.et/preorder
+{
+  "merchantCode": "891204", // Directly to Bole Tech Hub!
+  "outTradeNo": "ORD-10245",
+  "totalAmount": "165200.00",
+  "notifyUrl": "https://api.bekollo.com/webhooks/telebirr"
+}`
+    },
+    delivery: {
+      title: "🛵 Delivery Management (Autonomous Seller Dispatch)",
+      desc: "Each seller manages their own delivery riders and fee structures while the platform standardizes Addis Ababa sub-city geographic coordinates.",
+      steps: [
+        {
+          num: "Step 1",
+          title: "Configure Sub-City Fee Matrix",
+          desc: "In Seller Studio, shop admin sets flat delivery rates for Bole (Br 150), Kasanchis (Br 150), Yeka (Br 200), or Regional Bus (Br 400)."
+        },
+        {
+          num: "Step 2",
+          title: "Receive GPS Pin & Phone",
+          desc: "Once paid, seller receives buyer's exact woreda/house number and phone inside their private Telegram management channel."
+        },
+        {
+          num: "Step 3",
+          title: "Assign Store Courier Rider",
+          desc: "Seller clicks [🛵 Assign Rider] and inputs courier phone. Bot alerts buyer: 'Courier Abebe (+251 922...) is on the way!'"
+        }
+      ],
+      codeLabel: "Telegram Bot Dispatch Card to Seller Channel",
+      code: `📦 PAID ORDER #9921 RECEIVED
+Buyer: Mike Fikadu (+251 911 234 567)
+Destination: Bole Woreda 03, Near Edna Mall
+Payout: Br 165,350 deposited to your Telebirr (TX8912J)
+[🛵 Assign Rider] [📞 Call Buyer]`
+    },
+    inventory: {
+      title: "📦 Inventory Management & Viral Flash Drop Protection",
+      desc: "To survive viral traffic spikes when 100,000 users view limited stock, item publishing integrates instant Meilisearch indexing with Redis atomic locking.",
+      steps: [
+        {
+          num: "Step 1",
+          title: "Publish via Seller Studio",
+          desc: "Seller uploads item photos and stock count. Item is saved to Postgres and indexed into Meilisearch (<50ms) for instant search."
+        },
+        {
+          num: "Step 2",
+          title: "Automated Telegram Broadcast",
+          desc: "Bot automatically broadcasts an interactive item card with [🛍️ Buy Now] button directly to the seller's Telegram group."
+        },
+        {
+          num: "Step 3",
+          title: "Redis Atomic TTL Hold",
+          desc: "During checkout, Redis executes atomic `DECR stock` and holds inventory for 5 minutes. If unpaid, stock returns to pool automatically."
+        }
+      ],
+      codeLabel: "Redis High-Concurrency Flash Drop Commands",
+      code: `DECR stock:prod_101  -> Returns 7 (Atomic reservation)
+SETEX hold:user_128934:prod_101 300 1  -> 5-minute checkout lock
+// If payment webhook received:
+PERSIST hold:user_128934:prod_101
+// If timeout expires:
+INCR stock:prod_101`
+    }
+  };
+
+  function showPillar(key) {
+    document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+      btn.classList.remove('active');
+    });
+    event.currentTarget.classList.add('active');
+
+    const p = pillars[key];
+    let stepsHtml = '';
+    p.steps.forEach(s => {
+      stepsHtml += `
+        <div class="step-card">
+          <div class="step-num">${s.num}</div>
+          <div class="step-title">${s.title}</div>
+          <div class="step-desc">${s.desc}</div>
+        </div>
+      `;
+    });
+
+    document.getElementById('panelContent').innerHTML = `
+      <div class="panel-title">${p.title}</div>
+      <div class="panel-desc">${p.desc}</div>
+      <div class="flow-grid">${stepsHtml}</div>
+      <div class="code-label">${p.codeLabel}</div>
+      <pre class="code-box">${p.code}</pre>
+      <div class="interactive-demo">
+        <div>
+          <div style="font-weight: 800; font-size: 14px; margin-bottom: 2px;">Simulate this architectural flow?</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Test how data moves between Telegram WebView, Node.js API, and Telebirr.</div>
+        </div>
+        <button class="demo-btn" onclick="alert('Simulation: ${p.title} completed successfully with zero escrow delay!')">Run Simulation →</button>
+      </div>
+    `;
+  }
+
+  // Init
+  showPillar('auth');
+</script>
+</body>
+</html>

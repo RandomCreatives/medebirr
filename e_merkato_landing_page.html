@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>e-Merkato | Your Free Shopping Experience inside Telegram</title>
+<style>
+  :root {
+    --bg-dark: #0A0B0E;
+    --bg-card: #14161C;
+    --bg-surface: #1E212A;
+    --text-primary: #FFFFFF;
+    --text-secondary: #9DA3AE;
+    --accent: #FCCD04;
+    --accent-hover: #E5B900;
+    --accent-text: #111216;
+    --success: #10B981;
+    --border: rgba(255, 255, 255, 0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    overflow-x: hidden;
+    line-height: 1.6;
+  }
+
+  /* Navigation Header */
+  .navbar {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+  .brand-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #FCCD04 0%, #F59E0B 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 900;
+    color: var(--accent-text);
+    box-shadow: 0 4px 15px rgba(252, 205, 4, 0.3);
+  }
+  .brand-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: white;
+  }
+  .brand-subtitle {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .nav-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: color 0.2s;
+  }
+  .nav-link:hover { color: white; }
+
+  .btn-nav {
+    background: var(--bg-surface);
+    color: white;
+    border: 1px solid var(--border);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-nav:hover { border-color: var(--accent); background: rgba(252, 205, 4, 0.1); color: var(--accent); }
+
+  /* Hero Section */
+  .hero {
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 40px;
+    align-items: center;
+  }
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; text-align: center; }
+  }
+
+  .badge-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(252, 205, 4, 0.12);
+    border: 1px solid rgba(252, 205, 4, 0.4);
+    color: var(--accent);
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+  }
+  .pulse {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulseAnim 1.5s infinite;
+  }
+  @keyframes pulseAnim {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.4); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+  }
+
+  .hero h1 {
+    font-size: 52px;
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -1px;
+    margin-bottom: 20px;
+  }
+  .hero h1 span {
+    background: linear-gradient(135deg, #FCCD04 0%, #FFA000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 540px;
+    margin-bottom: 36px;
+    line-height: 1.6;
+  }
+  @media (max-width: 900px) { .hero p { margin: 0 auto 36px auto; } }
+
+  /* Hero CTA Buttons */
+  .cta-group {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 900px) { .cta-group { justify-content: center; } }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-text);
+    padding: 16px 32px;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 800;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 30px rgba(252, 205, 4, 0.3);
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary:hover { transform: translateY(-2px); background: var(--accent-hover); }
+
+  .btn-secondary {
+    background: var(--bg-card);
+    color: white;
+    border: 1px solid var(--border);
+    padding: 16px 28px;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .btn-secondary:hover { border-color: var(--accent); background: var(--bg-surface); }
+
+  /* Interactive Device Simulator Preview */
+  .device-preview {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 32px;
+    padding: 16px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+    position: relative;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  .device-topbar {
+    background: #111216;
+    padding: 12px;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .device-screen {
+    background: #0D0E12;
+    padding: 16px;
+    border-radius: 0 0 20px 20px;
+    min-height: 420px;
+  }
+  .store-pill {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .store-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  /* Stats Ribbon */
+  .stats-ribbon {
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 40px 24px;
+    margin-top: 60px;
+  }
+  .stats-grid {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    text-align: center;
+  }
+  @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  .stat-num {
+    font-size: 38px;
+    font-weight: 900;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  /* Value Prop Section */
+  .section {
+    max-width: 1200px;
+    margin: 80px auto;
+    padding: 0 24px;
+  }
+  .section-header {
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto 50px auto;
+  }
+  .section-header h2 {
+    font-size: 36px;
+    font-weight: 900;
+    margin-bottom: 14px;
+  }
+  .section-header p {
+    font-size: 16px;
+    color: var(--text-secondary);
+  }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+  }
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .tag-buyer { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+  .tag-seller { background: rgba(252, 205, 4, 0.2); color: var(--accent); }
+
+  .card h3 { font-size: 24px; font-weight: 800; margin-bottom: 12px; }
+  .card p { color: var(--text-secondary); font-size: 15px; margin-bottom: 24px; }
+  
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .feature-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: white;
+  }
+  .check-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  /* Payment & Trust Banner */
+  .trust-section {
+    background: var(--bg-surface);
+    border-radius: 28px;
+    padding: 40px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .gateway-logos {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+  .gateway-pill {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 12px 24px;
+    border-radius: 16px;
+    font-weight: 800;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* Footer */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-top: 80px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="#" class="brand">
+      <div class="brand-logo">M</div>
+      <div>
+        <div class="brand-title">e-Merkato</div>
+        <div class="brand-subtitle">Your Free Shopping Experience</div>
+      </div>
+    </a>
+    <div class="nav-links">
+      <a href="#buyers" class="nav-link">For Buyers</a>
+      <a href="#sellers" class="nav-link">For Sellers</a>
+      <a href="#security" class="nav-link">Verification</a>
+      <button class="btn-nav" onclick="launchHub()">🚀 Launch App Preview</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div>
+      <div class="badge-live">
+        <div class="pulse"></div>
+        <span>1,000+ Verified Ethiopian Shops Live Inside Telegram</span>
+      </div>
+      <h1>
+        Ethiopia's Digital Marketplace.<br/>
+        <span>Your Free Shopping Experience.</span>
+      </h1>
+      <p>
+        Welcome to <strong>e-Merkato</strong>—the revolutionary Telegram Mini App uniting 100,000 buyers with 1,000 autonomous sellers. Zero marketplace escrow delays. Zero commission fees. Direct peer-to-peer shopping.
+      </p>
+      <div class="cta-group">
+        <button class="btn-primary" onclick="launchHub()">
+          <span>🛒 Launch e-Merkato App</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <button class="btn-secondary" onclick="scrollToSection('sellers')">
+          <span>🏬 List Your Shop For Free</span>
+        </button>
+      </div>
+      <div style="margin-top: 24px; display: flex; align-items: center; gap: 14px; font-size: 13px; color: var(--text-secondary);">
+        <span>⚡ No download required</span> • <span>📱 Works directly in Telegram</span> • <span>💳 Telebirr Direct</span>
+      </div>
+    </div>
+
+    <!-- Live Interactive Device Teaser -->
+    <div class="device-preview">
+      <div class="device-topbar">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="width: 10px; height: 10px; border-radius: 50%; background: #EF4444;"></div>
+          <div style="width: 10px; height: 10px; border-radius: 50%; background: #F59E0B;"></div>
+          <div style="width: 10px; height: 10px; border-radius: 50%; background: #10B981;"></div>
+        </div>
+        <span style="font-size: 11px; font-weight: 800; color: var(--accent);">@eMerkatoBot preview</span>
+      </div>
+      <div class="device-screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div>
+            <div style="font-weight: 800; font-size: 14px; color: white;">e-Merkato Discovery</div>
+            <div style="font-size: 11px; color: var(--text-secondary);">Sub-City: Bole • 1,000 Shops</div>
+          </div>
+          <span style="background: rgba(16, 185, 129, 0.2); color: var(--success); padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 800;">LIVE FEED</span>
+        </div>
+
+        <div class="store-pill">
+          <div class="store-icon">📱</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 800; font-size: 13px;">Bole Apple & Tech Hub</div>
+            <div style="font-size: 11px; color: var(--accent);">Br 165,000 • 3-Day Warranty</div>
+          </div>
+          <span style="font-size: 11px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 8px;">View →</span>
+        </div>
+
+        <div class="store-pill">
+          <div class="store-icon" style="background: linear-gradient(135deg, #EC4899, #F43F5E);">👘</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 800; font-size: 13px;">Shiro Meda Heritage</div>
+            <div style="font-size: 11px; color: var(--accent);">Br 4,500 • Free Returns</div>
+          </div>
+          <span style="font-size: 11px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 8px;">View →</span>
+        </div>
+
+        <div class="store-pill">
+          <div class="store-icon" style="background: linear-gradient(135deg, #10B981, #059669);">☕</div>
+          <div style="flex: 1;">
+            <div style="font-weight: 800; font-size: 13px;">Sidama Coffee Direct</div>
+            <div style="font-size: 11px; color: var(--accent);">Br 950 • Fresh Guaranteed</div>
+          </div>
+          <span style="font-size: 11px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 8px;">View →</span>
+        </div>
+
+        <button onclick="launchHub()" style="width: 100%; margin-top: 14px; background: var(--accent); color: var(--accent-text); border: none; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 13px; cursor: pointer;">
+          Explore All 1,000 Shops Inside Hub →
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Live Statistics Ribbon -->
+  <section class="stats-ribbon">
+    <div class="stats-grid">
+      <div>
+        <div class="stat-num">1,000+</div>
+        <div class="stat-label">Autonomous Ethiopian Shops</div>
+      </div>
+      <div>
+        <div class="stat-num">100k+</div>
+        <div class="stat-label">Daily Active Buyers</div>
+      </div>
+      <div>
+        <div class="stat-num">0%</div>
+        <div class="stat-label">Marketplace Escrow Fee</div>
+      </div>
+      <div>
+        <div class="stat-num">100%</div>
+        <div class="stat-label">Direct Telebirr Payouts</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dual-Audience Value Proposition -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Two Audiences. One Seamless Hub.</h2>
+      <p>Whether you're looking for the best deals in Addis Ababa or running a viral Telegram shop, e-Merkato puts you in complete control.</p>
+    </div>
+
+    <div class="grid-2">
+      <!-- Buyer Card -->
+      <div class="card" id="buyers">
+        <span class="card-tag tag-buyer">FOR BUYERS (100k+ USERS)</span>
+        <h3>Your Free Shopping Experience</h3>
+        <p>Browse thousands of items across Addis Ababa and regional cities with sub-10ms search filters and zero middleman markups.</p>
+        <ul class="feature-list">
+          <li><span class="check-icon">✓</span> <strong>Direct Store-by-Store Checkout:</strong> Pay merchants directly via Telebirr SuperApp push notifications.</li>
+          <li><span class="check-icon">✓</span> <strong>Faceted Sub-City Search:</strong> Filter by Bole, Kazanchis, Piassa, or verified return warranty rules.</li>
+          <li><span class="check-icon">✓</span> <strong>Cryptographic PDF Receipts:</strong> Download detailed invoices complete with verification QR codes.</li>
+          <li><span class="check-icon">✓</span> <strong>Live Courier Tracking:</strong> Connect directly with the seller's assigned rider at your woreda.</li>
+        </ul>
+        <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="launchHub()">
+          Start Browsing e-Merkato Now
+        </button>
+      </div>
+
+      <!-- Seller Card -->
+      <div class="card" id="sellers">
+        <span class="card-tag tag-seller">FOR SELLERS & GROUPS (1,000+ SHOPS)</span>
+        <h3>Manage Your Shop For Free</h3>
+        <p>Keep 100% of your sales revenue. Link our Telegram bot to your sell/buy group and unlock a dedicated Seller Studio.</p>
+        <ul class="feature-list">
+          <li><span class="check-icon">✓</span> <strong>Zero Escrow Holding:</strong> Money deposits instantly into your Telebirr shortcode or CBE account.</li>
+          <li><span class="check-icon">✓</span> <strong>Autonomous Policy Engine:</strong> Set your own return rules, warranty terms, and local delivery rates.</li>
+          <li><span class="check-icon">✓</span> <strong>Auto-Broadcast to Groups:</strong> Items published in the Studio drop instantly into your Telegram channel.</li>
+          <li><span class="check-icon">✓</span> <strong>Rider Dispatch Center:</strong> Receive buyer GPS pins and dispatch your own couriers in seconds.</li>
+        </ul>
+        <button class="btn-secondary" style="width: 100%; justify-content: center; border-color: var(--accent); color: var(--accent);" onclick="launchHub()">
+          Open Seller Studio Workspace
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security & Payment Gateways -->
+  <section class="section" id="security">
+    <div class="trust-section">
+      <h2 style="font-size: 28px; font-weight: 800; margin-bottom: 12px;">Powered by Direct Ethiopian Gateways</h2>
+      <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+        By eliminating marketplace escrow holding pools, e-Merkato guarantees immediate, verified peer-to-peer settlement between buyers and sellers.
+      </p>
+      <div class="gateway-logos">
+        <div class="gateway-pill">📱 Telebirr SuperApp Push API</div>
+        <div class="gateway-pill">💳 Chapa Payment Gateway</div>
+        <div class="gateway-pill">🏦 Commercial Bank of Ethiopia (CBE)</div>
+        <div class="gateway-pill">📄 Cryptographic QR Verification</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div style="font-weight: 800; font-size: 16px; color: white; margin-bottom: 8px;">e-Merkato | Your Free Shopping Experience</div>
+    <div>Built for Addis Ababa and all Ethiopian Telegram communities. Powered by GroupCommerce TMA.</div>
+    <div style="margin-top: 14px; font-size: 11px; color: var(--text-secondary);">© 2026 e-Merkato Platform. All rights reserved.</div>
+  </footer>
+
+  <script>
+    function launchHub() {
+      // In production, this opens the Telegram WebApp link tg://resolve?domain=eMerkatoBot&startapp=hub
+      // Here we open our interactive app prototype file!
+      window.location.href = "high_scale_hub_prototype.html";
+    }
+    function scrollToSection(id) {
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

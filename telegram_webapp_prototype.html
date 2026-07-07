@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bekollo Pro | Multi-Group Telegram Web App</title>
+<style>
+  :root {
+    --tg-bg: #18191D;
+    --tg-card: #22242A;
+    --tg-card-hover: #2C2F36;
+    --tg-text: #FFFFFF;
+    --tg-subtext: #9DA3AE;
+    --tg-border: #33363F;
+    --primary: #FCCD04;
+    --primary-hover: #E5B900;
+    --primary-text: #18191D;
+    --success: #10B981;
+    --danger: #EF4444;
+    --info: #3B82F6;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: #0F1013;
+    color: var(--tg-text);
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 10px;
+  }
+
+  /* App Shell Simulator */
+  .app-shell {
+    width: 100%;
+    max-width: 440px;
+    background-color: var(--tg-bg);
+    border-radius: 28px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--tg-border);
+    position: relative;
+    max-height: 94vh;
+  }
+
+  /* Top Bar Simulator */
+  .telegram-header {
+    background-color: #1F2127;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--tg-border);
+    font-size: 14px;
+    z-index: 10;
+  }
+  .tg-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .tg-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #A855F7, #EC4899);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    color: white;
+  }
+
+  /* Role Switcher Bar */
+  .role-switcher {
+    background: #1A1C22;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--tg-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .role-badge {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+  }
+  .role-shopper { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+  .role-admin { background: rgba(252, 205, 4, 0.2); color: var(--primary); }
+
+  .toggle-btn {
+    background: var(--tg-card);
+    border: 1px solid var(--tg-border);
+    color: var(--tg-text);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+  .toggle-btn:hover { background: var(--tg-card-hover); border-color: var(--primary); }
+
+  /* Group Selector (Multi-Tenant Hub) */
+  .group-banner {
+    background: linear-gradient(135deg, #2A2D35 0%, #1E2026 100%);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--tg-border);
+  }
+  .group-select-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .group-select {
+    background: var(--tg-bg);
+    color: white;
+    border: 1px solid var(--tg-border);
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  /* Scrollable Content Area */
+  .content-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 80px;
+  }
+  .content-scroll::-webkit-scrollbar { width: 4px; }
+  .content-scroll::-webkit-scrollbar-thumb { background: var(--tg-border); border-radius: 4px; }
+
+  /* Navigation Tabs */
+  .nav-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scrollbar-width: none;
+  }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .tab-item {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: var(--tg-card);
+    color: var(--tg-subtext);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-item.active {
+    background: var(--primary);
+    color: var(--primary-text);
+  }
+
+  /* Product Grid */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 12px;
+  }
+  .product-card {
+    background: var(--tg-card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--tg-border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.2s;
+  }
+  .product-card:active { transform: scale(0.98); }
+  .product-img {
+    width: 100%;
+    height: 150px;
+    background-size: cover;
+    background-position: center;
+    background-color: #2D3039;
+    position: relative;
+  }
+  .wishlist-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .wishlist-btn.active { color: #EF4444; }
+  .product-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: space-between;
+  }
+  .product-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tg-text);
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .product-group-tag {
+    font-size: 11px;
+    color: var(--tg-subtext);
+    margin-bottom: 8px;
+  }
+  .product-price {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 10px;
+  }
+  .btn-select {
+    width: 100%;
+    padding: 8px;
+    background: var(--primary);
+    color: var(--primary-text);
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .btn-select:hover { opacity: 0.9; }
+
+  /* Bottom Navigation Bar */
+  .bottom-nav {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #1F2127;
+    border-top: 1px solid var(--tg-border);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 20;
+  }
+  .nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--tg-subtext);
+    font-size: 11px;
+    cursor: pointer;
+    position: relative;
+  }
+  .nav-btn.active { color: var(--primary); font-weight: 600; }
+  .nav-badge {
+    position: absolute;
+    top: -4px;
+    right: 12px;
+    background: var(--primary);
+    color: var(--primary-text);
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 10px;
+  }
+
+  /* Admin Dashboard Styles */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--tg-card);
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--tg-border);
+  }
+  .stat-label { font-size: 12px; color: var(--tg-subtext); margin-bottom: 4px; }
+  .stat-val { font-size: 20px; font-weight: 800; color: var(--tg-text); }
+  .stat-sub { font-size: 11px; color: var(--success); margin-top: 4px; }
+
+  .admin-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 20px 0 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .order-card {
+    background: var(--tg-card);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid var(--tg-border);
+  }
+  .order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--tg-border);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
+  .order-id { font-weight: 700; font-size: 14px; }
+  .status-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .status-pending { background: rgba(252, 205, 4, 0.2); color: #FCCD04; }
+  .status-delivery { background: rgba(59, 130, 246, 0.2); color: #60A5FA; }
+  .status-completed { background: rgba(16, 185, 129, 0.2); color: #10B981; }
+
+  .order-details { font-size: 13px; color: var(--tg-subtext); line-height: 1.5; }
+  .order-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .btn-action {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    border: none;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--primary); color: var(--primary-text); }
+  .btn-secondary { background: var(--tg-border); color: white; }
+
+  /* Forms & Modals */
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; color: var(--tg-subtext); margin-bottom: 6px; }
+  .form-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: #131417;
+    border: 1px solid var(--tg-border);
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--primary); }
+
+  .modal-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    align-items: flex-end;
+    z-index: 50;
+    backdrop-filter: blur(5px);
+  }
+  .modal-overlay.active { display: flex; }
+  .modal-sheet {
+    background: var(--tg-card);
+    width: 100%;
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+    max-height: 85vh;
+    overflow-y: auto;
+    border-top: 1px solid var(--tg-border);
+    animation: slideUp 0.3s ease-out;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .cart-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--tg-border);
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- Telegram App Header -->
+  <div class="telegram-header">
+    <div class="tg-user-info">
+      <div class="tg-avatar">M</div>
+      <div>
+        <div style="font-weight: 700;">Mike Fikadu</div>
+        <div style="font-size: 11px; color: var(--tg-subtext);">@Mike_Fikadu • Addis Ababa</div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span style="font-size: 12px; background: #2D3039; padding: 4px 8px; border-radius: 12px;">ETB / Br</span>
+    </div>
+  </div>
+
+  <!-- Role Switcher -->
+  <div class="role-switcher">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span id="roleBadge" class="role-badge role-shopper">Shopper Mode</span>
+      <span style="font-size: 12px; color: var(--tg-subtext);" id="roleDesc">Browsing Store catalog</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleRole()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+      Switch to <span id="switchTargetText">Group Admin</span>
+    </button>
+  </div>
+
+  <!-- Group / Store Selector Banner -->
+  <div class="group-banner">
+    <div style="font-size: 11px; color: var(--tg-subtext); margin-bottom: 4px;">ACTIVE TELEGRAM GROUP / STORE</div>
+    <select class="group-select" id="groupSelect" onchange="changeGroup()">
+      <option value="all">🌐 All Ethiopian Group Stores (Marketplace Feed)</option>
+      <option value="addis_fashion" selected>👗 Addis Fashion Hub (@AddisStyleGroup)</option>
+      <option value="bole_gadgets">📱 Bole Gadgets & Electronics (@BoleTechDeals)</option>
+      <option value="merkato_shoes">👟 Merkato Direct Footwear (@MerkatoShoes)</option>
+    </select>
+  </div>
+
+  <!-- Main Scrollable Container -->
+  <div class="content-scroll" id="mainContent">
+    <!-- Dynamic Content Loaded Here via JS -->
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <div class="bottom-nav" id="bottomNav">
+    <!-- Rendered via JS depending on role -->
+  </div>
+
+  <!-- Modal Sheet for Checkout/Add Product -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBg(event)">
+    <div class="modal-sheet" id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+  // State Management
+  let currentRole = 'shopper'; // 'shopper' or 'admin'
+  let currentTab = 'shop';
+  let activeGroup = 'addis_fashion';
+  let cart = [];
+  let wishlist = [1, 4];
+
+  // Dummy Data: Products across different Telegram sell/buy groups
+  let products = [
+    {
+      id: 1,
+      name: "Malia Neon Green Sports T-Shirt",
+      group: "addis_fashion",
+      groupName: "Addis Fashion Hub",
+      price: 399,
+      category: "Men",
+      stock: 24,
+      image: "linear-gradient(135deg, #a8ff78 0%, #78ffd6 100%)"
+    },
+    {
+      id: 2,
+      name: "Malia Royal Blue Dry-Fit T-Shirt",
+      group: "addis_fashion",
+      groupName: "Addis Fashion Hub",
+      price: 399,
+      category: "Men",
+      stock: 15,
+      image: "linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)"
+    },
+    {
+      id: 3,
+      name: "Light Blue Summer Linen Polo Shirt",
+      group: "addis_fashion",
+      groupName: "Addis Fashion Hub",
+      price: 650,
+      category: "Men",
+      stock: 8,
+      image: "linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%)"
+    },
+    {
+      id: 4,
+      name: "Apple AirPods Pro 2nd Gen (USB-C)",
+      group: "bole_gadgets",
+      groupName: "Bole Gadgets & Electronics",
+      price: 14500,
+      category: "Electronics",
+      stock: 5,
+      image: "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)"
+    },
+    {
+      id: 5,
+      name: "Anker 20,000mAh Power Bank Type-C",
+      group: "bole_gadgets",
+      groupName: "Bole Gadgets & Electronics",
+      price: 3200,
+      category: "Electronics",
+      stock: 12,
+      image: "linear-gradient(135deg, #434343 0%, #000000 100%)"
+    },
+    {
+      id: 6,
+      name: "Men's Orthopedic Running Sneakers",
+      group: "merkato_shoes",
+      groupName: "Merkato Direct Footwear",
+      price: 2400,
+      category: "Shoes",
+      stock: 18,
+      image: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+    }
+  ];
+
+  // Dummy Data: Orders in Admin Mode
+  let orders = [
+    {
+      id: "10245",
+      customer: "Abebe Bikila (@Abebe_B)",
+      phone: "+251 911 234 567",
+      address: "Bole Sub-City, Woreda 03, House 412, Addis Ababa",
+      items: "2x Malia Neon Green Sports T-Shirt",
+      total: 798,
+      deliveryFee: 150,
+      paymentMethod: "Telebirr (Verified: TX8912J)",
+      status: "pending"
+    },
+    {
+      id: "10244",
+      customer: "Sara Tadesse (@Sara_Tad)",
+      phone: "+251 922 889 900",
+      address: "Kazanchis near Jupiter Hotel, Addis Ababa",
+      items: "1x Light Blue Summer Linen Polo Shirt",
+      total: 650,
+      deliveryFee: 150,
+      paymentMethod: "Cash on Delivery",
+      status: "delivery"
+    }
+  ];
+
+  function toggleRole() {
+    currentRole = currentRole === 'shopper' ? 'admin' : 'shopper';
+    const badge = document.getElementById('roleBadge');
+    const desc = document.getElementById('roleDesc');
+    const target = document.getElementById('switchTargetText');
+
+    if (currentRole === 'shopper') {
+      badge.className = 'role-badge role-shopper';
+      badge.innerText = 'Shopper Mode';
+      desc.innerText = 'Browsing Store catalog';
+      target.innerText = 'Group Admin';
+      currentTab = 'shop';
+    } else {
+      badge.className = 'role-badge role-admin';
+      badge.innerText = 'Group Admin Mode';
+      desc.innerText = 'Managing products & orders';
+      target.innerText = 'Shopper View';
+      currentTab = 'dashboard';
+    }
+    renderApp();
+  }
+
+  function changeGroup() {
+    activeGroup = document.getElementById('groupSelect').value;
+    renderApp();
+  }
+
+  function renderApp() {
+    renderBottomNav();
+    const content = document.getElementById('mainContent');
+
+    if (currentRole === 'shopper') {
+      if (currentTab === 'shop') renderShopperHome(content);
+      else if (currentTab === 'cart') renderCart(content);
+      else if (currentTab === 'orders') renderCustomerOrders(content);
+      else if (currentTab === 'profile') renderCustomerProfile(content);
+    } else {
+      if (currentTab === 'dashboard') renderAdminDashboard(content);
+      else if (currentTab === 'products') renderAdminProducts(content);
+      else if (currentTab === 'orders_admin') renderAdminOrders(content);
+      else if (currentTab === 'settings') renderAdminSettings(content);
+    }
+  }
+
+  function renderBottomNav() {
+    const nav = document.getElementById('bottomNav');
+    if (currentRole === 'shopper') {
+      const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
+      nav.innerHTML = `
+        <button class="nav-btn ${currentTab === 'shop' ? 'active' : ''}" onclick="switchTab('shop')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          <span>Storefront</span>
+        </button>
+        <button class="nav-btn ${currentTab === 'cart' ? 'active' : ''}" onclick="switchTab('cart')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+          ${cartCount > 0 ? `<span class="nav-badge">${cartCount}</span>` : ''}
+          <span>Cart</span>
+        </button>
+        <button class="nav-btn ${currentTab === 'orders' ? 'active' : ''}" onclick="switchTab('orders')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+          <span>My Orders</span>
+        </button>
+        <button class="nav-btn ${currentTab === 'profile' ? 'active' : ''}" onclick="switchTab('profile')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Wallet & Hub</span>
+        </button>
+      `;
+    } else {
+      nav.innerHTML = `
+        <button class="nav-btn ${currentTab === 'dashboard' ? 'active' : ''}" onclick="switchTab('dashboard')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-btn ${currentTab === 'products' ? 'active' : ''}" onclick="switchTab('products')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          <span>Products</span>
+        </button>
+        <button class="nav-btn ${currentTab === 'orders_admin' ? 'active' : ''}" onclick="switchTab('orders_admin')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span class="nav-badge">1</span>
+          <span>Orders</span>
+        </button>
+        <button class="nav-btn ${currentTab === 'settings' ? 'active' : ''}" onclick="switchTab('settings')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          <span>Delivery/Pay</span>
+        </button>
+      `;
+    }
+  }
+
+  function switchTab(tab) {
+    currentTab = tab;
+    renderApp();
+  }
+
+  /* --- Shopper Views --- */
+  function renderShopperHome(container) {
+    const filtered = activeGroup === 'all' 
+      ? products 
+      : products.filter(p => p.group === activeGroup);
+
+    let html = `
+      <!-- Category Tabs -->
+      <div class="nav-tabs">
+        <div class="tab-item active">All Items (${filtered.length})</div>
+        <div class="tab-item">Men's Wear</div>
+        <div class="tab-item">Electronics</div>
+        <div class="tab-item">Under 500 Br</div>
+      </div>
+
+      <!-- Flash Banner -->
+      <div style="background: linear-gradient(135deg, #FCCD04, #FFA000); border-radius: 16px; padding: 14px; color: #18191D; margin-top: 8px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font-weight: 800; font-size: 14px;">🚀 Telegram Flash Deal</div>
+          <div style="font-size: 12px; font-weight: 600;">Free Delivery in Addis on Br 1,000+</div>
+        </div>
+        <span style="background: #18191D; color: white; padding: 4px 8px; border-radius: 8px; font-size: 11px; font-weight: 700;">FREESHIP</span>
+      </div>
+
+      <!-- Product Grid -->
+      <div class="product-grid">
+    `;
+
+    filtered.forEach(p => {
+      const isWished = wishlist.includes(p.id);
+      html += `
+        <div class="product-card">
+          <div class="product-img" style="background: ${p.image}">
+            <button class="wishlist-btn ${isWished ? 'active' : ''}" onclick="toggleWishlist(${p.id}, event)">
+              ♥
+            </button>
+          </div>
+          <div class="product-info">
+            <div>
+              <div class="product-title">${p.name}</div>
+              <div class="product-group-tag">🏬 ${p.groupName}</div>
+            </div>
+            <div>
+              <div class="product-price">Br ${p.price.toLocaleString()}</div>
+              <button class="btn-select" onclick="addToCart(${p.id})">+ Select & Add</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+
+  function toggleWishlist(id, e) {
+    e.stopPropagation();
+    if (wishlist.includes(id)) wishlist = wishlist.filter(item => item !== id);
+    else wishlist.push(id);
+    renderApp();
+  }
+
+  function addToCart(id) {
+    const item = products.find(p => p.id === id);
+    const existing = cart.find(c => c.id === id);
+    if (existing) existing.qty++;
+    else cart.push({ ...item, qty: 1 });
+    renderBottomNav();
+    alert(`Added "${item.name}" to cart!`);
+  }
+
+  function renderCart(container) {
+    if (cart.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 60px 20px;">
+          <div style="font-size: 48px; margin-bottom: 16px;">🛍️</div>
+          <h3 style="font-size: 18px; margin-bottom: 8px;">Your cart is empty</h3>
+          <p style="color: var(--tg-subtext); font-size: 13px; margin-bottom: 24px;">Browse items from telegram sell/buy groups and add them to get started.</p>
+          <button class="btn-select" style="max-width: 200px; padding: 12px; font-size: 14px;" onclick="switchTab('shop')">Browse Products</button>
+        </div>
+      `;
+      return;
+    }
+
+    let subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+    let deliveryFee = subtotal >= 1000 ? 0 : 150;
+    let total = subtotal + deliveryFee;
+
+    let html = `
+      <h3 style="font-size: 18px; margin-bottom: 16px;">Review Your Cart</h3>
+      <div style="background: var(--tg-card); border-radius: var(--radius); padding: 0 14px; border: 1px solid var(--tg-border); margin-bottom: 16px;">
+    `;
+
+    cart.forEach((item, index) => {
+      html += `
+        <div class="cart-item">
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 13px;">${item.name}</div>
+            <div style="font-size: 11px; color: var(--tg-subtext);">Group: ${item.groupName}</div>
+            <div style="font-weight: 700; color: var(--primary); font-size: 13px; margin-top: 4px;">Br ${item.price.toLocaleString()}</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button style="width: 26px; height: 26px; border-radius: 6px; background: #333; color: white; border: none; cursor: pointer;" onclick="changeQty(${index}, -1)">-</button>
+            <span style="font-weight: bold; font-size: 14px;">${item.qty}</span>
+            <button style="width: 26px; height: 26px; border-radius: 6px; background: #333; color: white; border: none; cursor: pointer;" onclick="changeQty(${index}, 1)">+</button>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+      </div>
+
+      <!-- Checkout Summary -->
+      <div style="background: var(--tg-card); border-radius: var(--radius); padding: 16px; border: 1px solid var(--tg-border); margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+          <span style="color: var(--tg-subtext);">Subtotal</span>
+          <span>Br ${subtotal.toLocaleString()}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px;">
+          <span style="color: var(--tg-subtext);">Delivery (Addis Ababa)</span>
+          <span>${deliveryFee === 0 ? '<span style="color:var(--success)">FREE</span>' : 'Br ' + deliveryFee}</span>
+        </div>
+        <div style="border-top: 1px solid var(--tg-border); margin: 10px 0; padding-top: 10px; display: flex; justify-content: space-between; font-weight: 800; font-size: 16px;">
+          <span>Total to Pay</span>
+          <span style="color: var(--primary);">Br ${total.toLocaleString()}</span>
+        </div>
+      </div>
+
+      <button class="btn-select" style="padding: 14px; font-size: 15px;" onclick="openCheckoutModal(${total})">
+        Proceed to Checkout (Br ${total.toLocaleString()})
+      </button>
+    `;
+
+    container.innerHTML = html;
+  }
+
+  function changeQty(index, delta) {
+    cart[index].qty += delta;
+    if (cart[index].qty <= 0) cart.splice(index, 1);
+    renderApp();
+  }
+
+  function openCheckoutModal(total) {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    content.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 18px;">Finalize Telegram Order</h3>
+        <button onclick="closeModal()" style="background: none; border: none; color: white; font-size: 20px;">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">DELIVERY DESTINATION IN ETHIOPIA</label>
+        <select class="form-input">
+          <option>📍 Bole Sub-City (Home Address Saved)</option>
+          <option>📍 Kazanchis (Work Address Saved)</option>
+          <option>📍 Regional Delivery (Bahir Dar / Hawassa / Adama via Bus)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">PHONE NUMBER FOR COURIER</label>
+        <input type="text" class="form-input" value="+251 911 234 567" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">SELECT PAYMENT METHOD</label>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <label style="background: #131417; padding: 12px; border-radius: 10px; border: 1px solid var(--primary); display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="radio" name="pay" checked />
+            <div>
+              <div style="font-weight: 700; font-size: 13px;">📱 Telebirr SuperApp Push / PIN</div>
+              <div style="font-size: 11px; color: var(--tg-subtext);">Instant automatic settlement via merchant code</div>
+            </div>
+          </label>
+          <label style="background: #131417; padding: 12px; border-radius: 10px; border: 1px solid var(--tg-border); display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="radio" name="pay" />
+            <div>
+              <div style="font-weight: 700; font-size: 13px;">💳 Chapa / CBE Birr Transfer</div>
+              <div style="font-size: 11px; color: var(--tg-subtext);">Bank transfer or card checkout</div>
+            </div>
+          </label>
+          <label style="background: #131417; padding: 12px; border-radius: 10px; border: 1px solid var(--tg-border); display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="radio" name="pay" />
+            <div>
+              <div style="font-weight: 700; font-size: 13px;">💵 Cash on Delivery</div>
+              <div style="font-size: 11px; color: var(--tg-subtext);">Pay cash to delivery rider upon receipt</div>
+            </div>
+          </label>
+        </div>
+      </div>
+      <button class="btn-select" style="padding: 14px; font-size: 15px; margin-top: 10px;" onclick="confirmOrder(${total})">
+        Confirm Order (Br ${total.toLocaleString()})
+      </button>
+    `;
+    modal.classList.add('active');
+  }
+
+  function confirmOrder(total) {
+    closeModal();
+    cart = [];
+    alert(`🎉 Order Confirmed! The seller group admin has been notified in their Telegram channel.`);
+    switchTab('orders');
+  }
+
+  function renderCustomerOrders(container) {
+    let html = `<h3 style="font-size: 18px; margin-bottom: 16px;">Recent Telegram Orders</h3>`;
+    
+    // Show static order plus notice
+    html += `
+      <div class="order-card">
+        <div class="order-header">
+          <span class="order-id">Order #10241</span>
+          <span class="status-badge status-completed">Delivered</span>
+        </div>
+        <div class="order-details">
+          <div><strong>Items:</strong> 1x Malia Royal Blue T-Shirt</div>
+          <div><strong>Total:</strong> Br 399</div>
+          <div><strong>Delivery:</strong> Arrived yesterday at Bole</div>
+        </div>
+        <div style="margin-top: 10px; padding: 8px; background: rgba(16, 185, 129, 0.1); border-radius: 8px; font-size: 12px; color: var(--success); display: flex; align-items: center; gap: 6px;">
+          <span>★</span> Hope you loved it! Tap to review seller group.
+        </div>
+      </div>
+
+      <div class="order-card">
+        <div class="order-header">
+          <span class="order-id">Order #10245</span>
+          <span class="status-badge status-delivery">Out for Delivery</span>
+        </div>
+        <div class="order-details">
+          <div><strong>Group:</strong> Addis Fashion Hub</div>
+          <div><strong>Items:</strong> 2x Malia Neon Green Sports T-Shirt</div>
+          <div><strong>Total:</strong> Br 798 (Paid via Telebirr)</div>
+        </div>
+        <div style="margin-top: 12px; height: 6px; background: #131417; border-radius: 3px; overflow: hidden;">
+          <div style="width: 75%; height: 100%; background: var(--info);"></div>
+        </div>
+        <div style="font-size: 11px; color: var(--tg-subtext); margin-top: 4px; text-align: right;">Courier dispatched (Estimated 30 mins)</div>
+      </div>
+    `;
+    container.innerHTML = html;
+  }
+
+  function renderCustomerProfile(container) {
+    container.innerHTML = `
+      <!-- Wallet Card -->
+      <div style="background: linear-gradient(135deg, #2A2E39 0%, #17181D 100%); border-radius: 20px; padding: 20px; border: 1px solid var(--tg-border); margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <div>
+            <div style="font-size: 11px; color: var(--tg-subtext); letter-spacing: 1px;">BEKOLLO POINTS & WALLET</div>
+            <div style="font-size: 28px; font-weight: 800; color: var(--primary);">340 <span style="font-size: 14px; font-weight: 600; color: white;">pts</span></div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 11px; color: var(--tg-subtext);">WALLET BALANCE</div>
+            <div style="font-size: 20px; font-weight: 700;">Br 500.00</div>
+          </div>
+        </div>
+        <div style="height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-bottom: 8px; overflow: hidden;">
+          <div style="width: 68%; height: 100%; background: var(--primary);"></div>
+        </div>
+        <div style="font-size: 11px; color: var(--tg-subtext);">160 pts more to reach <strong style="color: var(--primary);">Gold Tier</strong> (Free shipping on all groups)</div>
+      </div>
+
+      <!-- Coupons Section -->
+      <h4 style="font-size: 15px; margin-bottom: 10px;">Your Active Coupons</h4>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+        <div style="background: var(--tg-card); border-left: 4px solid var(--primary); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 700; font-size: 13px;">15% off next order</div>
+            <div style="font-size: 11px; color: var(--tg-subtext);">Code: BEKOLLO15 • Min spend Br 1,000</div>
+          </div>
+          <button style="background: #131417; border: 1px solid var(--tg-border); color: white; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;">Copy</button>
+        </div>
+        <div style="background: var(--tg-card); border-left: 4px solid var(--success); padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 700; font-size: 13px;">Free delivery in Addis Ababa</div>
+            <div style="font-size: 11px; color: var(--tg-subtext);">Code: FREESHIP • Any order</div>
+          </div>
+          <button style="background: #131417; border: 1px solid var(--tg-border); color: white; padding: 6px 10px; border-radius: 6px; font-size: 11px; cursor: pointer;">Copy</button>
+        </div>
+      </div>
+
+      <!-- Saved Addresses -->
+      <div style="background: var(--tg-card); border-radius: var(--radius); padding: 14px; border: 1px solid var(--tg-border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-weight: 700; font-size: 14px;">Saved Delivery Addresses</span>
+          <span style="font-size: 12px; color: var(--primary); cursor: pointer;">+ Add New</span>
+        </div>
+        <div style="font-size: 12px; padding: 8px 0; border-bottom: 1px solid var(--tg-border);">
+          <strong>🏠 Home:</strong> Bole Sub-City, Woreda 03, House 412, Addis Ababa
+        </div>
+        <div style="font-size: 12px; padding: 8px 0;">
+          <strong>🏢 Work:</strong> Kazanchis near Jupiter Hotel, Addis Ababa
+        </div>
+      </div>
+    `;
+  }
+
+  /* --- Group Admin / Seller Views --- */
+  function renderAdminDashboard(container) {
+    const groupName = document.getElementById('groupSelect').options[document.getElementById('groupSelect').selectedIndex].text;
+    container.innerHTML = `
+      <div style="background: rgba(252, 205, 4, 0.1); border: 1px solid var(--primary); padding: 12px; border-radius: 12px; margin-bottom: 16px; font-size: 13px;">
+        🏬 Managing: <strong>${groupName}</strong><br>
+        <span style="font-size: 11px; color: var(--tg-subtext);">Bot linked to Telegram Group ID: <code>-1001892341</code></span>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Group Revenue (Month)</div>
+          <div class="stat-val">Br 48,250</div>
+          <div class="stat-sub">↑ +18.4% vs last week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending Orders</div>
+          <div class="stat-val">4 Orders</div>
+          <div class="stat-sub" style="color: #FCCD04;">Requires dispatch</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Catalog</div>
+          <div class="stat-val">14 Items</div>
+          <div class="stat-sub">2 items low stock</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Group Buyers</div>
+          <div class="stat-val">1,280</div>
+          <div class="stat-sub">Telegram group members</div>
+        </div>
+      </div>
+
+      <div class="admin-section-title">
+        <span>Quick Management Actions</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+        <button class="btn-select" style="padding: 12px; background: var(--tg-card); border: 1px solid var(--tg-border); color: white;" onclick="switchTab('products')">
+          + Add New Product
+        </button>
+        <button class="btn-select" style="padding: 12px; background: var(--tg-card); border: 1px solid var(--tg-border); color: white;" onclick="switchTab('orders_admin')">
+          📦 View Orders (4)
+        </button>
+      </div>
+    `;
+  }
+
+  function renderAdminProducts(container) {
+    let html = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 18px;">Group Product Catalog</h3>
+        <button class="btn-select" style="width: auto; padding: 8px 14px;" onclick="openAddProductModal()">+ New Item</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+    `;
+
+    products.forEach(p => {
+      html += `
+        <div style="background: var(--tg-card); border: 1px solid var(--tg-border); border-radius: 12px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; border-radius: 8px; background: ${p.image}"></div>
+            <div>
+              <div style="font-weight: 700; font-size: 13px;">${p.name}</div>
+              <div style="font-size: 11px; color: var(--tg-subtext);">Stock: ${p.stock} units • Category: ${p.category}</div>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-weight: 800; color: var(--primary); font-size: 14px;">Br ${p.price}</div>
+            <button style="background: none; border: none; color: #60A5FA; font-size: 12px; cursor: pointer;">Edit Stock</button>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+
+  function openAddProductModal() {
+    const modal = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    content.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 18px;">Post New Product to Group</h3>
+        <button onclick="closeModal()" style="background: none; border: none; color: white; font-size: 20px;">×</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">PRODUCT TITLE</label>
+        <input type="text" class="form-input" id="newProdName" placeholder="e.g. Ethiopian Cotton Traditional Dress" />
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label class="form-label">PRICE (ETB / Br)</label>
+          <input type="number" class="form-input" id="newProdPrice" placeholder="1200" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">STOCK QUANTITY</label>
+          <input type="number" class="form-input" id="newProdStock" placeholder="10" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">CATEGORY</label>
+        <select class="form-input" id="newProdCat">
+          <option>Men</option>
+          <option>Women</option>
+          <option>Electronics</option>
+          <option>Shoes</option>
+        </select>
+      </div>
+      <button class="btn-select" style="padding: 14px; font-size: 15px; margin-top: 10px;" onclick="addNewProductSubmit()">
+        Publish to Telegram Group Store
+      </button>
+    `;
+    modal.classList.add('active');
+  }
+
+  function addNewProductSubmit() {
+    const name = document.getElementById('newProdName').value || "New Fashion Apparel Item";
+    const price = parseInt(document.getElementById('newProdPrice').value) || 599;
+    const stock = parseInt(document.getElementById('newProdStock').value) || 15;
+    const cat = document.getElementById('newProdCat').value || "Men";
+
+    products.unshift({
+      id: Date.now(),
+      name: name,
+      group: activeGroup === 'all' ? 'addis_fashion' : activeGroup,
+      groupName: "Addis Fashion Hub",
+      price: price,
+      category: cat,
+      stock: stock,
+      image: "linear-gradient(135deg, #f6d365 0%, #fda085 100%)"
+    });
+
+    closeModal();
+    renderApp();
+    alert(`✅ "${name}" published! A Telegram notification card with [Shop Now] button was sent to your group.`);
+  }
+
+  function renderAdminOrders(container) {
+    let html = `<h3 style="font-size: 18px; margin-bottom: 16px;">Group Incoming Orders</h3>`;
+
+    orders.forEach((o, index) => {
+      html += `
+        <div class="order-card">
+          <div class="order-header">
+            <div>
+              <span class="order-id">Order #${o.id}</span>
+              <div style="font-size: 11px; color: var(--tg-subtext);">Buyer: ${o.customer}</div>
+            </div>
+            <span class="status-badge ${o.status === 'pending' ? 'status-pending' : 'status-delivery'}">
+              ${o.status === 'pending' ? 'Pending Acceptance' : 'Out for Delivery'}
+            </span>
+          </div>
+          <div class="order-details">
+            <div><strong>Items:</strong> ${o.items}</div>
+            <div><strong>Phone:</strong> ${o.phone}</div>
+            <div><strong>Address:</strong> ${o.address}</div>
+            <div><strong>Payment:</strong> ${o.paymentMethod}</div>
+            <div style="margin-top: 4px; font-weight: 700; color: var(--primary);">Total Payout: Br ${o.total}</div>
+          </div>
+          <div class="order-actions">
+            ${o.status === 'pending' ? `
+              <button class="btn-action btn-primary" onclick="updateOrderStatus(${index}, 'delivery')">Accept & Assign Courier</button>
+            ` : `
+              <button class="btn-action" style="background: var(--success); color: white;" onclick="updateOrderStatus(${index}, 'completed')">Mark Delivered</button>
+            `}
+            <button class="btn-action btn-secondary" onclick="alert('Opening Telegram DM with ${o.customer}...')">Chat Buyer</button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+
+  function updateOrderStatus(index, newStatus) {
+    orders[index].status = newStatus;
+    renderApp();
+    alert(`Status updated! Automated Telegram bot status message sent to buyer.`);
+  }
+
+  function renderAdminSettings(container) {
+    container.innerHTML = `
+      <h3 style="font-size: 18px; margin-bottom: 16px;">Group Payment & Delivery Setup</h3>
+
+      <div style="background: var(--tg-card); border-radius: var(--radius); padding: 16px; border: 1px solid var(--tg-border); margin-bottom: 16px;">
+        <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--primary);">📍 Local Delivery Configuration</h4>
+        <div class="form-group">
+          <label class="form-label">ADDIS ABABA STANDARD DELIVERY FEE (ETB)</label>
+          <input type="number" class="form-input" value="150" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">REGIONAL DELIVERY FEE (OUTSIDE ADDIS)</label>
+          <input type="number" class="form-input" value="350" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">FREE DELIVERY THRESHOLD (ETB)</label>
+          <input type="number" class="form-input" value="1000" />
+        </div>
+      </div>
+
+      <div style="background: var(--tg-card); border-radius: var(--radius); padding: 16px; border: 1px solid var(--tg-border);">
+        <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--primary);">💳 Ethiopian Payment Gateways</h4>
+        <div class="form-group">
+          <label class="form-label">TELEBIRR MERCHANT CODE / SHORTCODE</label>
+          <input type="text" class="form-input" value="891204" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">CHAPA PUBLIC KEY</label>
+          <input type="text" class="form-input" value="CHAPUBK_TEST-xxxxxxxxxxxxxxxx" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">CBE BIRR ACCOUNT NUMBER</label>
+          <input type="text" class="form-input" value="1000239481923" />
+        </div>
+        <button class="btn-select" style="padding: 12px; margin-top: 8px;" onclick="alert('Payment & Delivery settings updated!')">Save Group Configuration</button>
+      </div>
+    `;
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+  }
+  function closeModalOnBg(e) {
+    if (e.target.id === 'modalOverlay') closeModal();
+  }
+
+  // Initial Render
+  renderApp();
+</script>
+</body>
+</html>
