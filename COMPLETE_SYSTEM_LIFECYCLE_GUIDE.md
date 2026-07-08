@@ -22,7 +22,7 @@ Unlike traditional web e-commerce platforms requiring email/password registratio
      "photo_url": "https://t.me/i/userpic/320/Mike.jpg"
    }
    ```
-3. **HMAC-SHA256 Backend Verification:** To prevent attackers from spoofing another user's Telegram ID, the frontend transmits `window.Telegram.WebApp.initData` (the raw string) to your Node.js/FastAPI backend API gateway (`POST /api/v1/auth/telegram`).
+3. **HMAC-SHA256 Backend Verification:** To prevent attackers from spoofing another user's Telegram ID, the public transmits `window.Telegram.WebApp.initData` (the raw string) to your Node.js/FastAPI backend API gateway (`POST /api/v1/auth/telegram`).
 4. **Token Generation:** The backend validates the SHA256 signature against your Telegram Bot Token. If valid, it provisions or updates the user in the `users` PostgreSQL table and issues an encrypted **JSON Web Token (JWT)** stored in `localStorage` for API sessions.
 
 ---
@@ -49,7 +49,7 @@ In a marketplace with 1,000 independent sellers, a standard single-checkout cart
 ### Technical Cart Architecture:
 * **Client-Side Persistence:** The active cart state is persisted in `window.localStorage.getItem('bekollo_cart')` and synced to Redis (`HSET cart:user_12893412`) every time an item is added.
 * **Automatic Store Partitioning Algorithm:**
-  When a buyer opens their cart, the frontend groups items by `shop_id`:
+  When a buyer opens their cart, the public groups items by `shop_id`:
   ```javascript
   // Cart grouping logic
   {

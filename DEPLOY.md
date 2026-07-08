@@ -7,8 +7,8 @@ Telegram Users
      │
      ▼
 Vercel (Frontend + API)          ← all requests go here
-  ├── /                          → frontend/index.html (static)
-  ├── /css /js                   → frontend/css, frontend/js (static)
+  ├── /                          → public/index.html (static)
+  ├── /css /js                   → public/css, public/js (static)
   └── /api/*                     → api/index.js (serverless function)
             │
             ▼

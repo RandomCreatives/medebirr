@@ -3,7 +3,7 @@
    All HTTP communication with the backend
 ═══════════════════════════════════════════════════ */
 
-// In Vercel production the frontend and API share the same domain,
+// In Vercel production the public and API share the same domain,
 // so relative /api/v1 paths work for both local dev and deployed.
 // Override with VITE_API_BASE or window.API_BASE if needed.
 const API_BASE = window.API_BASE || '/api/v1';

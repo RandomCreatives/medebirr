@@ -94,7 +94,7 @@ Buyers filter instantly by:
 Because multi-vendor escrow introduces massive financial regulatory overhead and delayed settlement, our platform implements **Store-Isolated Direct Checkout**.
 
 ### Cart Grouping Algorithm
-When a buyer adds items from multiple sellers into their global cart, the frontend automatically partitions the cart into **Store Packages**:
+When a buyer adds items from multiple sellers into their global cart, the public automatically partitions the cart into **Store Packages**:
 
 ```javascript
 function partitionCartBySeller(cartItems) {

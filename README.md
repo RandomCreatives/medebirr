@@ -29,7 +29,7 @@ eMerkato/
 │   ├── .env.example
 │   └── package.json
 │
-├── frontend/                   # Telegram Mini App (vanilla HTML/CSS/JS)
+├── public/                   # Telegram Mini App (vanilla HTML/CSS/JS)
 │   ├── index.html              # App shell
 │   ├── css/app.css             # Full dark-mode TMA styles
 │   └── js/
@@ -144,7 +144,7 @@ POST /payments/cash/confirm        (auth)  { order_id }
 1. Create a bot via [@BotFather](https://t.me/BotFather)
 2. Copy the bot token to your `.env` as `TELEGRAM_BOT_TOKEN`
 3. Create a Mini App via BotFather: `/newapp`
-4. Set the Web App URL to your deployed frontend URL
+4. Set the Web App URL to your deployed public URL
 5. Add the bot as admin to your sell/buy group
 6. Users who send `/register_shop` will get an onboarding link
 

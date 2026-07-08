@@ -149,7 +149,7 @@ backend/src/
   routes/payments.js → Telebirr H5, Chapa, Cash webhook handlers
   routes/users.js    → Profile, addresses, wishlist, notifications
 
-frontend/
+public/
   index.html         → App shell (header, role bar, nav, modal, toast)
   css/app.css        → Full dark-mode TMA design system
   js/api.js          → Typed API client for all backend endpoints
