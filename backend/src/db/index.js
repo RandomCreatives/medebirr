@@ -1,40 +1,43 @@
 /**
  * Database connection layer
  *
- * Supabase / Vercel serverless notes:
- * - Use the SUPABASE_DB_URL (port 5432, direct connection) for migrations/seeds
- * - Use DATABASE_URL (port 6543, pgbouncer transaction mode) for API queries
- *   pgbouncer does not support PREPARE statements, so we always use simple queries.
- * - SSL is required for Supabase; rejectUnauthorized: false is safe here because
- *   we control the connection string and trust Supabase's certificate chain.
- * - In serverless environments each invocation may spin up a new process, so
- *   pool size is kept small (max: 3) to avoid exhausting pgbouncer's connection limit.
+ * Supabase connection strategy:
+ * - Direct connection (db.[ref].supabase.co:5432) works globally from any region.
+ * - pgbouncer pooler (pooler.supabase.com:6543) is region-specific and can cause
+ *   ENOTFOUND errors when Vercel's region differs from the Supabase project region.
+ * - We use the direct connection with a small pool (max:3) which is safe for
+ *   serverless — Supabase supports up to 60 direct connections on the free tier.
+ * - SSL is always required for Supabase.
  */
 
 const { Pool } = require('pg');
 
-const isProduction = process.env.NODE_ENV === 'production';
 const isServerless = !!process.env.VERCEL;
 
 let pool;
 
-// Reuse pool across warm invocations in serverless (module-level singleton)
 function getPool() {
   if (!pool) {
     const connectionString = process.env.DATABASE_URL;
     if (!connectionString) {
       throw new Error('DATABASE_URL environment variable is not set');
     }
+
+    // Parse the connection string — if it already contains sslmode, pg respects it.
+    // We also set ssl in the config as a belt-and-suspenders for Supabase.
+    const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+
     pool = new Pool({
       connectionString,
-      ssl: { rejectUnauthorized: false }, // Always required for Supabase
+      ssl: isLocal ? false : { rejectUnauthorized: false },
       max: isServerless ? 3 : 10,
-      idleTimeoutMillis: isServerless ? 5000 : 30000,
-      connectionTimeoutMillis: 5000
+      idleTimeoutMillis: isServerless ? 10000 : 30000,
+      connectionTimeoutMillis: 10000
     });
+
     pool.on('error', (err) => {
       console.error('PostgreSQL pool error:', err.message);
-      pool = null; // Reset so next request gets a fresh pool
+      pool = null;
     });
   }
   return pool;

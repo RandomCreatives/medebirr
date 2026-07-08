@@ -8,8 +8,13 @@
  */
 
 // Load .env for local development only — Vercel injects env vars directly
-if (process.env.NODE_ENV !== 'production') {
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
   require('dotenv').config({ path: require('path').join(__dirname, '../backend/.env') });
+}
+
+// Default to production when running on Vercel
+if (process.env.VERCEL && !process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'production';
 }
 
 const express = require('express');
