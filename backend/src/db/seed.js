@@ -1,13 +1,26 @@
+require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const { Pool } = require('pg');
 
 // Seed uses direct connection (port 5432), not pgbouncer
 const connectionString = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
-const pool = new Pool({ connectionString, ssl: { rejectUnauthorized: false }, max: 1 });
+
+if (!connectionString) {
+  console.error('❌ Error: SUPABASE_DB_URL or DATABASE_URL environment variable is not set.');
+  console.error('If running locally, ensure you have a .env file in the project root or backend directory.');
+  process.exit(1);
+}
 
 async function seed() {
-  const client = await pool.connect();
+  const pool = new Pool({
+    connectionString,
+    ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false },
+    max: 1
+  });
+
+  let client;
   try {
+    client = await pool.connect();
     console.log('Seeding e-Merkato demo data...');
     await client.query('BEGIN');
 
@@ -69,7 +82,7 @@ async function seed() {
       `, [storeId, policy.return_policy_type, policy.custom_policy_text, policy.addis_delivery_fee, policy.regional_dispatch_fee]);
     }
 
-    // Products
+    // Products — Bole Apple & Tech Hub
     if (storeMap['bole-apple-tech']) {
       await client.query(`
         INSERT INTO products (store_id, title, description, price_etb, compare_price, sku, stock_quantity, category, sub_category, tags, is_published, is_featured, rating, rating_count, order_count)
@@ -80,6 +93,7 @@ async function seed() {
       `, [storeMap['bole-apple-tech']]);
     }
 
+    // Products — Shiro Meda Heritage Textile
     if (storeMap['shiro-meda-textile']) {
       await client.query(`
         INSERT INTO products (store_id, title, description, price_etb, sku, stock_quantity, category, sub_category, tags, is_published, is_featured, rating, rating_count, order_count)
@@ -90,6 +104,7 @@ async function seed() {
       `, [storeMap['shiro-meda-textile']]);
     }
 
+    // Products — Kaffa & Sidama Direct Roastery
     if (storeMap['kaffa-sidama-roastery']) {
       await client.query(`
         INSERT INTO products (store_id, title, description, price_etb, sku, stock_quantity, category, sub_category, tags, is_published, is_featured, rating, rating_count, order_count)
@@ -100,6 +115,7 @@ async function seed() {
       `, [storeMap['kaffa-sidama-roastery']]);
     }
 
+    // Products — Merkato Premium Footwear
     if (storeMap['merkato-footwear']) {
       await client.query(`
         INSERT INTO products (store_id, title, description, price_etb, sku, stock_quantity, category, sub_category, tags, is_published, is_featured, rating, rating_count, order_count)
@@ -110,7 +126,7 @@ async function seed() {
       `, [storeMap['merkato-footwear']]);
     }
 
-    // Demo delivery address for Mike
+    // Demo delivery addresses for Mike
     await client.query(`
       INSERT INTO delivery_addresses (tg_user_id, label, sub_city, woreda, house_number, landmark, phone, is_default)
       VALUES
@@ -122,12 +138,14 @@ async function seed() {
     await client.query('COMMIT');
     console.log('✅ Seed data inserted successfully.');
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK');
     console.error('❌ Seed failed:', err.message);
     process.exit(1);
   } finally {
-    client.release();
-    await pool.end();
+    if (client) {
+      client.release();
+      await pool.end();
+    }
   }
 }
 

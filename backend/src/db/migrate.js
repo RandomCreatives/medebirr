@@ -1,3 +1,4 @@
+require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const fs = require('fs');
 const path = require('path');
@@ -6,9 +7,16 @@ const { Pool } = require('pg');
 // Migrations must use the DIRECT connection (port 5432), not pgbouncer (port 6543).
 // pgbouncer in transaction mode does not support DDL (CREATE TABLE, etc).
 const connectionString = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+
+if (!connectionString) {
+  console.error('❌ Error: SUPABASE_DB_URL or DATABASE_URL environment variable is not set.');
+  console.error('Set SUPABASE_DB_URL to the Supabase direct connection string (port 5432).');
+  process.exit(1);
+}
+
 const pool = new Pool({
   connectionString,
-  ssl: { rejectUnauthorized: false },
+  ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false },
   max: 1
 });
 

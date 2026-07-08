@@ -54,7 +54,7 @@ app.use('/api/', apiLimiter);
 app.use('/api/v1/auth', authLimiter);
 
 // ─── Static Frontend ──────────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '../../frontend')));
+app.use(express.static(path.join(__dirname, '../../public')));
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/v1/auth', authRoutes);
@@ -82,7 +82,7 @@ app.use('/api/*', (req, res) => {
 
 // ─── SPA Catch-all (serve frontend for all non-API routes) ────────────────────
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../frontend/index.html'));
+  res.sendFile(path.join(__dirname, '../../public/index.html'));
 });
 
 // ─── Global Error Handler ─────────────────────────────────────────────────────
