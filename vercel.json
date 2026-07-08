@@ -1,38 +1,9 @@
 {
   "version": 2,
-  "name": "emerkato",
-  "buildCommand": "echo 'No build step required'",
-  "installCommand": "cd backend && npm install",
-  "functions": {
-    "api/index.js": {
-      "maxDuration": 30
-    }
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.js"
-    },
-    {
-      "src": "/frontend/(.*)",
-      "dest": "/frontend/$1"
-    },
-    {
-      "src": "/(css|js)/(.*)",
-      "dest": "/frontend/$1/$2"
-    },
-    {
-      "src": "/(.*\\.html)",
-      "dest": "/frontend/$1"
-    },
-    {
-      "src": "/",
-      "dest": "/frontend/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
-    }
+  "name": "medebirr",
+  "outputDirectory": "frontend",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.js" }
   ],
   "headers": [
     {

@@ -16,34 +16,25 @@ const { Pool } = require('pg');
 const isProduction = process.env.NODE_ENV === 'production';
 const isServerless = !!process.env.VERCEL;
 
-// Use pgbouncer URL in production (port 6543), direct URL in development (port 5432)
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is not set');
-}
-
-const poolConfig = {
-  connectionString,
-  ssl: isProduction ? { rejectUnauthorized: false } : false,
-  // Serverless: keep pool very small — pgbouncer handles the actual pooling
-  max: isServerless ? 3 : 10,
-  idleTimeoutMillis: isServerless ? 5000 : 30000,
-  connectionTimeoutMillis: 5000,
-  // Required for Supabase pgbouncer (transaction mode) — disables PREPARE
-  statement_timeout: 30000
-};
-
 let pool;
 
 // Reuse pool across warm invocations in serverless (module-level singleton)
 function getPool() {
   if (!pool) {
-    pool = new Pool(poolConfig);
+    const connectionString = process.env.DATABASE_URL;
+    if (!connectionString) {
+      throw new Error('DATABASE_URL environment variable is not set');
+    }
+    pool = new Pool({
+      connectionString,
+      ssl: { rejectUnauthorized: false }, // Always required for Supabase
+      max: isServerless ? 3 : 10,
+      idleTimeoutMillis: isServerless ? 5000 : 30000,
+      connectionTimeoutMillis: 5000
+    });
     pool.on('error', (err) => {
       console.error('PostgreSQL pool error:', err.message);
-      // Reset pool on fatal errors so next request gets a fresh one
-      pool = null;
+      pool = null; // Reset so next request gets a fresh pool
     });
   }
   return pool;

@@ -7,7 +7,10 @@
  * Vercel manages the HTTP lifecycle.
  */
 
-require('dotenv').config({ path: require('path').join(__dirname, '../backend/.env') });
+// Load .env for local development only — Vercel injects env vars directly
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config({ path: require('path').join(__dirname, '../backend/.env') });
+}
 
 const express = require('express');
 const cors = require('cors');
