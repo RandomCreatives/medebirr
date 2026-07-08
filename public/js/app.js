@@ -16,16 +16,46 @@ const App = {
     // Load persisted cart
     State.loadCart();
 
-    // Authenticate
     try {
       await this.authenticate();
       await this.loadInitialData();
-      this.showApp();
-      this.render();
     } catch (err) {
-      console.error('Init error:', err);
-      this.showError(err.message);
+      console.warn('API unavailable, running in offline mode:', err.message);
+      // Set a guest user so the UI renders regardless
+      if (!State.user) {
+        State.user = {
+          firstName: 'Guest',
+          lastName: '',
+          username: 'guest',
+          tier: 'standard',
+          isSeller: false,
+          walletPoints: 0
+        };
+      }
+      // Load demo products from static data so UI isn't empty
+      State.products = this._demoProducts();
+      State.offlineMode = true;
     }
+
+    this.showApp();
+    this.render();
+
+    // Show a soft banner if offline, not a hard crash
+    if (State.offlineMode) {
+      setTimeout(() => this.toast('⚠️ Database not connected — set DATABASE_URL in Vercel', 'error'), 800);
+    }
+  },
+
+  // Static demo products shown when DB is unreachable
+  _demoProducts() {
+    return [
+      { product_id: 'demo-1', title: 'Apple iPhone 15 Pro Max (256GB)', price_etb: 165000, compare_price: 170000, stock_quantity: 8, category: 'electronics', store_id: 'demo-store-1', store_name: 'Bole Apple & Tech Hub', location_sub_city: 'Bole', verified_badge: true, return_policy_type: '3_day_warranty', addis_delivery_fee: 200, cash_on_delivery: true, telebirr_enabled: true, rating: 4.9, rating_count: 312 },
+      { product_id: 'demo-2', title: 'Sony WH-1000XM5 Headphones', price_etb: 28500, stock_quantity: 15, category: 'electronics', store_id: 'demo-store-1', store_name: 'Bole Apple & Tech Hub', location_sub_city: 'Bole', verified_badge: true, return_policy_type: '3_day_warranty', addis_delivery_fee: 200, cash_on_delivery: true, telebirr_enabled: true, rating: 4.8, rating_count: 180 },
+      { product_id: 'demo-3', title: 'Traditional Habesha Kemis – Women', price_etb: 4500, stock_quantity: 40, category: 'fashion', store_id: 'demo-store-2', store_name: 'Shiro Meda Heritage Textile', location_sub_city: 'Gulele', verified_badge: true, return_policy_type: '7_day_free', addis_delivery_fee: 150, cash_on_delivery: true, telebirr_enabled: true, rating: 4.9, rating_count: 620 },
+      { product_id: 'demo-4', title: 'Organic Sidama Coffee Beans (1kg)', price_etb: 950, stock_quantity: 200, category: 'groceries', store_id: 'demo-store-3', store_name: 'Kaffa & Sidama Direct Roastery', location_sub_city: 'Kirkos', verified_badge: true, return_policy_type: 'fresh_guarantee', addis_delivery_fee: 100, cash_on_delivery: true, telebirr_enabled: true, rating: 5.0, rating_count: 1850 },
+      { product_id: 'demo-5', title: 'Nike Air Zoom Pegasus 40', price_etb: 6800, stock_quantity: 35, category: 'fashion', store_id: 'demo-store-4', store_name: 'Merkato Premium Footwear', location_sub_city: 'Addis Ketema', verified_badge: true, return_policy_type: 'size_exchange', addis_delivery_fee: 150, cash_on_delivery: true, telebirr_enabled: true, rating: 4.7, rating_count: 890 },
+      { product_id: 'demo-6', title: 'Yirgacheffe Natural Grade 1 (500g)', price_etb: 650, stock_quantity: 150, category: 'groceries', store_id: 'demo-store-3', store_name: 'Kaffa & Sidama Direct Roastery', location_sub_city: 'Kirkos', verified_badge: true, return_policy_type: 'fresh_guarantee', addis_delivery_fee: 100, cash_on_delivery: true, telebirr_enabled: true, rating: 5.0, rating_count: 1200 }
+    ];
   },
 
   async authenticate() {
