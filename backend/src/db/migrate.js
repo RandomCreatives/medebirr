@@ -1,21 +1,28 @@
+require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 
-// Migrations must use the DIRECT connection (port 5432), not pgbouncer (port 6543).
-// pgbouncer in transaction mode does not support DDL (CREATE TABLE, etc).
 const connectionString = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
-const pool = new Pool({
-  connectionString,
-  ssl: { rejectUnauthorized: false },
-  max: 1
-});
 
 async function migrate() {
+  if (!connectionString) {
+    console.error('❌ Error: SUPABASE_DB_URL or DATABASE_URL environment variable is not set.');
+    console.error('If running locally, ensure you have a .env file in the project root or backend directory.');
+    process.exit(1);
+  }
+
+  const pool = new Pool({
+    connectionString,
+    ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false },
+    max: 1
+  });
+
   const sql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     console.log('Running e-Merkato database migrations...');
     await client.query(sql);
     console.log('✅ Migrations complete.');
@@ -23,7 +30,7 @@ async function migrate() {
     console.error('❌ Migration failed:', err.message);
     process.exit(1);
   } finally {
-    client.release();
+    if (client) client.release();
     await pool.end();
   }
 }

@@ -1,13 +1,25 @@
+require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const { Pool } = require('pg');
 
-// Seed uses direct connection (port 5432), not pgbouncer
 const connectionString = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
-const pool = new Pool({ connectionString, ssl: { rejectUnauthorized: false }, max: 1 });
 
 async function seed() {
-  const client = await pool.connect();
+  if (!connectionString) {
+    console.error('❌ Error: SUPABASE_DB_URL or DATABASE_URL environment variable is not set.');
+    console.error('If running locally, ensure you have a .env file in the project root or backend directory.');
+    process.exit(1);
+  }
+
+  const pool = new Pool({
+    connectionString,
+    ssl: connectionString.includes('localhost') ? false : { rejectUnauthorized: false },
+    max: 1
+  });
+
+  let client;
   try {
+    client = await pool.connect();
     console.log('Seeding e-Merkato demo data...');
     await client.query('BEGIN');
 
@@ -107,7 +119,7 @@ async function seed() {
           ($1, 'Nike Air Zoom Pegasus 40 Running Shoes', 'Genuine Nike. Breathable mesh upper, React foam cushioning. Available: UK7, UK8, UK9, UK10, UK11. Colors: White/Blue, Black.', 6800, 'NIKE-PEGASUS-40', 35, 'fashion', 'footwear', ARRAY['nike','running','shoes','genuine'], true, true, 4.7, 890, 1650),
           ($1, 'Adidas Ultraboost 23 (Men & Women)', 'Premium Adidas Boost cushioning. Primeknit+ upper. 11 color options. Sizes UK4-UK12. Perfect for daily runs or casual wear.', 7200, 'ADIDAS-UB23', 28, 'fashion', 'footwear', ARRAY['adidas','ultraboost','shoes','premium'], true, false, 4.8, 450, 780),
           ($1, 'Puma RS-X Retro Sneakers (Unisex)', 'Chunky retro design. RS foam technology. 8 colorways available. Trending street style. Sizes UK4-UK12.', 4500, 'PUMA-RSX-UNI', 45, 'fashion', 'footwear', ARRAY['puma','sneakers','retro','casual'], true, false, 4.6, 320, 650)
-      `, [storeMap['merkato-footwear']]);
+      `);
     }
 
     // Demo delivery address for Mike
@@ -122,12 +134,14 @@ async function seed() {
     await client.query('COMMIT');
     console.log('✅ Seed data inserted successfully.');
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) await client.query('ROLLBACK');
     console.error('❌ Seed failed:', err.message);
     process.exit(1);
   } finally {
-    client.release();
-    await pool.end();
+    if (client) {
+      client.release();
+      await pool.end();
+    }
   }
 }
 
