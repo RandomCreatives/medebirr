@@ -1,18 +1,28 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+
 const { Pool } = require('pg');
 
-const isProduction = process.env.NODE_ENV === 'production';
+const isProduction = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
 const isServerless = !!process.env.VERCEL;
 
 const connectionString = process.env.DATABASE_URL;
 
+// Validation and explicit error reporting
+if (!connectionString && (isProduction || isServerless)) {
+  const msg = 'DATABASE_URL is missing. Please set it in Vercel/Environment settings.';
+  console.error('❌ ' + msg);
+}
+
 const poolConfig = {
-  connectionString,
-  ssl: isProduction ? { rejectUnauthorized: false } : (connectionString && !connectionString.includes('localhost') ? { rejectUnauthorized: false } : false),
+  connectionString: connectionString || undefined,
+  ssl: (isProduction || (connectionString && !connectionString.includes('localhost')))
+    ? { rejectUnauthorized: false }
+    : false,
   max: isServerless ? 3 : 10,
   idleTimeoutMillis: isServerless ? 5000 : 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: 10000,
   statement_timeout: 30000
 };
 
@@ -20,44 +30,41 @@ let pool;
 
 function getPool() {
   if (!connectionString) {
-    console.error('❌ Error: DATABASE_URL environment variable is not set.');
-    console.error('The application requires a valid PostgreSQL connection string.');
-    throw new Error('DATABASE_URL environment variable is not set');
+    throw new Error('DATABASE_URL is not set. Check your environment variables.');
   }
+
+  // Prevent connecting to localhost in production
+  if (isProduction && (connectionString.includes('127.0.0.1') || connectionString.includes('localhost'))) {
+    throw new Error('DATABASE_URL points to localhost, but the app is in production mode.');
+  }
+
   if (!pool) {
     pool = new Pool(poolConfig);
     pool.on('error', (err) => {
       console.error('PostgreSQL pool error:', err.message);
-      pool = null;
+      pool = null; // Clear so it can be re-initialized
     });
   }
   return pool;
 }
 
 const query = async (text, params) => {
-  const start = Date.now();
-  const res = await getPool().query(text, params);
-  if (!isProduction) {
-    const duration = Date.now() - start;
-    console.log('DB:', { sql: text.substring(0, 100).replace(/\s+/g, ' '), duration, rows: res.rowCount });
+  try {
+    const p = getPool();
+    const res = await p.query(text, params);
+    return res;
+  } catch (err) {
+    // Wrap error to ensure it's helpful
+    if (err.message.includes('ECONNREFUSED')) {
+      err.message = 'Database connection refused. Ensure DATABASE_URL is correct and Supabase is active.';
+    }
+    throw err;
   }
-  return res;
 };
 
 const getClient = async () => {
-  const client = await getPool().connect();
-  const originalRelease = client.release.bind(client);
-  const timeout = setTimeout(() => {
-    console.error('DB client held > 10s — releasing to prevent leak');
-    client.release = originalRelease;
-    client.release();
-  }, 10000);
-  client.release = () => {
-    clearTimeout(timeout);
-    client.release = originalRelease;
-    return client.release();
-  };
-  return client;
+  const p = getPool();
+  return await p.connect();
 };
 
 module.exports = { query, getClient, getPool };
