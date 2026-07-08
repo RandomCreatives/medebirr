@@ -1,6 +1,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+require('dotenv').config();
 
 const { Pool } = require('pg');
 
@@ -9,10 +10,9 @@ const isServerless = !!process.env.VERCEL;
 
 const connectionString = process.env.DATABASE_URL;
 
-// Validation and explicit error reporting
+// Validation
 if (!connectionString && (isProduction || isServerless)) {
-  const msg = 'DATABASE_URL is missing. Please set it in Vercel/Environment settings.';
-  console.error('❌ ' + msg);
+  console.error('❌ CRITICAL: DATABASE_URL is NOT set in the environment.');
 }
 
 const poolConfig = {
@@ -30,19 +30,18 @@ let pool;
 
 function getPool() {
   if (!connectionString) {
-    throw new Error('DATABASE_URL is not set. Check your environment variables.');
+    throw new Error('DATABASE_URL is not configured. Please add it to your environment variables.');
   }
 
-  // Prevent connecting to localhost in production
   if (isProduction && (connectionString.includes('127.0.0.1') || connectionString.includes('localhost'))) {
-    throw new Error('DATABASE_URL points to localhost, but the app is in production mode.');
+    throw new Error('DATABASE_URL points to localhost, but the app is in production/serverless mode.');
   }
 
   if (!pool) {
     pool = new Pool(poolConfig);
     pool.on('error', (err) => {
       console.error('PostgreSQL pool error:', err.message);
-      pool = null; // Clear so it can be re-initialized
+      pool = null;
     });
   }
   return pool;
@@ -51,12 +50,12 @@ function getPool() {
 const query = async (text, params) => {
   try {
     const p = getPool();
-    const res = await p.query(text, params);
-    return res;
+    return await p.query(text, params);
   } catch (err) {
-    // Wrap error to ensure it's helpful
+    console.error('Database Query Error:', err.message);
+    // Add context to connection errors
     if (err.message.includes('ECONNREFUSED')) {
-      err.message = 'Database connection refused. Ensure DATABASE_URL is correct and Supabase is active.';
+      err.message = `Could not connect to database at ${connectionString?.split('@')[1] || 'localhost'}. Ensure your DATABASE_URL is correct.`;
     }
     throw err;
   }
