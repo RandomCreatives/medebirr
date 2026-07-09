@@ -337,9 +337,9 @@ const Modals = {
             </div>
 
             <div class="pdp-rating" role="button" aria-label="Scroll to reviews">
-              <span class="pdp-stars">${this._renderSafe(() => this._starRating(product.rating || 0), '★★★☆☆')}</span>
-              <span>${(product.rating || 0).toFixed(1)}</span>
-              <span class="pdp-rating-count">(${product.rating_count || 0} reviews)</span>
+              <span class="pdp-stars">${this._renderSafe(() => this._starRating(Number(product.rating) || 0), '★★★☆☆')}</span>
+              <span>${(Number(product.rating) || 0).toFixed(1)}</span>
+              <span class="pdp-rating-count">(${Number(product.rating_count) || 0} reviews)</span>
             </div>
 
             <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;">
@@ -781,7 +781,7 @@ const Modals = {
               <div class="pdp-carousel-body">
                 <div class="pdp-carousel-item-title">${p.title}</div>
                 <div class="pdp-carousel-item-price">${State.formatETB(p.price_etb)}</div>
-                <div class="pdp-carousel-item-rating">⭐ ${(p.rating || 0).toFixed(1)}</div>
+                <div class="pdp-carousel-item-rating">⭐ ${(Number(p.rating) || 0).toFixed(1)}</div>
               </div>
             </div>
           `).join('')}
