@@ -27,6 +27,7 @@ const productRoutes = require('../backend/src/routes/products');
 const orderRoutes = require('../backend/src/routes/orders');
 const paymentRoutes = require('../backend/src/routes/payments');
 const userRoutes = require('../backend/src/routes/users');
+const botRoutes = require('../backend/src/routes/bot');
 const errorHandler = require('../backend/src/middleware/errorHandler');
 
 const app = express();
@@ -78,6 +79,7 @@ app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/bot', botRoutes);
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

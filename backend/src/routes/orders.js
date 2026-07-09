@@ -452,6 +452,16 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
       [rider_name, rider_phone, dispatch_note || null, req.params.orderId]
     );
 
+    // Notify buyer via Telegram bot
+    try {
+      const tgService = require('../services/telegram');
+      await tgService.notifyBuyerRiderAssigned(
+        ord.buyer_tg_user_id, result.rows[0], rider_name, rider_phone
+      );
+    } catch (e) {
+      console.warn('Buyer rider notification failed:', e.message);
+    }
+
     res.json({ order: result.rows[0], message: 'Rider assigned. Buyer will be notified.' });
   } catch (err) {
     next(err);

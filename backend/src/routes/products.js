@@ -176,6 +176,26 @@ router.post(
          is_published, is_featured]
       );
 
+      // If published and store has a linked group, broadcast to Telegram
+      if (is_published && storeCheck.rows[0]) {
+        const tgService = require('../services/telegram');
+        const storeData = await query(
+          `SELECT s.*, sp.return_policy_type FROM stores s
+           LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+           WHERE s.store_id = $1`,
+          [store_id]
+        );
+        const store = storeData.rows[0];
+        if (store?.tg_group_id) {
+          tgService.broadcastProduct(store.tg_group_id, result.rows[0], store)
+            .then(msgId => {
+              if (msgId) query('UPDATE products SET tg_message_id = $1 WHERE product_id = $2',
+                [msgId, result.rows[0].product_id]).catch(() => {});
+            })
+            .catch(e => console.warn('Telegram broadcast failed:', e.message));
+        }
+      }
+
       res.status(201).json({ product: result.rows[0] });
     } catch (err) {
       next(err);
@@ -227,6 +247,27 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
        image_urls, variants ? JSON.stringify(variants) : null,
        is_published, is_featured, req.params.productId]
     );
+
+    // If just published (is_published toggled to true), broadcast to Telegram group
+    if (is_published === true) {
+      const tgService = require('../services/telegram');
+      const storeData = await query(
+        `SELECT s.*, sp.return_policy_type FROM stores s
+         LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+         WHERE s.store_id = (SELECT store_id FROM products WHERE product_id = $1)`,
+        [req.params.productId]
+      );
+      const store = storeData.rows[0];
+      if (store?.tg_group_id && result.rows[0]) {
+        tgService.broadcastProduct(store.tg_group_id, result.rows[0], store)
+          .then(msgId => {
+            if (msgId) query('UPDATE products SET tg_message_id = $1 WHERE product_id = $2',
+              [msgId, req.params.productId]).catch(() => {});
+          })
+          .catch(e => console.warn('Telegram broadcast failed:', e.message));
+      }
+    }
+
     res.json({ product: result.rows[0] });
   } catch (err) {
     next(err);

@@ -123,6 +123,24 @@ const SellerViews = {
       </div>
 
       <div id="policyForm">
+
+        <!-- Telegram Group Link Section -->
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:4px;">📢 Telegram Group Connection</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">
+            ${store.tg_channel_username
+              ? `✅ Connected: <strong style="color:white;">@${store.tg_channel_username}</strong> — Products auto-post here when published.`
+              : '⚠️ No group connected yet. Connect a group to auto-broadcast your products.'}
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input class="form-input" id="groupUsernameInput" placeholder="@YourGroupUsername" value="${store.tg_channel_username || ''}" style="flex:1;"/>
+            <button onclick="App._verifyGroupFromPolicy()" style="background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.4);color:var(--accent);padding:9px 14px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">
+              ✅ Verify Admin
+            </button>
+          </div>
+          <div id="policyGroupVerifyResult" style="margin-top:8px;"></div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">Return Policy</label>
           <select class="form-select" id="policyType">

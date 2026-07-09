@@ -742,7 +742,24 @@ const App = {
     }
   },
 
-  // ── Profile Modal ─────────────────────────────────
+  // Verify group from the Policy settings tab
+  async _verifyGroupFromPolicy() {
+    const groupUsername = document.getElementById('groupUsernameInput')?.value?.trim();
+    if (!groupUsername) { this.toast('Enter a group username first', 'error'); return; }
+    const resultEl = document.getElementById('policyGroupVerifyResult');
+    if (resultEl) resultEl.innerHTML = `<div style="font-size:12px;color:var(--text-secondary);">🔍 Checking...</div>`;
+    try {
+      const result = await Api.bot.verifyGroup(State.currentStoreId, groupUsername);
+      // Refresh stores
+      const meData = await Api.users.me();
+      State.stores = meData.stores || [];
+      if (resultEl) resultEl.innerHTML = `<div style="font-size:12px;color:var(--success);">✅ Verified! @medebirrbot is admin of <strong>${result.chatTitle}</strong>. Products will now auto-post here.</div>`;
+      this.toast('Group connected!', 'success');
+    } catch (err) {
+      if (resultEl) resultEl.innerHTML = `<div style="font-size:12px;color:var(--danger);">❌ ${err.message}</div>`;
+      this.toast('Verification failed', 'error');
+    }
+  },
   openProfileModal() {
     const u = State.user;
     if (!u) return;
@@ -805,16 +822,20 @@ const App = {
 
   // ── Register Store Modal ──────────────────────────
   openRegisterStoreModal() {
+    const botUsername = 'medebirrbot';
     Modals.open(`
       <div class="modal-handle"></div>
       <div class="modal-title">🏪 Open Your Shop on Medebirr</div>
       <p style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;line-height:1.6;">
-        List your products, reach buyers across Addis Ababa and Ethiopia. Zero commission fees. Payments go directly to your Telebirr account.
+        List your products, reach buyers across Ethiopia. Zero commission. Payments go directly to your Telebirr.
       </p>
+
+      <!-- Step 1: Store Info -->
+      <div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Step 1 — Store Details</div>
 
       <div class="form-group">
         <label class="form-label">Store / Shop Name</label>
-        <input class="form-input" id="regStoreName" placeholder="e.g. Bole Fashion House, Kaffa Coffee Direct"/>
+        <input class="form-input" id="regStoreName" placeholder="e.g. Bole Fashion House"/>
       </div>
 
       <div class="form-group">
@@ -823,7 +844,7 @@ const App = {
           <option value="fashion">👗 Fashion & Traditional Clothing</option>
           <option value="electronics">📱 Electronics & Phones</option>
           <option value="groceries">☕ Coffee, Food & Groceries</option>
-          <option value="footwear">👟 Footwear & Shoes</option>
+          <option value="footwear">👟 Footwear</option>
           <option value="furniture">🪑 Furniture & Home</option>
           <option value="beauty">💄 Beauty & Personal Care</option>
           <option value="other">📦 Other</option>
@@ -844,14 +865,56 @@ const App = {
       </div>
 
       <div class="form-group">
-        <label class="form-label">Your Telebirr Shortcode / Phone (for direct payments)</label>
+        <label class="form-label">Your Telebirr Shortcode / Phone</label>
         <input class="form-input" id="regTelebirr" type="tel" placeholder="e.g. 891204 or +251 9XX XXX XXX"/>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Buyers will pay directly to this Telebirr account — zero marketplace holding.</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Buyers pay directly to this account — zero marketplace holding.</div>
+      </div>
+
+      <!-- Step 2: Telegram Group -->
+      <div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin:20px 0 12px 0;">Step 2 — Connect Your Telegram Group</div>
+
+      <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;">
+        <div style="font-size:13px;font-weight:800;color:#60A5FA;margin-bottom:8px;">📢 Why connect a group?</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+          When you publish a product in the Seller Studio, the bot automatically posts it to your Telegram group with a <strong style="color:white;">Buy Now</strong> button.<br/>
+          New paid orders are sent to your group instantly.
+        </div>
       </div>
 
       <div class="form-group">
+        <label class="form-label">Your Telegram Group or Channel Username</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;">@</span>
+          <input class="form-input" id="regGroupUsername" placeholder="YourGroupUsername" style="padding-left:28px;"/>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Must be a public group or channel (e.g. @BoleAppleDeals)</div>
+      </div>
+
+      <!-- Make bot admin instructions -->
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:800;color:white;margin-bottom:10px;">📋 How to make @${botUsername} an admin:</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:2;">
+          1. Open your Telegram group or channel<br/>
+          2. Tap the group name → <strong style="color:white;">Administrators</strong><br/>
+          3. Tap <strong style="color:white;">Add Administrator</strong><br/>
+          4. Search <strong style="color:var(--accent);">@${botUsername}</strong><br/>
+          5. Enable <strong style="color:white;">Post Messages</strong> → Save
+        </div>
+        <a href="https://t.me/${botUsername}" target="_blank"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.3);border-radius:8px;padding:10px;margin-top:12px;color:var(--accent);text-decoration:none;font-size:12px;font-weight:800;">
+          💬 Open @${botUsername} in Telegram
+        </a>
+      </div>
+
+      <div id="groupVerifyResult" style="display:none;"></div>
+
+      <button id="verifyGroupBtn" style="display:none;" class="btn-secondary" style="margin-bottom:10px;" onclick="App._verifyGroupLink()">
+        ✅ Verify @${botUsername} is Admin
+      </button>
+
+      <div class="form-group">
         <label class="form-label">Brief Description (optional)</label>
-        <textarea class="form-textarea" id="regDesc" placeholder="What makes your shop special? Describe your products..."></textarea>
+        <textarea class="form-textarea" id="regDesc" placeholder="What makes your shop special?"></textarea>
       </div>
 
       <button class="btn-primary" onclick="App.submitRegisterStore()">
@@ -859,21 +922,67 @@ const App = {
       </button>
 
       <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text-secondary);">
-        After registration, your store is reviewed within 24 hours.<br/>
+        After registration your store is reviewed within 24 hours.<br/>
         You can start adding products immediately.
       </div>
     `);
+
+    // Show verify button when group username is entered
+    document.getElementById('regGroupUsername')?.addEventListener('input', function() {
+      const verifyBtn = document.getElementById('verifyGroupBtn');
+      if (verifyBtn) verifyBtn.style.display = this.value.trim() ? 'block' : 'none';
+    });
+  },
+
+  // Called after store is created to verify group link
+  _verifyGroupLink: async function() {
+    const groupUsername = document.getElementById('regGroupUsername')?.value?.trim();
+    if (!groupUsername) return;
+    const resultEl = document.getElementById('groupVerifyResult');
+    const verifyBtn = document.getElementById('verifyGroupBtn');
+
+    if (resultEl) {
+      resultEl.style.display = 'block';
+      resultEl.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">🔍 Checking...</div>`;
+    }
+    if (verifyBtn) verifyBtn.disabled = true;
+
+    // We need a store_id — check if store is already registered
+    const storeId = State.currentStoreId;
+    if (!storeId) {
+      if (resultEl) resultEl.innerHTML = `<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--warning);">Register your store first, then verify the group.</div>`;
+      if (verifyBtn) verifyBtn.disabled = false;
+      return;
+    }
+
+    try {
+      const result = await Api.bot.verifyGroup(storeId, groupUsername);
+      if (resultEl) resultEl.innerHTML = `
+        <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:12px;font-size:12px;color:var(--success);margin-bottom:10px;">
+          ✅ <strong>Verified!</strong> @medebirrbot is admin of <strong style="color:white;">${result.chatTitle}</strong><br/>
+          <span style="color:var(--text-secondary);">Products will now auto-post to this group when published.</span>
+        </div>`;
+    } catch (err) {
+      const hint = err.data?.hint || 'Make sure the bot is added as admin first.';
+      if (resultEl) resultEl.innerHTML = `
+        <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;font-size:12px;color:var(--danger);margin-bottom:10px;">
+          ❌ ${err.message}<br/>
+          <span style="color:var(--text-secondary);margin-top:4px;display:block;">${hint}</span>
+        </div>`;
+      if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = '🔄 Try Again'; }
+    }
   },
 
   async submitRegisterStore() {
-    const storeName = document.getElementById('regStoreName')?.value?.trim();
-    const phone = document.getElementById('regPhone')?.value?.trim();
-    const subCity = document.getElementById('regSubCity')?.value;
-    const telebirrId = document.getElementById('regTelebirr')?.value?.trim();
-    const desc = document.getElementById('regDesc')?.value?.trim();
+    const storeName    = document.getElementById('regStoreName')?.value?.trim();
+    const phone        = document.getElementById('regPhone')?.value?.trim();
+    const subCity      = document.getElementById('regSubCity')?.value;
+    const telebirrId   = document.getElementById('regTelebirr')?.value?.trim();
+    const desc         = document.getElementById('regDesc')?.value?.trim();
+    const groupUsername = document.getElementById('regGroupUsername')?.value?.trim();
 
     if (!storeName) { this.toast('Store name is required', 'error'); return; }
-    if (!phone) { this.toast('Business phone is required', 'error'); return; }
+    if (!phone)     { this.toast('Business phone is required', 'error'); return; }
 
     try {
       this.toast('Registering your store...', 'info');
@@ -882,6 +991,7 @@ const App = {
         location_sub_city: subCity,
         business_phone: phone,
         telebirr_merchant_id: telebirrId || null,
+        tg_channel_username: groupUsername || null,
         description: desc || null
       });
 
@@ -893,21 +1003,37 @@ const App = {
         State.user.isSeller = true;
       }
 
+      // Auto-verify group if username was provided
+      let groupVerifyMsg = '';
+      if (groupUsername && State.currentStoreId) {
+        try {
+          const verifyResult = await Api.bot.verifyGroup(State.currentStoreId, groupUsername);
+          groupVerifyMsg = `<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--success);margin-bottom:12px;">
+            ✅ @medebirrbot verified as admin of <strong style="color:white;">${verifyResult.chatTitle}</strong><br/>
+            Products will auto-post to your group when published.
+          </div>`;
+        } catch (e) {
+          groupVerifyMsg = `<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--warning);margin-bottom:12px;">
+            ⚠️ Group not verified yet — add @medebirrbot as admin in your group, then re-verify from Policy settings.
+          </div>`;
+        }
+      }
+
       Modals.open(`
         <div class="modal-handle"></div>
-        <div style="text-align:center;padding:20px 0;">
-          <div style="font-size:52px;margin-bottom:16px;">🎉</div>
-          <div style="font-size:20px;font-weight:900;margin-bottom:8px;color:var(--success);">Store Registered!</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;">
+        <div style="text-align:center;padding:16px 0 20px 0;">
+          <div style="font-size:52px;margin-bottom:14px;">🎉</div>
+          <div style="font-size:20px;font-weight:900;margin-bottom:6px;color:var(--success);">Store Registered!</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.7;">
             <strong style="color:white;">${storeName}</strong> is now registered.<br/>
-            Status: <span style="color:var(--warning);">⏳ Pending Verification</span><br/>
-            You can start adding products now while we review your account.
+            Status: <span style="color:var(--warning);">⏳ Pending Verification (24h)</span>
           </div>
-          <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-md);padding:14px;margin-bottom:20px;font-size:12px;color:var(--success);text-align:left;line-height:1.8;">
+          ${groupVerifyMsg}
+          <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-md);padding:14px;margin-bottom:20px;font-size:12px;color:var(--success);text-align:left;line-height:2;">
             ✅ Store profile created<br/>
             ✅ Telebirr account linked<br/>
-            ⏳ Admin verification in progress (24h)<br/>
-            📦 You can add products immediately
+            ${groupUsername ? '✅ Telegram group connected' : '⚠️ No group connected yet — add one in Policy settings'}<br/>
+            📦 Start adding products immediately
           </div>
           <button class="btn-primary" onclick="App.toggleRole();Modals.close();">
             🏬 Open Seller Studio →

@@ -170,6 +170,26 @@ router.post('/telebirr/webhook', async (req, res, next) => {
       }
 
       console.log(`✅ Telebirr payment confirmed: Order ${tx.order_id}, TX: ${transactionNo}`);
+
+      // Notify seller via Telegram bot
+      try {
+        const tgService = require('../services/telegram');
+        const orderFull = await query(
+          `SELECT o.*, s.tg_group_id, u.first_name, u.last_name, u.username
+           FROM orders o
+           JOIN stores s ON o.store_id = s.store_id
+           JOIN users u ON o.buyer_tg_user_id = u.tg_user_id
+           WHERE o.order_id = $1`,
+          [tx.order_id]
+        );
+        const items = await query('SELECT * FROM order_items WHERE order_id = $1', [tx.order_id]);
+        const ord = orderFull.rows[0];
+        if (ord?.tg_group_id) {
+          await tgService.notifySellerNewOrder(ord.tg_group_id, ord, ord, items.rows);
+        }
+      } catch (e) {
+        console.warn('Seller notification failed:', e.message);
+      }
     } else {
       await query(
         `UPDATE payment_transactions SET status = 'failed', gateway_response = $1 WHERE gateway_tx_ref = $2`,
