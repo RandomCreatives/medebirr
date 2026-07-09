@@ -1,4 +1,11 @@
 require('dotenv').config();
+
+// Safety: refuse to start if bypass auth is set in production
+if (process.env.NODE_ENV === 'production' && process.env.BYPASS_TELEGRAM_AUTH === 'true') {
+  console.error('❌ CRITICAL: BYPASS_TELEGRAM_AUTH=true in production. Remove it.');
+  process.env.BYPASS_TELEGRAM_AUTH = 'false';
+}
+
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');

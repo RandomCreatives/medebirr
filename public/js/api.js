@@ -29,12 +29,18 @@ const Api = {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     const options = { method, headers };
     if (body && method !== 'GET') options.body = JSON.stringify(body);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    options.signal = controller.signal;
     try {
       const res = await fetch(`${API_BASE}${path}`, options);
+      clearTimeout(timeout);
       const data = await res.json();
       if (!res.ok) throw Object.assign(new Error(data.error || 'API Error'), { status: res.status, data });
       return data;
     } catch (err) {
+      clearTimeout(timeout);
+      if (err.name === 'AbortError') throw new Error('Request timed out');
       if (err.status) throw err;
       throw new Error('Network error — check your connection');
     }

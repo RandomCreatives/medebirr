@@ -12,8 +12,15 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
   require('dotenv').config({ path: require('path').join(__dirname, '../backend/.env') });
 }
 
-// Always production on Vercel regardless of NODE_ENV env var
-if (process.env.VERCEL) process.env.NODE_ENV = 'production';
+// Vercel sets VERCEL_ENV=production for production deploys, 'preview' for previews
+// Only force production for real production deployments (previews need mock auth)
+if (process.env.VERCEL_ENV === 'production') process.env.NODE_ENV = 'production';
+
+// ─── Safety: refuse to start if bypass auth is accidentally set in production ──
+if (process.env.NODE_ENV === 'production' && process.env.BYPASS_TELEGRAM_AUTH === 'true') {
+  console.error('❌ CRITICAL: BYPASS_TELEGRAM_AUTH=true is set in production. This bypasses Telegram authentication and opens the app to anyone. Remove this env var from your production deployment.');
+  process.env.BYPASS_TELEGRAM_AUTH = 'false';
+}
 
 const express = require('express');
 const cors = require('cors');
@@ -126,7 +133,7 @@ if (require.main === module) {
 if (process.env.VERCEL && process.env.TELEGRAM_BOT_TOKEN && process.env.APP_URL) {
   setTimeout(async () => {
     try {
-      const tg = require('./services/telegram');
+      const tg = require('../backend/src/services/telegram');
       const webhookUrl = `${process.env.APP_URL}/api/v1/bot/webhook`;
       const result = await tg.tgCall('setWebhook', { url: webhookUrl, allowed_updates: ['message', 'channel_post', 'my_chat_member'] });
       if (result.ok) console.log(`✅ Telegram webhook set: ${webhookUrl}`);

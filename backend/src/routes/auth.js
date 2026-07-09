@@ -30,17 +30,19 @@ router.post(
 
       const { initData } = req.body;
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
-      const bypassEnabled =
-        process.env.NODE_ENV !== 'production' ||
-        process.env.BYPASS_TELEGRAM_AUTH === 'true';
 
-      // Allow mock/devlogin initData only when bypass is on
+      // Allow mock/devlogin initData only in non-production
+      // BYPASS_TELEGRAM_AUTH is intentionally ignored in production — if you
+      // need to test in a browser, deploy to a preview deployment (NODE_ENV
+      // won't be 'production' on Vercel previews).
+      const bypassEnabled = process.env.NODE_ENV !== 'production';
+
       let verification;
       if (initData.startsWith('mock:') || initData.startsWith('devlogin:')) {
         if (!bypassEnabled) {
           return res.status(401).json({
             error: 'Mock authentication is disabled in production',
-            hint: 'Open inside Telegram, or set BYPASS_TELEGRAM_AUTH=true to test in a browser.'
+            hint: 'Open inside Telegram, or deploy to a preview environment to test in a browser.'
           });
         }
         const prefix = initData.startsWith('mock:') ? 'mock:' : 'devlogin:';

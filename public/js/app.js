@@ -21,33 +21,31 @@ const App = {
     this.render();
 
     // ── Phase 2: Authenticate + fetch real data in background ─────
-    try {
-      await this.authenticate();
-      // Update header with real user data
-      this.showApp();
-      this.renderRoleBar();
-      this.renderNavigation();
-
-      // Load products + stores in parallel, don't block
-      this.loadInitialData().then(() => {
-        this.renderContent();
-      });
-
-    } catch (err) {
-      console.warn('Auth/API error:', err.message);
-      State.bootError = err?.message || String(err);
-      if (!State.user) {
-        State.user = { firstName: 'Guest', lastName: '', username: 'guest', tier: 'standard', isSeller: false, walletPoints: 0 };
+    // Don't block the UI — show cached content immediately,
+    // then update when real data arrives.
+    this.authenticate()
+      .then(() => {
         this.showApp();
-        this.render();
-      }
-      if (State.products.length === 0) {
-        State.products = this._demoProducts();
-        this.renderContent();
-      }
-      State.offlineMode = true;
-      setTimeout(() => this.toast(`⚠️ ${State.bootError?.slice(0, 100) || 'Connection issue'}`, 'error'), 500);
-    }
+        this.renderRoleBar();
+        this.renderNavigation();
+        return this.loadInitialData();
+      })
+      .then(() => this.renderContent())
+      .catch((err) => {
+        console.warn('Auth/API error:', err.message);
+        State.bootError = err?.message || String(err);
+        if (!State.user) {
+          State.user = { firstName: 'Guest', lastName: '', username: 'guest', tier: 'standard', isSeller: false, walletPoints: 0 };
+          this.showApp();
+          this.render();
+        }
+        if (State.products.length === 0) {
+          State.products = this._demoProducts();
+          this.renderContent();
+        }
+        State.offlineMode = true;
+        setTimeout(() => this.toast(`⚠️ ${State.bootError?.slice(0, 100) || 'Connection issue'}`, 'error'), 500);
+      });
   },
 
   // Restore last-known data from localStorage so first paint is instant
@@ -560,6 +558,8 @@ const App = {
       this.toast('Could not load store page', 'error');
     }
   },
+
+  async toggleRole() {
     State.role = State.role === 'buyer' ? 'seller' : 'buyer';
     State.currentTab = State.role === 'buyer' ? 'explore' : 'dashboard';
     if (State.role === 'seller') {
