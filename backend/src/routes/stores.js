@@ -244,4 +244,52 @@ router.get('/:storeId/stats', requireAuth, requireSellerOf('storeId'), async (re
   }
 });
 
+/**
+ * DELETE /api/v1/stores/:storeId
+ * Delete a store and all its data (owner only)
+ * Requires confirmation — checks for active/paid orders first
+ */
+router.delete('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res, next) => {
+  try {
+    const storeId = req.params.storeId;
+
+    // Block deletion if there are active (unpaid or dispatched) orders
+    const activeOrders = await query(
+      `SELECT COUNT(*) FROM orders
+       WHERE store_id = $1
+         AND order_status NOT IN ('delivered','cancelled')
+         AND payment_status = 'paid'`,
+      [storeId]
+    );
+    if (parseInt(activeOrders.rows[0].count) > 0) {
+      return res.status(409).json({
+        error: 'Cannot delete store with active orders',
+        detail: `You have ${activeOrders.rows[0].count} paid order(s) that are not yet delivered. Fulfil or cancel them first.`
+      });
+    }
+
+    const store = req.store; // Attached by requireSellerOf
+
+    // Soft-delete: mark suspended + clear group link so the group can be reused
+    await query(
+      `UPDATE stores SET
+        status = 'deleted',
+        tg_group_id = NULL,
+        tg_channel_username = NULL,
+        updated_at = NOW()
+       WHERE store_id = $1`,
+      [storeId]
+    );
+
+    // Unpublish all products
+    await query('UPDATE products SET is_published = FALSE WHERE store_id = $1', [storeId]);
+
+    res.json({
+      message: `Store "${store.store_name}" has been deleted. All products have been unpublished.`
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

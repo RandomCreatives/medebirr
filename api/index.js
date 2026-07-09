@@ -122,5 +122,20 @@ if (require.main === module) {
   app.listen(PORT, () => console.log(`e-Merkato API running on http://localhost:${PORT}`));
 }
 
+// ─── Auto-register Telegram webhook on startup (production only) ─────────────
+if (process.env.VERCEL && process.env.TELEGRAM_BOT_TOKEN && process.env.APP_URL) {
+  setTimeout(async () => {
+    try {
+      const tg = require('./services/telegram');
+      const webhookUrl = `${process.env.APP_URL}/api/v1/bot/webhook`;
+      const result = await tg.tgCall('setWebhook', { url: webhookUrl, allowed_updates: ['message', 'channel_post', 'my_chat_member'] });
+      if (result.ok) console.log(`✅ Telegram webhook set: ${webhookUrl}`);
+      else console.warn('⚠️ Telegram webhook setup failed:', result.description);
+    } catch (e) {
+      console.warn('⚠️ Telegram webhook setup error:', e.message);
+    }
+  }, 3000); // Delay 3s to let the server fully initialize
+}
+
 // Export for Vercel
 module.exports = app;

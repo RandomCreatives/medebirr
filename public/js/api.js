@@ -66,7 +66,8 @@ const Api = {
     create:       (data)        => Api.post('/stores', data),
     update:       (id, data)    => Api.put(`/stores/${id}`, data),
     updatePolicy: (id, data)    => Api.put(`/stores/${id}/policy`, data),
-    stats:        (id)          => Api.get(`/stores/${id}/stats`)
+    stats:        (id)          => Api.get(`/stores/${id}/stats`),
+    delete:       (id)          => Api.delete(`/stores/${id}`)
   },
 
   // ── Orders ─────────────────────────────────────────

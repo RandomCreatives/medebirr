@@ -742,6 +742,75 @@ const App = {
     }
   },
 
+  // ── Delete Store ──────────────────────────────────
+  confirmDeleteStore(storeId, storeName) {
+    Modals.open(`
+      <div class="modal-handle"></div>
+      <div style="text-align:center;padding:8px 0 16px 0;">
+        <div style="font-size:40px;margin-bottom:14px;">⚠️</div>
+        <div style="font-size:17px;font-weight:900;margin-bottom:8px;color:var(--danger);">Delete Store?</div>
+        <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:20px;">
+          You are about to permanently delete<br/>
+          <strong style="color:white;">${storeName}</strong><br/>
+          This will unpublish all products and disconnect the Telegram group.<br/>
+          <strong style="color:var(--danger);">This cannot be undone.</strong>
+        </div>
+
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:12px;margin-bottom:20px;font-size:12px;color:var(--text-secondary);text-align:left;line-height:1.8;">
+          ✗ All products will be unpublished<br/>
+          ✗ Telegram group will be disconnected<br/>
+          ✓ Order history is preserved for reference<br/>
+          ✓ You can open a new store anytime
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button class="btn-secondary" onclick="Modals.close();App.openProfileModal();" style="flex:1;">
+            Cancel
+          </button>
+          <button onclick="App.deleteStore('${storeId}','${storeName.replace(/'/g,'\\\'')}')"
+            style="flex:1;background:var(--danger);color:white;border:none;padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:800;cursor:pointer;">
+            🗑️ Delete Store
+          </button>
+        </div>
+      </div>
+    `);
+  },
+
+  async deleteStore(storeId, storeName) {
+    try {
+      this.toast('Deleting store...', 'info');
+      await Api.stores.delete(storeId);
+
+      // Remove from state
+      State.stores = State.stores.filter(s => s.store_id !== storeId);
+      if (State.currentStoreId === storeId) {
+        State.currentStoreId = State.stores[0]?.store_id || null;
+      }
+      // Switch back to buyer mode if no stores left
+      if (State.stores.length === 0) {
+        State.role = 'buyer';
+        State.currentTab = 'explore';
+      }
+
+      Modals.open(`
+        <div class="modal-handle"></div>
+        <div style="text-align:center;padding:20px 0;">
+          <div style="font-size:48px;margin-bottom:14px;">✅</div>
+          <div style="font-size:17px;font-weight:900;margin-bottom:8px;">Store Deleted</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.6;">
+            <strong style="color:white;">${storeName}</strong> has been deleted.<br/>
+            All products have been unpublished.
+          </div>
+          <button class="btn-primary" onclick="Modals.close();">Done</button>
+        </div>
+      `);
+      this.render();
+    } catch (err) {
+      Modals.close();
+      this.toast(err.message || 'Failed to delete store', 'error');
+    }
+  },
+
   // Verify group from the Policy settings tab
   async _verifyGroupFromPolicy() {
     const groupUsername = document.getElementById('groupUsernameInput')?.value?.trim();
@@ -788,15 +857,22 @@ const App = {
       <div style="margin:14px 0;">
         <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Your Stores</div>
         ${State.stores.map(s => `
-          <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
-            <div>
-              <div style="font-size:13px;font-weight:800;">${s.store_name}</div>
-              <div style="font-size:11px;color:${s.status==='verified'?'var(--success)':'var(--warning)'};">
-                ${s.status==='verified'?'✓ Verified':'⏳ Pending Verification'}
+          <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+              <div>
+                <div style="font-size:13px;font-weight:800;">${s.store_name}</div>
+                <div style="font-size:11px;color:${s.status==='verified'?'var(--success)':'var(--warning)'};">
+                  ${s.status==='verified'?'✓ Verified':'⏳ Pending Verification'}
+                </div>
+                ${s.tg_channel_username ? `<div style="font-size:11px;color:var(--text-secondary);">📢 @${s.tg_channel_username}</div>` : ''}
               </div>
+              <button onclick="App.toggleRole();Modals.close();" style="background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.3);color:#FCCD04;padding:7px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">
+                Open Studio →
+              </button>
             </div>
-            <button onclick="App.toggleRole();Modals.close();" style="background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.3);color:#FCCD04;padding:7px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">
-              Open Studio →
+            <button onclick="App.confirmDeleteStore('${s.store_id}','${s.store_name.replace(/'/g,'\\\'')}')"
+              style="width:100%;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--danger);padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">
+              🗑️ Delete this store
             </button>
           </div>`).join('')}
       </div>

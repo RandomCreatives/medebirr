@@ -45,6 +45,21 @@ router.post('/verify-group', requireAuth, async (req, res, next) => {
       });
     }
 
+    // ── One group per shop enforcement ──────────────────────────────────────
+    // Check if this chat_id is already linked to a DIFFERENT store
+    const existingLink = await query(
+      'SELECT store_id, store_name FROM stores WHERE tg_group_id = $1 AND store_id != $2',
+      [chatInfo.chatId, store_id]
+    );
+    if (existingLink.rows.length > 0) {
+      return res.status(409).json({
+        verified: false,
+        error: `This Telegram group is already linked to "${existingLink.rows[0].store_name}"`,
+        hint: 'Each Telegram group can only be connected to one Medebirr store. Use a different group or unlink it from the other store first.'
+      });
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     // Check bot admin status
     const { isAdmin, status } = await tg.checkBotIsAdmin(chatInfo.chatId);
 
