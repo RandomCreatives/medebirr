@@ -272,14 +272,22 @@ const Modals = {
     try {
       this._renderPDP(product);
     } catch (err) {
-      console.warn('PDP render error, showing fallback:', err);
+      console.warn('PDP render error:', err);
       this.open(`
         <div class="modal-handle"></div>
         <div class="modal-title">${product.title || 'Product Details'}</div>
+        <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px;">
+          🏪 ${product.store_name || 'Store'} · 📍 ${product.location_sub_city || 'Addis Ababa'}
+          ${product.rating ? ` · ⭐ ${product.rating.toFixed(1)}` : ''}
+        </div>
         <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${product.description || 'No description available.'}</p>
-        <div style="display:flex;gap:16px;align-items:center;margin-top:16px;">
+        <div style="display:flex;gap:12px;align-items:center;margin-top:16px;flex-wrap:wrap;">
           <span style="font-size:28px;font-weight:900;color:var(--accent);">${State.formatETB(product.price_etb)}</span>
-          <button class="pdp-btn-primary" onclick="App.addToCart('${product.product_id}');this.innerHTML='✓ Added!'">🛒 Add to Cart</button>
+          ${product.compare_price ? `<span style="font-size:14px;color:var(--text-muted);text-decoration:line-through;">${State.formatETB(product.compare_price)}</span>` : ''}
+        </div>
+        <button class="pdp-btn-primary" style="margin-top:14px;" onclick="App.addToCart('${product.product_id}');this.innerHTML='✓ Added!'">🛒 Add to Cart</button>
+        <div style="margin-top:12px;padding:8px;background:rgba(239,68,68,0.1);border-radius:6px;font-size:11px;color:#EF4444;">
+          ⚠️ ${err.message || 'Unknown error'}
         </div>
       `);
     }
@@ -317,7 +325,7 @@ const Modals = {
               ${images ? `<img src="${images[0]}" alt="${product.title}" draggable="false"/>` : `<span style="font-size:80px;">${emoji}</span>`}
             </div>
             <div class="pdp-thumb-strip" id="pdpThumbStrip">
-              ${this._renderThumbs(product, images, gradient, emoji)}
+              ${this._renderSafe(() => this._renderThumbs(product, images, gradient, emoji))}
             </div>
           </div>
 
@@ -331,8 +339,8 @@ const Modals = {
               ${savings > 0 ? `<span class="pdp-save-badge">Save ${savings}%</span>` : ''}
             </div>
 
-            <div class="pdp-rating" onclick="document.getElementById('pdpAccordion')?.scrollIntoView({behavior:'smooth'})" role="button" aria-label="Scroll to reviews">
-              <span class="pdp-stars">${this._starRating(product.rating || 0)}</span>
+            <div class="pdp-rating" role="button" aria-label="Scroll to reviews">
+              <span class="pdp-stars">${this._renderSafe(() => this._starRating(product.rating || 0), '★★★☆☆')}</span>
               <span>${(product.rating || 0).toFixed(1)}</span>
               <span class="pdp-rating-count">(${product.rating_count || 0} reviews)</span>
             </div>
@@ -346,7 +354,7 @@ const Modals = {
                 : `· <span style="color:var(--danger);">Out of Stock</span>`}
             </div>
 
-            ${this._renderVariants(product.variants)}
+            ${this._renderSafe(() => this._renderVariants(product.variants))}
 
             <div class="pdp-cta-box">
               <div class="pdp-cta-row">
@@ -368,10 +376,10 @@ const Modals = {
         </div>
 
         <div class="pdp-body">
-          ${this._renderBenefits(product)}
-          ${this._renderAccordion(product)}
-          ${this._renderCrossSell(product)}
-          ${this._renderRecommendations(product)}
+          ${this._renderSafe(() => this._renderBenefits(product))}
+          ${this._renderSafe(() => this._renderAccordion(product))}
+          ${this._renderSafe(() => this._renderCrossSell(product))}
+          ${this._renderSafe(() => this._renderRecommendations(product))}
         </div>
       </div>
     `, 'pdp-full');
@@ -579,6 +587,10 @@ const Modals = {
   },
 
   // ── Benefits Grid ──────────────────────────────────
+  _renderSafe(fn, fallback = '') {
+    try { return fn(); } catch (e) { console.warn('PDP section error:', e); return fallback; }
+  },
+
   _renderBenefits(product) {
     const cat = product.category || '';
     const benefits = [
