@@ -181,13 +181,15 @@ const App = {
   },
 
   async loadInitialData() {
-    const [productsData, addressesData] = await Promise.all([
+    const [productsData, addressesData, storesData] = await Promise.all([
       Api.products.list({ sort: 'featured', limit: 20 }),
-      Api.users.addresses().catch(() => ({ addresses: [] }))
+      Api.users.addresses().catch(() => ({ addresses: [] })),
+      Api.stores.list({ limit: 100 }).catch(() => ({ stores: [] }))
     ]);
-    State.products = productsData.products || [];
-    State.productTotal = productsData.total || 0;
-    State.addresses = addressesData.addresses || [];
+    State.products     = productsData.products || [];
+    State.productTotal = productsData.total    || 0;
+    State.addresses    = addressesData.addresses || [];
+    State.allStores    = storesData.stores || [];
   },
 
   showApp() {
@@ -214,9 +216,10 @@ const App = {
       document.getElementById('headerLocation').textContent = username ? `@${username}` : 'Addis Ababa, Ethiopia';
     }
 
-    // Clickable avatar — opens profile / account modal
+    // Clickable avatar — opens profile tab
     document.getElementById('userAvatar').style.cursor = 'pointer';
-    document.getElementById('userAvatar').onclick = () => App.openProfileModal();
+    document.getElementById('userAvatar').onclick = () => App.switchTab('profile');
+    document.getElementById('appHeader').querySelector('.header-left').onclick = () => App.switchTab('profile');
 
     // Switch-account button (browser only)
     if (!window.Telegram?.WebApp?.initData) {
@@ -290,23 +293,24 @@ const App = {
     const cartCount = State.cartCount();
 
     if (State.role === 'buyer') {
+      const cartCount = State.cartCount();
       nav.innerHTML = `
         <button class="nav-item ${State.currentTab==='explore'?'active':''}" onclick="App.switchTab('explore')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           Explore
+        </button>
+        <button class="nav-item ${State.currentTab==='shops'?'active':''}" onclick="App.switchTab('shops')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Shops
         </button>
         <button class="nav-item ${State.currentTab==='cart'?'active':''}" onclick="App.switchTab('cart')">
           ${cartCount > 0 ? `<span class="nav-badge">${cartCount}</span>` : ''}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
           Cart
         </button>
-        <button class="nav-item ${State.currentTab==='wishlist'?'active':''}" onclick="App.switchTab('wishlist')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-          Saved
-        </button>
         <button class="nav-item ${State.currentTab==='orders'?'active':''}" onclick="App.switchTab('orders')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          Deliveries
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Orders
         </button>
       `;
     } else {
@@ -336,15 +340,17 @@ const App = {
   renderContent() {
     const body = document.getElementById('appBody');
     if (State.role === 'buyer') {
-      if (State.currentTab === 'explore') BuyerViews.renderExplore(body);
-      else if (State.currentTab === 'cart') BuyerViews.renderCart(body);
+      if (State.currentTab === 'explore')  BuyerViews.renderExplore(body);
+      else if (State.currentTab === 'shops')   BuyerViews.renderShops(body);
+      else if (State.currentTab === 'cart')    BuyerViews.renderCart(body);
       else if (State.currentTab === 'wishlist') BuyerViews.renderWishlist(body);
-      else if (State.currentTab === 'orders') BuyerViews.renderOrders(body);
+      else if (State.currentTab === 'orders')  BuyerViews.renderOrders(body);
+      else if (State.currentTab === 'profile') BuyerViews.renderProfile(body);
     } else {
       if (State.currentTab === 'dashboard') SellerViews.renderDashboard(body);
       else if (State.currentTab === 'inventory') SellerViews.renderInventory(body);
-      else if (State.currentTab === 'policy') SellerViews.renderPolicy(body);
-      else if (State.currentTab === 'dispatch') SellerViews.renderDispatch(body);
+      else if (State.currentTab === 'policy')    SellerViews.renderPolicy(body);
+      else if (State.currentTab === 'dispatch')  SellerViews.renderDispatch(body);
     }
     document.getElementById('appBody').scrollTop = 0;
   },
@@ -352,19 +358,24 @@ const App = {
   // ── Navigation ────────────────────────────────────
   async switchTab(tab) {
     State.currentTab = tab;
-    // Lazy-load tab data on first visit
     if (tab === 'orders' && !State.myOrders.length) {
       await this.refreshOrders();
+    }
+    if (tab === 'profile' && !State.addresses.length) {
+      try {
+        const data = await Api.users.addresses();
+        State.addresses = data.addresses || [];
+      } catch (e) {}
+    }
+    if (tab === 'shops' && !State.allStores) {
+      await this._loadAllStores();
     }
     if (tab === 'wishlist' && !State.wishlistItems) {
       try {
         const data = await Api.users.wishlist();
         State.wishlistItems = data.wishlist || [];
-        // Sync wishlist IDs into the Set for fast lookup
         State.wishlist = new Set(State.wishlistItems.map(p => p.product_id));
-      } catch (e) {
-        State.wishlistItems = [];
-      }
+      } catch (e) { State.wishlistItems = []; }
     }
     if (tab === 'dispatch' && State.role === 'seller' && !State.storeOrders.length) {
       await this.loadSellerData();
@@ -372,7 +383,108 @@ const App = {
     this.render();
   },
 
-  async toggleRole() {
+  async _loadAllStores() {
+    try {
+      const data = await Api.stores.list({ limit: 100 });
+      State.allStores = data.stores || [];
+    } catch (e) {
+      State.allStores = [];
+    }
+  },
+
+  handleShopSearch(val) {
+    const q = val.toLowerCase();
+    const filtered = (State.allStores || []).filter(s =>
+      s.store_name.toLowerCase().includes(q) ||
+      (s.location_sub_city || '').toLowerCase().includes(q) ||
+      (s.description || '').toLowerCase().includes(q)
+    );
+    State._filteredStores = filtered;
+    // Re-render shops with filtered list
+    const prev = State.allStores;
+    State.allStores = filtered;
+    BuyerViews.renderShops(document.getElementById('appBody'));
+    State.allStores = prev;
+  },
+
+  async openStorePage(storeId) {
+    try {
+      const [storeData, productsData] = await Promise.all([
+        Api.stores.get(storeId),
+        Api.products.list({ store_id: storeId, limit: 20, sort: 'popular' })
+      ]);
+      const store = storeData.store;
+      const products = productsData.products || [];
+      const policyLabel = { '7_day_free':'7-Day Free Return','3_day_warranty':'3-Day Warranty','size_exchange':'Size Exchange','fresh_guarantee':'Freshness Guarantee','no_return':'No Returns' };
+      const gradients = ['linear-gradient(135deg,#FCCD04,#F59E0B)','linear-gradient(135deg,#3B82F6,#1D4ED8)','linear-gradient(135deg,#10B981,#059669)','linear-gradient(135deg,#EC4899,#F43F5E)'];
+      const grad = gradients[(store.store_name||'S').charCodeAt(0) % gradients.length];
+
+      Modals.open(`
+        <div class="modal-handle"></div>
+
+        <!-- Store Header -->
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+          <div style="width:56px;height:56px;border-radius:16px;background:${grad};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#111;flex-shrink:0;">
+            ${(store.store_name||'S')[0].toUpperCase()}
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="font-size:17px;font-weight:900;">${store.store_name}</div>
+              ${store.verified_badge ? '<span style="color:var(--success);font-size:14px;">✓</span>' : ''}
+            </div>
+            <div style="font-size:12px;color:var(--text-secondary);">📍 ${store.location_sub_city || 'Addis Ababa'}${store.location_woreda ? ', '+store.location_woreda : ''}</div>
+            ${store.rating ? `<div style="font-size:11px;color:var(--warning);">⭐ ${Number(store.rating).toFixed(1)} · ${store.rating_count||0} reviews · ${store.total_orders||0} orders</div>` : ''}
+          </div>
+        </div>
+
+        <!-- Telegram + actions -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          ${store.tg_channel_username
+            ? `<a href="https://t.me/${store.tg_channel_username}" target="_blank"
+                 style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60A5FA;padding:10px;border-radius:var(--radius-sm);font-size:13px;font-weight:800;text-decoration:none;">
+                 💬 Join Telegram Group
+               </a>`
+            : ''}
+          <button onclick="App.switchTab('explore');App.handleFilter('all');Modals.close();"
+            style="flex:1;background:var(--bg-surface);border:1px solid var(--border);color:white;padding:10px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;">
+            ← Back to Hub
+          </button>
+        </div>
+
+        ${store.description ? `<p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">${store.description}</p>` : ''}
+
+        <!-- Policy + delivery info -->
+        ${store.return_policy_type ? `
+        <div class="policy-box" style="margin-bottom:14px;">
+          🛡️ <strong>${policyLabel[store.return_policy_type]||'Store Policy'}</strong>
+          ${store.custom_policy_text ? `<br/><span style="color:var(--text-secondary);">${store.custom_policy_text}</span>` : ''}
+        </div>` : ''}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+          <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:10px;text-align:center;">
+            <div style="font-size:15px;font-weight:900;color:var(--accent);">Br ${Number(store.addis_delivery_fee||150).toLocaleString()}</div>
+            <div style="font-size:10px;color:var(--text-secondary);">Addis Delivery</div>
+          </div>
+          <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:10px;text-align:center;">
+            <div style="font-size:15px;font-weight:900;color:var(--accent);">Br ${Number(store.regional_dispatch_fee||400).toLocaleString()}</div>
+            <div style="font-size:10px;color:var(--text-secondary);">Regional Dispatch</div>
+          </div>
+        </div>
+
+        <!-- Products -->
+        <div style="font-size:13px;font-weight:800;margin-bottom:10px;">
+          Products (${products.length})
+        </div>
+        <div class="item-grid">
+          ${products.length
+            ? products.map(p => BuyerViews._itemCard(p)).join('')
+            : '<div style="grid-column:span 2;text-align:center;padding:20px;color:var(--text-secondary);font-size:13px;">No products listed yet.</div>'}
+        </div>
+      `);
+    } catch (err) {
+      this.toast('Could not load store page', 'error');
+    }
+  },
     State.role = State.role === 'buyer' ? 'seller' : 'buyer';
     State.currentTab = State.role === 'buyer' ? 'explore' : 'dashboard';
     if (State.role === 'seller') {
@@ -742,7 +854,80 @@ const App = {
     }
   },
 
-  // ── Delete Store ──────────────────────────────────
+  async saveProfile() {
+    const firstName = document.getElementById('editFirstName')?.value?.trim();
+    const lastName  = document.getElementById('editLastName')?.value?.trim();
+    const phone     = document.getElementById('editPhone')?.value?.trim();
+    const city      = document.getElementById('editCity')?.value?.trim();
+    if (!firstName) { this.toast('First name is required', 'error'); return; }
+    // Update local state immediately
+    State.user.firstName = firstName;
+    State.user.lastName  = lastName;
+    if (phone) State.user.phone = phone;
+    if (city)  State.user.city  = city;
+    // Update header
+    document.getElementById('userAvatar').textContent = firstName[0].toUpperCase();
+    document.getElementById('headerUsername').textContent = `${firstName} ${lastName}`.trim();
+    this.toast('Profile saved!', 'success');
+  },
+
+  async deleteAddress(addressId) {
+    try {
+      await Api.users.deleteAddress(addressId);
+      State.addresses = State.addresses.filter(a => a.address_id !== addressId);
+      this.renderContent();
+      this.toast('Address removed', 'info');
+    } catch (err) {
+      this.toast('Could not remove address', 'error');
+    }
+  },
+
+  openAddAddressModal() {
+    Modals.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">+ Add Address</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div class="form-group">
+          <label class="form-label">Label</label>
+          <select class="form-select" id="newAddrLabel">
+            <option>Home</option><option>Work</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sub-City</label>
+          <select class="form-select" id="newAddrSubCity">
+            ${['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio'].map(s=>`<option>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Woreda</label><input class="form-input" id="newAddrWoreda" placeholder="e.g. Woreda 03"/></div>
+      <div class="form-group"><label class="form-label">House / Landmark</label><input class="form-input" id="newAddrHouse" placeholder="e.g. Near Edna Mall, House 412"/></div>
+      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="newAddrPhone" type="tel" placeholder="+251 9XX XXX XXX"/></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:16px;cursor:pointer;">
+        <input type="checkbox" id="newAddrDefault" style="accent-color:var(--accent);"> Set as default address
+      </label>
+      <button class="btn-primary" onclick="App._saveNewAddress()">Save Address</button>
+    `);
+  },
+
+  async _saveNewAddress() {
+    const label    = document.getElementById('newAddrLabel')?.value;
+    const subCity  = document.getElementById('newAddrSubCity')?.value;
+    const woreda   = document.getElementById('newAddrWoreda')?.value?.trim();
+    const house    = document.getElementById('newAddrHouse')?.value?.trim();
+    const phone    = document.getElementById('newAddrPhone')?.value?.trim();
+    const isDefault = document.getElementById('newAddrDefault')?.checked;
+    if (!phone) { this.toast('Phone number is required', 'error'); return; }
+    try {
+      const data = await Api.users.addAddress({ label, sub_city: subCity, woreda, house_number: house, phone, is_default: isDefault });
+      State.addresses.push(data.address);
+      Modals.close();
+      this.renderContent();
+      this.toast('Address saved!', 'success');
+    } catch (err) {
+      this.toast('Could not save address', 'error');
+    }
+  },
   confirmDeleteStore(storeId, storeName) {
     Modals.open(`
       <div class="modal-handle"></div>

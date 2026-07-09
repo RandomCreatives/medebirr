@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   Buyer Views: Explore, Cart, Wishlist, Orders
+   Buyer Views: Explore, Shops, Cart, Wishlist, Orders
 ═══════════════════════════════════════════════════ */
 
 const BuyerViews = {
@@ -38,10 +38,11 @@ const BuyerViews = {
 
   _filterPills() {
     const filters = [
-      { key: 'all', label: '🌐 All Shops' },
-      { key: 'electronics', label: '📱 Electronics' },
-      { key: 'fashion', label: '👗 Fashion' },
-      { key: 'groceries', label: '☕ Coffee & Food' },
+      { key: 'all',         label: '🌐 All'         },
+      { key: 'electronics', label: '📱 Electronics'  },
+      { key: 'fashion',     label: '👗 Fashion'      },
+      { key: 'groceries',   label: '☕ Food & Coffee' },
+      { key: 'footwear',    label: '👟 Footwear'     },
     ];
     return filters.map(f => `
       <button class="filter-pill ${State.activeFilter === f.key ? 'active' : ''}" onclick="App.handleFilter('${f.key}')">${f.label}</button>
@@ -49,14 +50,13 @@ const BuyerViews = {
   },
 
   _itemCard(p) {
-    const inWishlist = State.wishlist.has(p.product_id);
     const gradient = this._categoryGradient(p.category);
     const compare = p.compare_price ? `<span class="item-compare">${State.formatETB(p.compare_price)}</span>` : '';
     return `
       <div class="item-card" onclick="App.openProduct('${p.product_id}')">
         <div class="item-thumb" style="background:${gradient};">
           ${p.return_policy_type ? `<span class="item-policy-tag">${State.policyLabel(p.return_policy_type).split('-')[0]}</span>` : ''}
-          <div class="item-store-badge">🏪 ${p.store_name}</div>
+          <div class="item-store-badge" onclick="event.stopPropagation();App.openStorePage('${p.store_id}')">🏪 ${p.store_name}</div>
         </div>
         <div class="item-body">
           <div>
@@ -77,10 +77,12 @@ const BuyerViews = {
   _categoryGradient(cat) {
     const map = {
       electronics: 'linear-gradient(135deg,#1f4037,#99f2c8)',
-      fashion: 'linear-gradient(135deg,#f857a6,#ff5858)',
-      groceries: 'linear-gradient(135deg,#fa709a,#fee140)',
-      footwear: 'linear-gradient(135deg,#4facfe,#00f2fe)',
-      default: 'linear-gradient(135deg,#667eea,#764ba2)'
+      fashion:     'linear-gradient(135deg,#f857a6,#ff5858)',
+      groceries:   'linear-gradient(135deg,#fa709a,#fee140)',
+      footwear:    'linear-gradient(135deg,#4facfe,#00f2fe)',
+      furniture:   'linear-gradient(135deg,#a18cd1,#fbc2eb)',
+      beauty:      'linear-gradient(135deg,#ffecd2,#fcb69f)',
+      default:     'linear-gradient(135deg,#667eea,#764ba2)'
     };
     return map[cat] || map.default;
   },
@@ -93,7 +95,168 @@ const BuyerViews = {
     </div>`;
   },
 
-  // ── Cart ──────────────────────────────────────────
+  // ── Shops Directory ───────────────────────────────
+  renderShops(container) {
+    const shops = State.allStores || [];
+    container.innerHTML = `
+      <div class="search-wrap">
+        <span class="search-icon">🏪</span>
+        <input type="text" class="search-input" id="shopSearchInput"
+               placeholder="Search stores by name or location..."
+               oninput="App.handleShopSearch(this.value)" />
+      </div>
+      <div class="section-header">
+        <span class="section-title">All Shops</span>
+        <span style="font-size:11px;color:var(--text-secondary);">${shops.length} stores</span>
+      </div>
+      ${!shops.length
+        ? `<div class="empty-state"><div class="empty-icon">🏪</div><div class="empty-title">Loading shops...</div></div>`
+        : shops.map(s => this._shopCard(s)).join('')}
+    `;
+  },
+
+  _shopCard(s) {
+    const initial = (s.store_name||'S')[0].toUpperCase();
+    const gradients = ['linear-gradient(135deg,#FCCD04,#F59E0B)','linear-gradient(135deg,#3B82F6,#1D4ED8)','linear-gradient(135deg,#10B981,#059669)','linear-gradient(135deg,#EC4899,#F43F5E)','linear-gradient(135deg,#8B5CF6,#6D28D9)'];
+    const grad = gradients[s.store_name.charCodeAt(0) % gradients.length];
+    const policyLabel = { '7_day_free':'7-Day Returns','3_day_warranty':'3-Day Warranty','size_exchange':'Size Exchange','fresh_guarantee':'Fresh Guarantee','no_return':'No Returns' };
+    return `
+      <div class="card" style="margin-bottom:10px;cursor:pointer;" onclick="App.openStorePage('${s.store_id}')">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:48px;height:48px;border-radius:14px;background:${grad};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#111;flex-shrink:0;">${initial}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.store_name}</div>
+              ${s.verified_badge ? '<span style="font-size:10px;color:var(--success);">✓</span>' : ''}
+            </div>
+            <div style="font-size:11px;color:var(--text-secondary);">📍 ${s.location_sub_city || 'Addis Ababa'} · ${s.rating ? `⭐ ${Number(s.rating).toFixed(1)}` : 'New'}</div>
+            ${s.return_policy_type ? `<div style="font-size:10px;color:var(--success);margin-top:2px;">🛡️ ${policyLabel[s.return_policy_type]||''}</div>` : ''}
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            ${s.tg_channel_username
+              ? `<a href="https://t.me/${s.tg_channel_username}" target="_blank" onclick="event.stopPropagation();"
+                   style="display:flex;align-items:center;gap:4px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60A5FA;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;">
+                   💬 Group
+                 </a>`
+              : ''}
+          </div>
+        </div>
+        ${s.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${s.description}</div>` : ''}
+      </div>
+    `;
+  },
+
+  // ── Profile Page ──────────────────────────────────
+  renderProfile(container) {
+    const u = State.user;
+    if (!u) return;
+    const isSeller = State.stores.length > 0;
+    const gradients = ['linear-gradient(135deg,#FCCD04,#F59E0B)','linear-gradient(135deg,#3B82F6,#1D4ED8)','linear-gradient(135deg,#10B981,#059669)'];
+    const grad = gradients[(u.firstName||'U').charCodeAt(0) % gradients.length];
+
+    container.innerHTML = `
+      <!-- Avatar + Identity -->
+      <div style="text-align:center;padding:20px 0 16px 0;">
+        <div style="width:80px;height:80px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:#111;margin:0 auto 12px auto;">
+          ${(u.firstName||'U')[0].toUpperCase()}
+        </div>
+        <div style="font-size:20px;font-weight:900;">${u.firstName} ${u.lastName||''}</div>
+        ${u.username ? `<div style="font-size:13px;color:var(--text-secondary);">@${u.username}</div>` : ''}
+        <div style="margin-top:8px;">
+          <span style="font-size:11px;padding:3px 12px;border-radius:20px;font-weight:800;${isSeller ? 'background:rgba(252,205,4,0.2);color:#FCCD04;' : 'background:rgba(59,130,246,0.2);color:#60A5FA;'}">
+            ${isSeller ? '🏬 Seller' : '🛒 Buyer'}
+          </span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Personal Info -->
+      <div style="margin:16px 0;">
+        <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Personal Info</div>
+        <div id="profileEditForm">
+          ${this._profileInfoRow('First Name',  u.firstName,  'editFirstName')}
+          ${this._profileInfoRow('Last Name',   u.lastName||'', 'editLastName')}
+          ${this._profileInfoRow('Phone',       u.phone||'',    'editPhone', 'tel')}
+          ${this._profileInfoRow('City',        u.city||'Addis Ababa', 'editCity')}
+        </div>
+        <button onclick="App.saveProfile()" class="btn-primary" style="margin-top:12px;">
+          💾 Save Changes
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Saved Addresses -->
+      <div style="margin:16px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;">Saved Addresses</div>
+          <button onclick="App.openAddAddressModal()" style="font-size:11px;color:var(--accent);background:none;border:none;cursor:pointer;font-weight:700;">+ Add</button>
+        </div>
+        ${State.addresses.length
+          ? State.addresses.map(a => `
+            <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <div style="font-size:13px;font-weight:800;">${a.label} ${a.is_default ? '<span style="font-size:9px;background:rgba(252,205,4,0.2);color:var(--accent);padding:1px 6px;border-radius:10px;">Default</span>' : ''}</div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">📍 ${a.sub_city}${a.woreda?', '+a.woreda:''} ${a.house_number?'· '+a.house_number:''}</div>
+                <div style="font-size:11px;color:var(--text-secondary);">📞 ${a.phone}</div>
+              </div>
+              <button onclick="App.deleteAddress('${a.address_id}')"
+                style="background:none;border:none;color:var(--danger);font-size:16px;cursor:pointer;padding:4px;">🗑</button>
+            </div>`).join('')
+          : '<div style="font-size:13px;color:var(--text-secondary);">No saved addresses. Add one for faster checkout.</div>'}
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Store section for sellers -->
+      ${isSeller ? `
+      <div style="margin:16px 0;">
+        <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">My Stores</div>
+        ${State.stores.map(s => `
+          <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+              <div>
+                <div style="font-size:13px;font-weight:800;">${s.store_name}</div>
+                <div style="font-size:11px;color:${s.status==='verified'?'var(--success)':'var(--warning)'};">${s.status==='verified'?'✓ Verified':'⏳ Pending'}</div>
+                ${s.tg_channel_username ? `<div style="font-size:11px;color:var(--text-secondary);">📢 @${s.tg_channel_username}</div>` : ''}
+              </div>
+              <button onclick="App.toggleRole();App.switchTab('dashboard');" style="background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.3);color:#FCCD04;padding:7px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">
+                Studio →
+              </button>
+            </div>
+            <button onclick="App.confirmDeleteStore('${s.store_id}','${s.store_name.replace(/'/g,'\\\'')}')"
+              style="width:100%;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.18);color:var(--danger);padding:7px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">
+              🗑️ Delete Store
+            </button>
+          </div>`).join('')}
+      </div>
+      <div class="divider"></div>` : `
+      <div style="margin:16px 0;">
+        <button onclick="App.openRegisterStoreModal()" class="btn-primary" style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:var(--success);">
+          🏪 Open a Shop on Medebirr — Free
+        </button>
+      </div>
+      <div class="divider"></div>`}
+
+      <!-- Actions -->
+      <div style="margin:16px 0;display:flex;flex-direction:column;gap:8px;">
+        <button onclick="App.switchTab('orders')" class="btn-secondary">📦 My Orders & Deliveries</button>
+        ${!window.Telegram?.WebApp?.initData ? `
+        <button onclick="App._switchUser()" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--danger);padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;width:100%;">
+          ⇄ Switch Account
+        </button>` : ''}
+      </div>
+    `;
+  },
+
+  _profileInfoRow(label, value, id, type='text') {
+    return `
+      <div style="margin-bottom:10px;">
+        <label class="form-label">${label}</label>
+        <input class="form-input" id="${id}" type="${type}" value="${value||''}" placeholder="${label}..."/>
+      </div>`;
+  },
   renderCart(container) {
     const shopIds = Object.keys(State.cart);
     if (!shopIds.length) {
