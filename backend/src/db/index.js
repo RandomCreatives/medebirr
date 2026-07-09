@@ -10,11 +10,6 @@ const isServerless = !!process.env.VERCEL;
 
 const connectionString = process.env.DATABASE_URL;
 
-// Validation
-if (!connectionString && (isProduction || isServerless)) {
-  console.error('❌ CRITICAL: DATABASE_URL is NOT set in the environment.');
-}
-
 const poolConfig = {
   connectionString: connectionString || undefined,
   ssl: (isProduction || (connectionString && !connectionString.includes('localhost')))
@@ -30,11 +25,11 @@ let pool;
 
 function getPool() {
   if (!connectionString) {
-    throw new Error('DATABASE_URL is not configured. Please add it to your environment variables.');
+    throw new Error('DATABASE_URL is not set. Please configure it in Vercel settings.');
   }
 
   if (isProduction && (connectionString.includes('127.0.0.1') || connectionString.includes('localhost'))) {
-    throw new Error('DATABASE_URL points to localhost, but the app is in production/serverless mode.');
+    throw new Error('DATABASE_URL points to localhost, but the app is in production mode.');
   }
 
   if (!pool) {
@@ -52,10 +47,10 @@ const query = async (text, params) => {
     const p = getPool();
     return await p.query(text, params);
   } catch (err) {
-    console.error('Database Query Error:', err.message);
-    // Add context to connection errors
-    if (err.message.includes('ECONNREFUSED')) {
-      err.message = `Could not connect to database at ${connectionString?.split('@')[1] || 'localhost'}. Ensure your DATABASE_URL is correct.`;
+    // Detailed error for ENOTFOUND
+    if (err.code === 'ENOTFOUND') {
+      const host = connectionString?.split('@')[1]?.split(':')[0] || 'unknown';
+      err.message = `Hostname unreachable: ${host}. Ensure your DATABASE_URL uses the correct Supabase pooler host (aws-0-eu-central-1.pooler.supabase.com).`;
     }
     throw err;
   }

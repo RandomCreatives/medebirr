@@ -9,6 +9,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const { query } = require('../backend/src/db');
 
 const authRoutes = require('../backend/src/routes/auth');
 const storeRoutes = require('../backend/src/routes/stores');
@@ -70,6 +71,26 @@ app.get('/api/health', (req, res) => {
     env: process.env.NODE_ENV || 'production',
     region: process.env.VERCEL_REGION || 'local'
   });
+});
+
+// ─── DB Health Check ─────────────────────────────────────────────────────────
+app.get('/api/health/db', async (req, res) => {
+  try {
+    const dbRes = await query('SELECT version(), current_database() as db');
+    res.json({
+      ok: true,
+      database: dbRes.rows[0].db,
+      timestamp: new Date().toISOString(),
+      version: dbRes.rows[0].version
+    });
+  } catch (err) {
+    console.error('DB Health Check Failure:', err.message);
+    res.status(503).json({
+      ok: false,
+      error: err.message,
+      hint: 'Check if your DATABASE_URL is correct and has the right credentials/region.'
+    });
+  }
 });
 
 app.use('/api/*', (req, res) => {
