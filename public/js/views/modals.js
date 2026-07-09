@@ -20,9 +20,12 @@ const Modals = {
 
     const sub = State.pkgSubtotal(shopId);
     const total = State.pkgTotal(shopId);
-    const addresses = State.addresses.length
-      ? State.addresses.map(a => `<option value="${a.address_id}"${a.is_default?' selected':''}>${a.label}: ${a.sub_city}, ${a.woreda || ''} · ${a.phone}</option>`).join('')
-      : '<option value="new">+ Add new address</option>';
+
+    // Build address options
+    const hasAddresses = State.addresses.length > 0;
+    const addressOptions = hasAddresses
+      ? State.addresses.map(a => `<option value="${a.address_id}"${a.is_default?' selected':''}>${a.label}: ${a.sub_city}${a.woreda?', '+a.woreda:''} · ${a.phone}</option>`).join('') + '<option value="new">+ New address</option>'
+      : '<option value="new">+ Add delivery address</option>';
 
     this.open(`
       <div class="modal-handle"></div>
@@ -32,51 +35,68 @@ const Modals = {
       <div class="form-group">
         <label class="form-label">📍 Delivery Destination</label>
         <select class="form-select" id="checkoutAddress" onchange="Modals._handleAddressChange(this.value)">
-          ${addresses}
+          ${addressOptions}
         </select>
-        <div id="newAddressForm" style="display:none;margin-top:10px;">
+        <div id="newAddressForm" style="${hasAddresses ? 'display:none;' : ''}margin-top:10px;">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div class="form-group"><label class="form-label">Sub-City</label><input class="form-input" id="newSubCity" placeholder="Bole, Kirkos..."/></div>
+            <div class="form-group"><label class="form-label">Sub-City</label><input class="form-input" id="newSubCity" placeholder="Bole, Kirkos, Yeka..."/></div>
             <div class="form-group"><label class="form-label">Woreda</label><input class="form-input" id="newWoreda" placeholder="Woreda 03"/></div>
           </div>
           <div class="form-group"><label class="form-label">House / Landmark</label><input class="form-input" id="newHouse" placeholder="Near Edna Mall, House 412"/></div>
-          <div class="form-group"><label class="form-label">Phone Number</label><input class="form-input" id="newPhone" placeholder="+251 911 234 567" type="tel"/></div>
+          <div class="form-group"><label class="form-label">Your Phone Number</label><input class="form-input" id="newPhone" placeholder="+251 9XX XXX XXX" type="tel"/></div>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">💳 Payment Method</label>
-        <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">
-          Money settles directly to <strong>${pkg.shopName}</strong>'s verified account — zero marketplace holding.
-        </p>
-        <label class="payment-option selected" onclick="Modals._selectPayment(this,'chapa')">
-          <input type="radio" name="payMethod" value="chapa" checked />
-          <div><div class="payment-name">💳 Chapa — Card / Bank Transfer</div><div class="payment-desc">Pay securely via Chapa. Supports CBE, Awash Bank, telebirr & cards.</div></div>
-        </label>
-        <label class="payment-option" onclick="Modals._selectPayment(this,'telebirr')">
-          <input type="radio" name="payMethod" value="telebirr" />
-          <div><div class="payment-name">📱 Telebirr SuperApp Push</div><div class="payment-desc">Direct push to your Telebirr-registered phone.</div></div>
-        </label>
-        ${pkg.cashEnabled ? `<label class="payment-option" onclick="Modals._selectPayment(this,'cash')"><input type="radio" name="payMethod" value="cash"/><div><div class="payment-name">💵 Cash on Delivery</div><div class="payment-desc">Pay the seller's rider at your door.</div></div></label>` : ''}
+        <label class="form-label">📱 Payment via Telebirr</label>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <span style="font-size:24px;">📱</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;color:white;">Telebirr SuperApp</div>
+              <div style="font-size:11px;color:var(--text-secondary);">Direct to ${pkg.shopName}'s verified account</div>
+            </div>
+          </div>
+          <label class="form-label">Your Telebirr Phone Number</label>
+          <input class="form-input" id="telebirrPhone" type="tel" placeholder="+251 9XX XXX XXX"
+            value="${State.user?.phone || ''}"
+            style="font-size:15px;letter-spacing:1px;"/>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">
+            📌 Enter the phone number registered to your Telebirr account. A push notification will be sent to confirm payment.
+          </div>
+        </div>
+        ${pkg.cashEnabled ? `
+        <label class="payment-option" onclick="Modals._selectPayment(this,'cash')" style="margin-top:8px;">
+          <input type="radio" name="payMethod" value="cash"/>
+          <div><div class="payment-name">💵 Cash on Delivery</div><div class="payment-desc">Pay the seller's rider at your door.</div></div>
+        </label>` : ''}
       </div>
 
-      <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;font-size:13px;">
+      <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
           <input type="checkbox" id="policyAgreement" style="accent-color:var(--accent);margin-top:2px;flex-shrink:0;">
-          <span style="color:var(--text-secondary);line-height:1.5;">I agree to <strong style="color:white;">${pkg.shopName}'s ${State.policyLabel(pkg.returnPolicy)}</strong> policy for this order.</span>
+          <span style="color:var(--text-secondary);font-size:12px;line-height:1.5;">I agree to <strong style="color:white;">${pkg.shopName}'s ${State.policyLabel(pkg.returnPolicy)}</strong> policy for this order.</span>
         </label>
       </div>
 
       <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;"><span style="color:var(--text-secondary);">Subtotal</span><span>${State.formatETB(sub)}</span></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;"><span style="color:var(--text-secondary);">Delivery</span><span>${State.formatETB(pkg.deliveryFee)}</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:900;border-top:1px solid var(--border);padding-top:8px;"><span>Total</span><span style="color:var(--accent);">${State.formatETB(total)}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;"><span style="color:var(--text-secondary);">Delivery (${pkg.location})</span><span>${State.formatETB(pkg.deliveryFee)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:900;border-top:1px solid var(--border);padding-top:8px;">
+          <span>Total</span><span style="color:var(--accent);">${State.formatETB(total)}</span>
+        </div>
       </div>
 
       <button class="btn-primary" onclick="App.placeOrder('${shopId}')">
-        Place Order & Pay ${State.formatETB(total)} →
+        🛒 Place Order — ${State.formatETB(total)}
       </button>
     `);
+
+    // Show new address form if no addresses
+    if (!hasAddresses) {
+      const form = document.getElementById('newAddressForm');
+      if (form) form.style.display = 'block';
+    }
   },
 
   _selectPayment(label, value) {
@@ -219,46 +239,56 @@ const Modals = {
   },
 
   // ── Payment Processing ────────────────────────────
-  showPaymentProcessing(txRef, amount, merchant) {
+  showPaymentProcessing(txRef, amount, telebirrPhone) {
     this.open(`
       <div class="modal-handle"></div>
       <div style="text-align:center;padding:20px 0;">
         <div style="font-size:48px;margin-bottom:16px;">📱</div>
-        <div style="font-size:18px;font-weight:900;margin-bottom:8px;">Telebirr Payment</div>
-        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;">
-          Confirm <strong style="color:var(--accent);">${State.formatETB(amount)}</strong> on your phone<br/>
-          <span style="font-size:12px;">Settlement: Directly to seller's Telebirr (${merchant})</span>
+        <div style="font-size:18px;font-weight:900;margin-bottom:8px;">Check Your Telebirr</div>
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;">
+          A push notification has been sent to<br/>
+          <strong style="color:var(--accent);font-size:16px;">${telebirrPhone || 'your phone'}</strong><br/>
+          <span style="font-size:12px;">Confirm <strong style="color:white;">${State.formatETB(amount)}</strong> with your Telebirr PIN</span>
         </div>
-        <div style="background:var(--bg-surface);border-radius:var(--radius-md);padding:14px;margin-bottom:20px;font-size:12px;color:var(--text-secondary);">
-          <div style="margin-bottom:4px;">Transaction Ref: <strong style="color:white;">${txRef}</strong></div>
-          <div>A push notification has been sent to your Telebirr-registered phone.</div>
+        <div style="background:var(--bg-surface);border-radius:var(--radius-md);padding:14px;margin-bottom:24px;font-size:12px;color:var(--text-secondary);text-align:left;">
+          <div style="margin-bottom:6px;">📌 <strong style="color:white;">Steps:</strong></div>
+          <div style="line-height:2;">1. Open your Telebirr app<br/>2. Tap the payment notification<br/>3. Enter your 4-digit PIN<br/>4. Return here — order confirms automatically</div>
         </div>
-        <div class="loading-spinner" style="margin:0 auto 16px auto;"></div>
-        <div style="font-size:12px;color:var(--text-secondary);">Waiting for your PIN confirmation...</div>
-        <button class="btn-secondary" style="margin-top:20px;" onclick="App.simulatePaymentSuccess('${txRef}')">
-          ✅ Simulate Successful Payment (Demo)
-        </button>
+        <div class="loading-spinner" style="margin:0 auto 14px auto;"></div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;">Waiting for payment confirmation...</div>
+        <div style="font-size:11px;color:var(--text-muted);">TX Ref: ${txRef}</div>
       </div>
     `);
   },
 
-  // ── Order Confirmation ────────────────────────────
-  showOrderConfirmed(orderRef, storeName) {
+  // ── Order Confirmation + PDF Receipt ─────────────
+  showOrderConfirmed(orderRef, storeName, orderId) {
     this.open(`
       <div class="modal-handle"></div>
-      <div style="text-align:center;padding:20px 0;">
-        <div style="font-size:54px;margin-bottom:16px;">🎉</div>
-        <div style="font-size:20px;font-weight:900;margin-bottom:8px;color:var(--success);">Order Confirmed!</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.6;">
-          <strong style="color:white;">${orderRef}</strong> placed with ${storeName}.<br/>
-          Payment settled directly to the seller.<br/>
-          You'll receive a Telegram alert when your rider is assigned.
+      <div style="text-align:center;padding:16px 0 20px 0;">
+        <div style="font-size:52px;margin-bottom:14px;">🎉</div>
+        <div style="font-size:20px;font-weight:900;margin-bottom:6px;color:var(--success);">Order Confirmed!</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;">
+          <strong style="color:white;">${orderRef}</strong><br/>
+          Placed with <strong style="color:white;">${storeName}</strong><br/>
+          Payment settled directly to the seller.
         </div>
-        <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-md);padding:14px;margin-bottom:20px;font-size:12px;color:var(--success);">
-          🛡️ Your purchase is protected by the store's return policy.<br/>
-          Confirm delivery via QR handshake when rider arrives.
+
+        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-md);padding:14px;margin-bottom:16px;font-size:12px;color:var(--success);text-align:left;line-height:1.8;">
+          🛵 You'll get a Telegram message when your rider is assigned<br/>
+          🛡️ Purchase protected by the store's return policy<br/>
+          ✅ Confirm delivery when rider arrives to start warranty
         </div>
-        <button class="btn-primary" onclick="Modals.close();App.switchTab('orders')">Track My Order</button>
+
+        ${orderId ? `
+        <a href="/api/v1/orders/${orderId}/receipt" target="_blank"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:13px;margin-bottom:12px;color:white;text-decoration:none;font-size:13px;font-weight:700;">
+          📄 Download PDF Receipt
+        </a>` : ''}
+
+        <button class="btn-primary" onclick="Modals.close();App.switchTab('orders')">
+          📦 Track My Order
+        </button>
       </div>
     `);
   }

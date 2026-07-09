@@ -457,16 +457,25 @@ const App = {
 
     const pkg = State.cart[shopId];
     const paymentMethod = document.querySelector('input[name="payMethod"]:checked')?.value || 'telebirr';
+    const telebirrPhone = document.getElementById('telebirrPhone')?.value?.trim();
     const addressSelect = document.getElementById('checkoutAddress');
     const addressId = addressSelect?.value;
 
+    // Validate Telebirr phone for telebirr payment
+    if (paymentMethod === 'telebirr' && !telebirrPhone) {
+      this.toast('Please enter your Telebirr phone number', 'error');
+      document.getElementById('telebirrPhone')?.focus();
+      return;
+    }
+
     let deliveryAddress;
     if (!addressId || addressId === 'new') {
-      const subCity = document.getElementById('newSubCity')?.value;
-      const woreda = document.getElementById('newWoreda')?.value;
-      const house = document.getElementById('newHouse')?.value;
-      const phone = document.getElementById('newPhone')?.value;
-      if (!subCity || !phone) { this.toast('Sub-city and phone are required', 'error'); return; }
+      const subCity = document.getElementById('newSubCity')?.value?.trim();
+      const woreda = document.getElementById('newWoreda')?.value?.trim();
+      const house = document.getElementById('newHouse')?.value?.trim();
+      const phone = document.getElementById('newPhone')?.value?.trim() || telebirrPhone;
+      if (!subCity) { this.toast('Please enter your sub-city', 'error'); return; }
+      if (!phone) { this.toast('Please enter your phone number', 'error'); return; }
       deliveryAddress = { sub_city: subCity, woreda, house_number: house, phone };
     } else {
       const addr = State.addresses.find(a => a.address_id === addressId);
@@ -477,32 +486,31 @@ const App = {
 
     try {
       this.toast('Placing order...', 'info');
-      const orderData = await Api.orders.create({ store_id: shopId, items, delivery_address: deliveryAddress, payment_method: paymentMethod, address_id: addressId !== 'new' ? addressId : undefined });
+      const orderData = await Api.orders.create({
+        store_id: shopId, items, delivery_address: deliveryAddress,
+        payment_method: paymentMethod,
+        address_id: (addressId && addressId !== 'new') ? addressId : undefined,
+        telebirr_phone: telebirrPhone
+      });
       const order = orderData.order;
 
       if (paymentMethod === 'chapa') {
         const payData = await Api.payments.initiateChapa(order.order_id);
         if (payData.checkoutUrl) {
-          // Open Chapa checkout in same window — it redirects back after payment
           window.location.href = payData.checkoutUrl;
-        } else {
-          this.toast('Could not initiate payment', 'error');
         }
       } else if (paymentMethod === 'telebirr') {
         const payData = await Api.payments.initiateTelebirr(order.order_id);
-        if (payData.toPayUrl && !payData.toPayUrl.includes('mock-payment')) {
-          window.open(payData.toPayUrl, '_blank');
-        }
-        Modals.showPaymentProcessing(payData.txRef, order.total_etb, order.store?.telebirr_merchant_id);
+        Modals.showPaymentProcessing(payData.txRef, order.total_etb, telebirrPhone);
         this._pendingOrderId = order.order_id;
         this._pendingStoreId = shopId;
         this._pendingOrderRef = order.order_ref;
-        this._pendingStoreName = order.store?.store_name;
+        this._pendingStoreName = order.store?.store_name || pkg.shopName;
       } else if (paymentMethod === 'cash') {
         await Api.payments.confirmCash(order.order_id);
         State.clearStoreCart(shopId);
         this.renderNavigation();
-        Modals.showOrderConfirmed(order.order_ref, order.store?.store_name || pkg.shopName);
+        Modals.showOrderConfirmed(order.order_ref, order.store?.store_name || pkg.shopName, order.order_id);
         this.refreshOrders();
       }
     } catch (err) {
@@ -511,7 +519,6 @@ const App = {
   },
 
   async simulatePaymentSuccess(txRef) {
-    // Demo mode: simulate webhook callback
     if (this._pendingOrderId) {
       try {
         await fetch('/api/v1/payments/telebirr/webhook', {
@@ -521,10 +528,10 @@ const App = {
         });
         State.clearStoreCart(this._pendingStoreId);
         this.renderNavigation();
-        Modals.showOrderConfirmed(this._pendingOrderRef, this._pendingStoreName || 'Store');
+        Modals.showOrderConfirmed(this._pendingOrderRef, this._pendingStoreName || 'Store', this._pendingOrderId);
         this.refreshOrders();
       } catch (err) {
-        this.toast('Payment simulation failed', 'error');
+        this.toast('Payment confirmation failed', 'error');
       }
     }
   },
