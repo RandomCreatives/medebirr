@@ -744,6 +744,7 @@ const App = {
         this._pendingStoreId = shopId;
         this._pendingOrderRef = order.order_ref;
         this._pendingStoreName = order.store?.store_name || pkg.shopName;
+        this._startPaymentPolling();
       } else if (payMethod === 'chapa') {
         const payData = await Api.payments.initiateChapa(order.order_id);
         Modals.showPaymentProcessing(payData.txRef || payData.checkout_url, order.total_etb, '', 'chapa');
@@ -751,6 +752,7 @@ const App = {
         this._pendingStoreId = shopId;
         this._pendingOrderRef = order.order_ref;
         this._pendingStoreName = order.store?.store_name || pkg.shopName;
+        this._startPaymentPolling();
       } else {
         await Api.payments.confirmCash(order.order_id);
         State.clearStoreCart(shopId);
@@ -781,12 +783,39 @@ const App = {
     }
   },
 
+  _startPaymentPolling() {
+    clearInterval(this._paymentPollTimer);
+    let attempts = 0;
+    this._paymentPollTimer = setInterval(async () => {
+      attempts++;
+      if (attempts > 60) {
+        clearInterval(this._paymentPollTimer);
+        this.toast('Payment confirmation timed out — tap "Check Status" to retry', 'error');
+        return;
+      }
+      if (!this._pendingOrderId) { clearInterval(this._paymentPollTimer); return; }
+      try {
+        const data = await Api.orders.get(this._pendingOrderId);
+        const order = data.order;
+        if (order.payment_status === 'completed' || order.order_status === 'confirmed' || order.order_status === 'dispatched') {
+          clearInterval(this._paymentPollTimer);
+          State.clearStoreCart(this._pendingStoreId);
+          this.renderNavigation();
+          Modals.showOrderConfirmed(this._pendingOrderRef, this._pendingStoreName || 'Store', this._pendingOrderId);
+          this.refreshOrders();
+          this._pendingOrderId = null;
+        }
+      } catch (_) {}
+    }, 5000);
+  },
+
   async checkOrderStatus() {
     if (!this._pendingOrderId) { this.toast('No pending order', 'error'); return; }
     try {
       const data = await Api.orders.get(this._pendingOrderId);
       const order = data.order;
       if (order.payment_status === 'completed' || order.order_status === 'confirmed' || order.order_status === 'dispatched') {
+        clearInterval(this._paymentPollTimer);
         State.clearStoreCart(this._pendingStoreId);
         this.renderNavigation();
         Modals.showOrderConfirmed(this._pendingOrderRef, this._pendingStoreName || 'Store', this._pendingOrderId);

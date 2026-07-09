@@ -18,6 +18,7 @@ const Modals = {
     const sheet = document.getElementById('modalSheet');
     backdrop.classList.remove('open', 'pdp-backdrop');
     sheet.className = 'modal-sheet';
+    if (App._paymentPollTimer) clearInterval(App._paymentPollTimer);
   },
 
   // ── Checkout Sheet ────────────────────────────────
