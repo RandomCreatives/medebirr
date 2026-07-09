@@ -269,6 +269,7 @@ const Modals = {
 
   // ── Product Detail Page (Full PDP) ────────────────
   openProductDetail(product) {
+    if (!product) { App.toast('Product unavailable', 'error'); return; }
     try {
       this._renderPDP(product);
     } catch (err) {
@@ -276,10 +277,6 @@ const Modals = {
       this.open(`
         <div class="modal-handle"></div>
         <div class="modal-title">${product.title || 'Product Details'}</div>
-        <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px;">
-          🏪 ${product.store_name || 'Store'} · 📍 ${product.location_sub_city || 'Addis Ababa'}
-          ${product.rating ? ` · ⭐ ${product.rating.toFixed(1)}` : ''}
-        </div>
         <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${product.description || 'No description available.'}</p>
         <div style="display:flex;gap:12px;align-items:center;margin-top:16px;flex-wrap:wrap;">
           <span style="font-size:28px;font-weight:900;color:var(--accent);">${State.formatETB(product.price_etb)}</span>
@@ -287,7 +284,7 @@ const Modals = {
         </div>
         <button class="pdp-btn-primary" style="margin-top:14px;" onclick="App.addToCart('${product.product_id}');this.innerHTML='✓ Added!'">🛒 Add to Cart</button>
         <div style="margin-top:12px;padding:8px;background:rgba(239,68,68,0.1);border-radius:6px;font-size:11px;color:#EF4444;">
-          ⚠️ ${err.message || 'Unknown error'}
+          ⚠️ ${err.message || err || 'Unknown error'}
         </div>
       `);
     }

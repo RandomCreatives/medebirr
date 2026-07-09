@@ -594,14 +594,15 @@ const App = {
 
   // ── Product Actions ───────────────────────────────
   async openProduct(productId) {
+    let product;
     try {
       const data = await Api.products.get(productId);
-      Modals.openProductDetail(data.product);
-    } catch (err) {
-      // Fallback to catalog data
-      const product = State.products.find(p => p.product_id === productId);
-      if (product) Modals.openProductDetail(product);
+      product = data?.product;
+    } catch (_) {
+      product = State.products.find(p => p.product_id === productId);
     }
+    if (!product) { this.toast('Product not found', 'error'); return; }
+    Modals.openProductDetail(product);
   },
 
   handleSearch(val) {
