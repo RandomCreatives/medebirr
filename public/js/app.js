@@ -66,21 +66,22 @@ const App = {
     let initData;
 
     if (window.Telegram?.WebApp?.initData) {
-      // Real Telegram WebApp — use native initData
+      // ── Real Telegram WebApp ──────────────────────
       initData = window.Telegram.WebApp.initData;
     } else {
-      // Browser mode — check for saved session first
+      // ── Browser fallback (testing only) ──────────
+      // Real users open via Telegram — this path is for testers/developers
       const savedId = localStorage.getItem('em_demo_user');
       if (savedId) {
         initData = `mock:${savedId}`;
       } else {
-        // Show login screen and wait for user to pick a profile
         const userId = await this._showBrowserLoginScreen();
         localStorage.setItem('em_demo_user', userId);
         initData = `mock:${userId}`;
       }
     }
 
+    // Reuse existing valid token
     const existingToken = Api.getToken();
     if (existingToken) {
       try {
@@ -101,79 +102,61 @@ const App = {
     if (State.stores.length > 0) State.currentStoreId = State.stores[0].store_id;
   },
 
-  // Show a login screen in the browser when outside Telegram
+  // Browser login screen — only shown outside Telegram
   _showBrowserLoginScreen() {
     return new Promise((resolve) => {
       document.getElementById('loadingScreen').innerHTML = `
-        <div style="width:100%;max-width:420px;padding:28px 24px;text-align:center;">
-          <div class="logo-mark" style="margin:0 auto 12px auto;">eM</div>
-          <div style="font-size:22px;font-weight:900;margin-bottom:6px;">e-Merkato</div>
-          <div style="font-size:13px;color:#9DA3AE;margin-bottom:28px;">Ethiopia's Telegram Marketplace</div>
+        <div style="width:100%;max-width:400px;padding:24px 20px;text-align:center;">
+          <div class="logo-mark" style="margin:0 auto 10px auto;">eM</div>
+          <div style="font-size:20px;font-weight:900;margin-bottom:4px;">e-Merkato</div>
+          <div style="font-size:12px;color:#9DA3AE;margin-bottom:24px;">Ethiopia's Telegram Marketplace</div>
 
-          <div style="background:#15171C;border:1px solid #2D303A;border-radius:20px;padding:24px;text-align:left;">
-            <div style="font-size:13px;font-weight:800;color:#9DA3AE;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">Select Demo Profile</div>
+          <div style="background:#15171C;border:1px solid #2D303A;border-radius:18px;padding:20px;text-align:left;margin-bottom:16px;">
+            <div style="background:rgba(252,205,4,0.1);border:1px solid rgba(252,205,4,0.3);border-radius:10px;padding:12px;margin-bottom:16px;">
+              <div style="font-size:13px;font-weight:800;color:#FCCD04;margin-bottom:4px;">📱 Open in Telegram for full experience</div>
+              <div style="font-size:11px;color:#9DA3AE;line-height:1.5;">Real users authenticate via Telegram automatically — no sign up needed. This browser preview is for testing only.</div>
+            </div>
 
-            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
-              <button onclick="App._loginAs(12893412,'Mike Fikadu','Buyer')" style="background:#1E2027;border:1px solid #2D303A;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.2s;text-align:left;width:100%;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
-                <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#3B82F6,#1D4ED8);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;flex-shrink:0;">M</div>
-                <div>
-                  <div style="font-size:14px;font-weight:800;color:white;">Mike Fikadu</div>
-                  <div style="font-size:11px;color:#9DA3AE;">@Mike_Fikadu · Buyer · Bole, Addis Ababa</div>
-                </div>
-                <div style="margin-left:auto;font-size:11px;background:rgba(59,130,246,0.2);color:#60A5FA;padding:3px 10px;border-radius:20px;font-weight:700;">BUYER</div>
+            <div style="font-size:11px;font-weight:800;color:#9DA3AE;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Test as a demo user</div>
+
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+              <button onclick="App._loginAs(12893412)" style="background:#1E2027;border:1px solid #2D303A;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3B82F6,#1D4ED8);display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:14px;flex-shrink:0;">M</div>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:white;">Mike Fikadu</div><div style="font-size:10px;color:#9DA3AE;">Buyer · Bole, Addis Ababa</div></div>
+                <span style="font-size:10px;background:rgba(59,130,246,0.2);color:#60A5FA;padding:2px 8px;border-radius:20px;font-weight:700;">BUYER</span>
               </button>
-
-              <button onclick="App._loginAs(98760002,'Abebe Girma','Seller - Bole Apple & Tech Hub')" style="background:#1E2027;border:1px solid #2D303A;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;width:100%;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
-                <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#FCCD04,#F59E0B);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#111;flex-shrink:0;">A</div>
-                <div>
-                  <div style="font-size:14px;font-weight:800;color:white;">Abebe Girma</div>
-                  <div style="font-size:11px;color:#9DA3AE;">@BoleAppleAdmin · Bole Apple & Tech Hub</div>
-                </div>
-                <div style="margin-left:auto;font-size:11px;background:rgba(252,205,4,0.2);color:#FCCD04;padding:3px 10px;border-radius:20px;font-weight:700;">SELLER</div>
+              <button onclick="App._loginAs(98760002)" style="background:#1E2027;border:1px solid #2D303A;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FCCD04,#F59E0B);display:flex;align-items:center;justify-content:center;font-weight:800;color:#111;font-size:14px;flex-shrink:0;">A</div>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:white;">Abebe Girma</div><div style="font-size:10px;color:#9DA3AE;">Seller · Bole Apple & Tech Hub</div></div>
+                <span style="font-size:10px;background:rgba(252,205,4,0.2);color:#FCCD04;padding:2px 8px;border-radius:20px;font-weight:700;">SELLER</span>
               </button>
-
-              <button onclick="App._loginAs(98760003,'Tigist Kebede','Seller - Shiro Meda Textile')" style="background:#1E2027;border:1px solid #2D303A;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;width:100%;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
-                <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#EC4899,#F43F5E);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;flex-shrink:0;">T</div>
-                <div>
-                  <div style="font-size:14px;font-weight:800;color:white;">Tigist Kebede</div>
-                  <div style="font-size:11px;color:#9DA3AE;">@ShiroMedaAdmin · Shiro Meda Textile</div>
-                </div>
-                <div style="margin-left:auto;font-size:11px;background:rgba(252,205,4,0.2);color:#FCCD04;padding:3px 10px;border-radius:20px;font-weight:700;">SELLER</div>
-              </button>
-
-              <button onclick="App._loginAs(98760004,'Dawit Alemu','Seller - Kaffa Roastery')" style="background:#1E2027;border:1px solid #2D303A;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;width:100%;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
-                <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#10B981,#059669);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;flex-shrink:0;">D</div>
-                <div>
-                  <div style="font-size:14px;font-weight:800;color:white;">Dawit Alemu</div>
-                  <div style="font-size:11px;color:#9DA3AE;">@KaffaRoastAdmin · Kaffa & Sidama Roastery</div>
-                </div>
-                <div style="margin-left:auto;font-size:11px;background:rgba(252,205,4,0.2);color:#FCCD04;padding:3px 10px;border-radius:20px;font-weight:700;">SELLER</div>
+              <button onclick="App._loginAs(98760004)" style="background:#1E2027;border:1px solid #2D303A;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#10B981,#059669);display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:14px;flex-shrink:0;">D</div>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:white;">Dawit Alemu</div><div style="font-size:10px;color:#9DA3AE;">Seller · Kaffa & Sidama Roastery</div></div>
+                <span style="font-size:10px;background:rgba(252,205,4,0.2);color:#FCCD04;padding:2px 8px;border-radius:20px;font-weight:700;">SELLER</span>
               </button>
             </div>
 
-            <div style="border-top:1px solid #2D303A;padding-top:16px;">
-              <div style="font-size:11px;color:#9DA3AE;margin-bottom:8px;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Or enter Telegram User ID</div>
+            <div style="border-top:1px solid #2D303A;padding-top:14px;">
+              <div style="font-size:11px;color:#9DA3AE;margin-bottom:8px;">Or enter any Telegram User ID</div>
               <div style="display:flex;gap:8px;">
-                <input id="customTgId" type="number" placeholder="e.g. 12893412" style="flex:1;background:#0B0C0E;border:1px solid #2D303A;border-radius:10px;padding:10px 12px;color:white;font-size:13px;outline:none;" />
-                <button onclick="App._loginWithCustomId()" style="background:#FCCD04;color:#111;border:none;border-radius:10px;padding:10px 16px;font-weight:800;font-size:13px;cursor:pointer;">Go</button>
+                <input id="customTgId" type="number" placeholder="Telegram ID e.g. 12893412" style="flex:1;background:#0B0C0E;border:1px solid #2D303A;border-radius:8px;padding:9px 12px;color:white;font-size:12px;outline:none;"/>
+                <button onclick="App._loginWithCustomId()" style="background:#FCCD04;color:#111;border:none;border-radius:8px;padding:9px 14px;font-weight:800;font-size:12px;cursor:pointer;">Go →</button>
               </div>
             </div>
           </div>
 
-          <div style="margin-top:16px;font-size:11px;color:#646A78;line-height:1.5;">
-            In production this screen is replaced by Telegram's native auth.<br/>
-            <span style="color:#FCCD04;cursor:pointer;" onclick="App._switchUser()">Switch account</span>
+          <div style="font-size:10px;color:#646A78;">
+            <a href="https://t.me/eMerkatoBot" target="_blank" style="color:#FCCD04;text-decoration:none;font-weight:700;">Open @eMerkatoBot in Telegram →</a>
           </div>
         </div>
       `;
-      // Store resolve so buttons can call it
       App._loginResolve = resolve;
     });
   },
 
   _loginAs(userId) {
     if (App._loginResolve) {
-      // Show loading spinner while authenticating
       document.getElementById('loadingScreen').innerHTML = `
         <div style="text-align:center;">
           <div class="logo-mark" style="margin:0 auto 16px auto;">eM</div>
@@ -497,7 +480,15 @@ const App = {
       const orderData = await Api.orders.create({ store_id: shopId, items, delivery_address: deliveryAddress, payment_method: paymentMethod, address_id: addressId !== 'new' ? addressId : undefined });
       const order = orderData.order;
 
-      if (paymentMethod === 'telebirr') {
+      if (paymentMethod === 'chapa') {
+        const payData = await Api.payments.initiateChapa(order.order_id);
+        if (payData.checkoutUrl) {
+          // Open Chapa checkout in same window — it redirects back after payment
+          window.location.href = payData.checkoutUrl;
+        } else {
+          this.toast('Could not initiate payment', 'error');
+        }
+      } else if (paymentMethod === 'telebirr') {
         const payData = await Api.payments.initiateTelebirr(order.order_id);
         if (payData.toPayUrl && !payData.toPayUrl.includes('mock-payment')) {
           window.open(payData.toPayUrl, '_blank');

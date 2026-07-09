@@ -49,11 +49,14 @@ const Modals = {
         <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">
           Money settles directly to <strong>${pkg.shopName}</strong>'s verified account — zero marketplace holding.
         </p>
-        <label class="payment-option selected" onclick="Modals._selectPayment(this,'telebirr')">
-          <input type="radio" name="payMethod" value="telebirr" checked />
-          <div><div class="payment-name">📱 Telebirr SuperApp Push</div><div class="payment-desc">Instant push to your phone. Settles directly to seller.</div></div>
+        <label class="payment-option selected" onclick="Modals._selectPayment(this,'chapa')">
+          <input type="radio" name="payMethod" value="chapa" checked />
+          <div><div class="payment-name">💳 Chapa — Card / Bank Transfer</div><div class="payment-desc">Pay securely via Chapa. Supports CBE, Awash Bank, telebirr & cards.</div></div>
         </label>
-        ${pkg.chapaEnabled ? `<label class="payment-option" onclick="Modals._selectPayment(this,'chapa')"><input type="radio" name="payMethod" value="chapa"/><div><div class="payment-name">💳 Chapa (Card / Bank)</div><div class="payment-desc">Pay via Chapa checkout page.</div></div></label>` : ''}
+        <label class="payment-option" onclick="Modals._selectPayment(this,'telebirr')">
+          <input type="radio" name="payMethod" value="telebirr" />
+          <div><div class="payment-name">📱 Telebirr SuperApp Push</div><div class="payment-desc">Direct push to your Telebirr-registered phone.</div></div>
+        </label>
         ${pkg.cashEnabled ? `<label class="payment-option" onclick="Modals._selectPayment(this,'cash')"><input type="radio" name="payMethod" value="cash"/><div><div class="payment-name">💵 Cash on Delivery</div><div class="payment-desc">Pay the seller's rider at your door.</div></div></label>` : ''}
       </div>
 
