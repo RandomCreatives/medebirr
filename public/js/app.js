@@ -54,15 +54,22 @@ const App = {
   _restoreCache() {
     try {
       const cachedUser = localStorage.getItem('em_user');
-      if (cachedUser) State.user = JSON.parse(cachedUser);
+      if (cachedUser) {
+        State.user = JSON.parse(cachedUser);
+      } else {
+        // No cached user — set a minimal placeholder so showApp() works
+        // Will be replaced by real user data after auth completes
+        State.user = { firstName: 'Medebirr', lastName: '', username: '', tier: 'standard', isSeller: false };
+      }
 
       const cachedProducts = localStorage.getItem('em_products_cache');
       if (cachedProducts) State.products = JSON.parse(cachedProducts);
-      else State.products = this._demoProducts(); // Skeleton while loading
+      else State.products = this._demoProducts();
 
       const cachedStores = localStorage.getItem('em_stores_cache');
       if (cachedStores) State.allStores = JSON.parse(cachedStores);
     } catch (e) {
+      State.user     = { firstName: 'Medebirr', lastName: '', username: '', tier: 'standard', isSeller: false };
       State.products = this._demoProducts();
     }
   },
@@ -83,23 +90,54 @@ const App = {
     let initData;
 
     if (window.Telegram?.WebApp?.initData) {
-      // ── Real Telegram WebApp ──────────────────────
       initData = window.Telegram.WebApp.initData;
     } else {
-      // ── Browser fallback (testing only) ──────────
-      // Real users open via Telegram — this path is for testers/developers
       const savedId = localStorage.getItem('em_demo_user');
       if (savedId) {
         initData = `mock:${savedId}`;
       } else {
-        const userId = await this._showBrowserLoginScreen();
-        localStorage.setItem('em_demo_user', userId);
-        initData = `mock:${userId}`;
+        // No session at all — show login screen
+        // But first check if we have a cached user (avoids blocking UI)
+        const hasCached = !!localStorage.getItem('em_user');
+        if (!hasCached) {
+          const userId = await this._showBrowserLoginScreen();
+          localStorage.setItem('em_demo_user', userId);
+          initData = `mock:${userId}`;
+        } else {
+          // Re-use cached Telegram ID for background re-auth
+          try {
+            const cached = JSON.parse(localStorage.getItem('em_user'));
+            const tgId = cached.tgUserId || cached.tg_user_id || 12893412;
+            initData = `mock:${tgId}`;
+            localStorage.setItem('em_demo_user', String(tgId));
+          } catch (e) {
+            initData = `mock:12893412`;
+            localStorage.setItem('em_demo_user', '12893412');
+          }
+        }
       }
     }
 
-    // Reuse existing valid token
     const existingToken = Api.getToken();
+
+    // ── Fast path: valid token + cached user ─────────────────────
+    // Skip the API call entirely — verify in background without blocking
+    if (existingToken && State.user && State.user.firstName !== 'Medebirr') {
+      Api.users.me()
+        .then(meData => {
+          State.user   = meData.user;
+          State.stores = meData.stores || [];
+          if (State.stores.length > 0) State.currentStoreId = State.stores[0].store_id;
+          try { localStorage.setItem('em_user', JSON.stringify(State.user)); } catch (e) {}
+          this.showApp();
+          this.renderRoleBar();
+          this.renderNavigation();
+        })
+        .catch(() => Api.clearToken());
+      return; // Don't block — UI is already shown with cached data
+    }
+
+    // ── Slow path: must hit the API ───────────────────────────────
     if (existingToken) {
       try {
         const meData = await Api.users.me();
@@ -118,7 +156,6 @@ const App = {
     State.user   = authData.user;
     State.stores = authData.user.stores || [];
     if (State.stores.length > 0) State.currentStoreId = State.stores[0].store_id;
-    // Cache user for instant next-load header
     try { localStorage.setItem('em_user', JSON.stringify(State.user)); } catch (e) {}
   },
 

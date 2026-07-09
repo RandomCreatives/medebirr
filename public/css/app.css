@@ -51,6 +51,17 @@ body { background: #050507; color: var(--text-primary); display: flex;
   border-top-color: var(--accent); border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
+/* Slim progress bar at top — less visually heavy than a centered spinner */
+.loading-screen::after {
+  content: '';
+  position: fixed; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* App Shell */
