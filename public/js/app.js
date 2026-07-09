@@ -7,46 +7,63 @@ const App = {
 
   // ── Bootstrap ─────────────────────────────────────
   async init() {
-    // Initialize Telegram WebApp
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
     }
 
-    // Load persisted cart
     State.loadCart();
 
-    try {
-      await this.authenticate();
-      await this.loadInitialData();
-    } catch (err) {
-      console.warn('API unavailable, running in offline mode:', err);
-      State.bootError = err?.message || String(err);
-      // Set a guest user so the UI renders regardless
-      if (!State.user) {
-        State.user = {
-          firstName: 'Guest',
-          lastName: '',
-          username: 'guest',
-          tier: 'standard',
-          isSeller: false,
-          walletPoints: 0
-        };
-      }
-      // Load demo products from static data so UI isn't empty
-      State.products = this._demoProducts();
-      State.offlineMode = true;
-    }
-
+    // ── Phase 1: Show UI instantly with cached data ──────────────
+    // Restore cached user + products so the screen renders in <100ms
+    this._restoreCache();
     this.showApp();
     this.render();
 
-    // Show a soft banner if offline, not a hard crash
-    if (State.offlineMode) {
-      const msg = State.bootError
-        ? `⚠️ API error: ${State.bootError.slice(0, 120)}`
-        : '⚠️ Database not connected — check DATABASE_URL in Vercel';
-      setTimeout(() => this.toast(msg, 'error'), 800);
+    // ── Phase 2: Authenticate + fetch real data in background ─────
+    try {
+      await this.authenticate();
+      // Update header with real user data
+      this.showApp();
+      this.renderRoleBar();
+      this.renderNavigation();
+
+      // Load products + stores in parallel, don't block
+      this.loadInitialData().then(() => {
+        this.renderContent();
+      });
+
+    } catch (err) {
+      console.warn('Auth/API error:', err.message);
+      State.bootError = err?.message || String(err);
+      if (!State.user) {
+        State.user = { firstName: 'Guest', lastName: '', username: 'guest', tier: 'standard', isSeller: false, walletPoints: 0 };
+        this.showApp();
+        this.render();
+      }
+      if (State.products.length === 0) {
+        State.products = this._demoProducts();
+        this.renderContent();
+      }
+      State.offlineMode = true;
+      setTimeout(() => this.toast(`⚠️ ${State.bootError?.slice(0, 100) || 'Connection issue'}`, 'error'), 500);
+    }
+  },
+
+  // Restore last-known data from localStorage so first paint is instant
+  _restoreCache() {
+    try {
+      const cachedUser = localStorage.getItem('em_user');
+      if (cachedUser) State.user = JSON.parse(cachedUser);
+
+      const cachedProducts = localStorage.getItem('em_products_cache');
+      if (cachedProducts) State.products = JSON.parse(cachedProducts);
+      else State.products = this._demoProducts(); // Skeleton while loading
+
+      const cachedStores = localStorage.getItem('em_stores_cache');
+      if (cachedStores) State.allStores = JSON.parse(cachedStores);
+    } catch (e) {
+      State.products = this._demoProducts();
     }
   },
 
@@ -86,9 +103,10 @@ const App = {
     if (existingToken) {
       try {
         const meData = await Api.users.me();
-        State.user = meData.user;
+        State.user   = meData.user;
         State.stores = meData.stores || [];
         if (State.stores.length > 0) State.currentStoreId = State.stores[0].store_id;
+        try { localStorage.setItem('em_user', JSON.stringify(State.user)); } catch (e) {}
         return;
       } catch (err) {
         Api.clearToken();
@@ -97,9 +115,11 @@ const App = {
 
     const authData = await Api.auth.telegram(initData);
     Api.setToken(authData.token);
-    State.user = authData.user;
+    State.user   = authData.user;
     State.stores = authData.user.stores || [];
     if (State.stores.length > 0) State.currentStoreId = State.stores[0].store_id;
+    // Cache user for instant next-load header
+    try { localStorage.setItem('em_user', JSON.stringify(State.user)); } catch (e) {}
   },
 
   // Browser login screen — only shown outside Telegram
@@ -181,15 +201,33 @@ const App = {
   },
 
   async loadInitialData() {
-    const [productsData, addressesData, storesData] = await Promise.all([
-      Api.products.list({ sort: 'featured', limit: 20 }),
-      Api.users.addresses().catch(() => ({ addresses: [] })),
-      Api.stores.list({ limit: 100 }).catch(() => ({ stores: [] }))
+    // Use the lightweight /featured endpoint for first paint — much faster
+    const [productsData, addressesData] = await Promise.all([
+      Api.products.featured(12),
+      Api.users.addresses().catch(() => ({ addresses: [] }))
     ]);
     State.products     = productsData.products || [];
-    State.productTotal = productsData.total    || 0;
+    State.productTotal = State.products.length;
     State.addresses    = addressesData.addresses || [];
-    State.allStores    = storesData.stores || [];
+
+    // Cache for instant next load
+    try { localStorage.setItem('em_products_cache', JSON.stringify(State.products)); } catch (e) {}
+
+    // Stores + full product list load silently in background
+    Promise.all([
+      Api.stores.list({ limit: 100 }).catch(() => ({ stores: [] })),
+      Api.products.list({ sort: 'featured', limit: 20 }).catch(() => ({ products: State.products }))
+    ]).then(([storesData, fullProducts]) => {
+      State.allStores    = storesData.stores || [];
+      State.products     = fullProducts.products || State.products;
+      State.productTotal = fullProducts.total || State.products.length;
+      try {
+        localStorage.setItem('em_stores_cache',   JSON.stringify(State.allStores));
+        localStorage.setItem('em_products_cache', JSON.stringify(State.products));
+      } catch (e) {}
+      // Quietly refresh the explore grid if the user is still on it
+      if (State.currentTab === 'explore') this.renderContent();
+    }).catch(() => {});
   },
 
   showApp() {

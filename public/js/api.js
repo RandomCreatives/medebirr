@@ -52,6 +52,7 @@ const Api = {
 
   // ── Products ───────────────────────────────────────
   products: {
+    featured: (limit=12)  => Api.get(`/products/featured?limit=${limit}`),
     list:   (params = {}) => { const qs = new URLSearchParams(params).toString(); return Api.get(`/products${qs ? '?' + qs : ''}`); },
     get:    (id)          => Api.get(`/products/${id}`),
     create: (data)        => Api.post('/products', data),

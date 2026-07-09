@@ -6,8 +6,35 @@ const { query } = require('../db');
 const router = express.Router();
 
 /**
+ * GET /api/v1/products/featured
+ * Lightweight featured products — minimal fields for fast first load
+ */
+router.get('/featured', async (req, res, next) => {
+  try {
+    const { limit = 12 } = req.query;
+    const result = await query(
+      `SELECT p.product_id, p.title, p.price_etb, p.compare_price,
+              p.stock_quantity, p.category, p.is_featured, p.rating,
+              s.store_id, s.store_name, s.location_sub_city, s.verified_badge,
+              sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery
+       FROM products p
+       JOIN stores s ON p.store_id = s.store_id
+       LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+       WHERE p.is_published = TRUE AND s.status = 'verified'
+       ORDER BY p.is_featured DESC, p.order_count DESC
+       LIMIT $1`,
+      [Math.min(parseInt(limit), 20)]
+    );
+    // Set aggressive cache headers — featured products don't change by the second
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    res.json({ products: result.rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * GET /api/v1/products
- * Public product discovery with faceted filtering
  */
 router.get('/', async (req, res, next) => {
   try {
