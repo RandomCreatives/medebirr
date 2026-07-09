@@ -13,6 +13,7 @@
 const { Pool } = require('pg');
 
 const isServerless = !!process.env.VERCEL;
+const isProduction = process.env.NODE_ENV === 'production';
 
 let pool;
 
@@ -25,7 +26,9 @@ function getPool() {
 
     // Parse the connection string — if it already contains sslmode, pg respects it.
     // We also set ssl in the config as a belt-and-suspenders for Supabase.
-    const isLocal = connectionString.includes('localhost') || connectionString.includes('127.0.0.1');
+    const isLocal =
+      /(^|[@/])localhost([:/]|$)/.test(connectionString) ||
+      /(^|[@/])127\.0\.0\.1([:/]|$)/.test(connectionString);
 
     pool = new Pool({
       connectionString,

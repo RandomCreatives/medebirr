@@ -9,6 +9,14 @@ const router = express.Router();
 /**
  * POST /api/v1/auth/telegram
  * Authenticate via Telegram WebApp initData
+ *
+ * Supports three initData forms:
+ *   1. Real Telegram WebApp initData (verified with HMAC-SHA256 against BOT_TOKEN).
+ *   2. `mock:<tg_user_id>` — only allowed in non-production OR when
+ *      BYPASS_TELEGRAM_AUTH=true (set this temporarily on Vercel to test in a
+ *      normal browser outside Telegram). NEVER leave it enabled in real prod.
+ *   3. `devlogin:<tg_user_id>` — alias for (2), requires BYPASS_TELEGRAM_AUTH=true
+ *      or NODE_ENV !== 'production'.
  */
 router.post(
   '/telegram',
@@ -22,21 +30,50 @@ router.post(
 
       const { initData } = req.body;
       const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const bypassEnabled =
+        process.env.NODE_ENV !== 'production' ||
+        process.env.BYPASS_TELEGRAM_AUTH === 'true';
 
-      // In development/demo mode, allow mock initData
+      // Allow mock/devlogin initData only when bypass is on
       let verification;
-      if (process.env.NODE_ENV !== 'production' && initData.startsWith('mock:')) {
-        const mockUserId = parseInt(initData.replace('mock:', ''), 10);
-        verification = {
-          valid: true,
-          user: {
-            id: mockUserId || 12893412,
-            first_name: 'Mike',
-            last_name: 'Fikadu',
-            username: 'Mike_Fikadu',
-            language_code: 'en'
-          }
-        };
+      if (initData.startsWith('mock:') || initData.startsWith('devlogin:')) {
+        if (!bypassEnabled) {
+          return res.status(401).json({
+            error: 'Mock authentication is disabled in production',
+            hint: 'Open inside Telegram, or set BYPASS_TELEGRAM_AUTH=true to test in a browser.'
+          });
+        }
+        const prefix = initData.startsWith('mock:') ? 'mock:' : 'devlogin:';
+        const mockUserId = parseInt(initData.replace(prefix, ''), 10);
+        // Fetch the existing seeded user so the upsert preserves their demo identity
+        const existing = await query(
+          'SELECT * FROM users WHERE tg_user_id = $1 LIMIT 1',
+          [mockUserId || 12893412]
+        );
+        if (existing.rows.length > 0) {
+          const u = existing.rows[0];
+          verification = {
+            valid: true,
+            user: {
+              id: u.tg_user_id,
+              first_name: u.first_name,
+              last_name: u.last_name || '',
+              username: u.username || '',
+              language_code: u.language_code || 'en'
+            }
+          };
+        } else {
+          verification = {
+            valid: true,
+            user: {
+              id: mockUserId || 12893412,
+              first_name: 'Mike',
+              last_name: 'Fikadu',
+              username: 'Mike_Fikadu',
+              language_code: 'en'
+            }
+          };
+        }
       } else {
         verification = verifyTelegramInitData(initData, botToken);
       }

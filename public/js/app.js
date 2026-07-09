@@ -20,7 +20,8 @@ const App = {
       await this.authenticate();
       await this.loadInitialData();
     } catch (err) {
-      console.warn('API unavailable, running in offline mode:', err.message);
+      console.warn('API unavailable, running in offline mode:', err);
+      State.bootError = err?.message || String(err);
       // Set a guest user so the UI renders regardless
       if (!State.user) {
         State.user = {
@@ -42,7 +43,10 @@ const App = {
 
     // Show a soft banner if offline, not a hard crash
     if (State.offlineMode) {
-      setTimeout(() => this.toast('⚠️ Database not connected — set DATABASE_URL in Vercel', 'error'), 800);
+      const msg = State.bootError
+        ? `⚠️ API error: ${State.bootError.slice(0, 120)}`
+        : '⚠️ Database not connected — check DATABASE_URL in Vercel';
+      setTimeout(() => this.toast(msg, 'error'), 800);
     }
   },
 

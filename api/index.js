@@ -86,11 +86,28 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'e-Merkato API',
-    version: '1.0.0',
+    version: '1.0.1',
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'production',
-    region: process.env.VERCEL_REGION || 'local'
+    region: process.env.VERCEL_REGION || 'local',
+    dbConfigured: !!process.env.DATABASE_URL,
+    bypassAuth: process.env.BYPASS_TELEGRAM_AUTH === 'true'
   });
+});
+
+app.get('/api/health/db', async (req, res, next) => {
+  try {
+    const { query } = require('../backend/src/db');
+    const r = await query('SELECT NOW() AS now, current_database() AS db, version() AS ver');
+    res.json({
+      ok: true,
+      timestamp: r.rows[0].now,
+      database: r.rows[0].db,
+      version: r.rows[0].ver.split(' ').slice(0, 2).join(' ')
+    });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
 });
 
 app.use('/api/*', (req, res) => {
