@@ -120,13 +120,37 @@ const Modals = {
           <label class="form-label">Phone Number</label>
           <input class="form-input" id="contactPhone" type="tel" placeholder="+251 9XX XXX XXX" value="${State.user?.phone || ''}"/>
         </div>
-        <div>
+        <div id="telebirrField">
           <label class="form-label">Telebirr Number</label>
           <input class="form-input" id="telebirrPhone" type="tel" placeholder="+251 9XX XXX XXX" value="${State.user?.phone || ''}"/>
+          <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;" id="telebirrNote">Required for Telebirr payment</div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:16px;background:var(--bg-surface);padding:10px;border-radius:8px;">
-        📌 Telebirr number: the phone registered to your Telebirr account. A push notification will be sent to confirm payment.
+
+      <!-- ── STEP 3: Payment Method ── -->
+      <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">
+        💳 Step 3 — Choose Payment Method
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr${pkg.chapaEnabled ? ' 1fr' : ''};gap:8px;margin-bottom:12px;" id="paymentMethodCards">
+        <label class="payment-option selected" onclick="Modals._selectPayment(this,'telebirr')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
+          <input type="radio" name="payMethod" value="telebirr" checked style="display:none;">
+          <span style="font-size:24px;">📱</span>
+          <span style="font-size:13px;font-weight:800;">Telebirr</span>
+          <span style="font-size:10px;color:var(--text-secondary);">Mobile Money</span>
+        </label>
+        <label class="payment-option" onclick="Modals._selectPayment(this,'cash')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
+          <input type="radio" name="payMethod" value="cash" style="display:none;">
+          <span style="font-size:24px;">💵</span>
+          <span style="font-size:13px;font-weight:800;">Cash on Delivery</span>
+          <span style="font-size:10px;color:var(--text-secondary);">Pay when received</span>
+        </label>
+        ${pkg.chapaEnabled ? `
+        <label class="payment-option" onclick="Modals._selectPayment(this,'chapa')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
+          <input type="radio" name="payMethod" value="chapa" style="display:none;">
+          <span style="font-size:24px;">💳</span>
+          <span style="font-size:13px;font-weight:800;">Chapa</span>
+          <span style="font-size:10px;color:var(--text-secondary);">Card / Bank Transfer</span>
+        </label>` : ''}
       </div>
 
       <!-- ── Policy + Summary ── -->
@@ -260,6 +284,8 @@ const Modals = {
   _selectPayment(label, value) {
     document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
     label.classList.add('selected');
+    const field = document.getElementById('telebirrField');
+    if (field) field.style.display = value === 'telebirr' ? '' : 'none';
   },
 
   _handleAddressChange(val) {
@@ -868,24 +894,43 @@ const Modals = {
   },
 
   // ── Payment Processing ────────────────────────────
-  showPaymentProcessing(txRef, amount, telebirrPhone) {
+  showPaymentProcessing(txRef, amount, phoneOrUrl, method = 'telebirr') {
+    const isChapa = method === 'chapa';
     this.open(`
       <div class="modal-handle"></div>
       <div style="text-align:center;padding:20px 0;">
-        <div style="font-size:48px;margin-bottom:16px;">📱</div>
-        <div style="font-size:18px;font-weight:900;margin-bottom:8px;">Check Your Telebirr</div>
+        <div style="font-size:48px;margin-bottom:16px;">${isChapa ? '💳' : '📱'}</div>
+        <div style="font-size:18px;font-weight:900;margin-bottom:8px;">${isChapa ? 'Pay via Chapa' : 'Check Your Telebirr'}</div>
+
+        ${isChapa ? `
+        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;">
+          Complete payment of <strong style="color:var(--accent);">${State.formatETB(amount)}</strong><br/>
+          via Chapa (Card / Bank Transfer)
+        </div>
+        <a href="${txRef}" target="_blank" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;margin-bottom:12px;">
+          🔗 Open Chapa Payment Page
+        </a>
+        <div style="font-size:11px;color:var(--text-secondary);background:var(--bg-surface);border-radius:var(--radius-sm);padding:10px;margin-bottom:16px;">
+          After payment, return here. The order confirms automatically once verified.
+        </div>
+        ` : `
         <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;">
           A push notification has been sent to<br/>
-          <strong style="color:var(--accent);font-size:16px;">${telebirrPhone || 'your phone'}</strong><br/>
+          <strong style="color:var(--accent);font-size:16px;">${phoneOrUrl || 'your phone'}</strong><br/>
           <span style="font-size:12px;">Confirm <strong style="color:white;">${State.formatETB(amount)}</strong> with your Telebirr PIN</span>
         </div>
         <div style="background:var(--bg-surface);border-radius:var(--radius-md);padding:14px;margin-bottom:24px;font-size:12px;color:var(--text-secondary);text-align:left;">
           <div style="margin-bottom:6px;">📌 <strong style="color:white;">Steps:</strong></div>
           <div style="line-height:2;">1. Open your Telebirr app<br/>2. Tap the payment notification<br/>3. Enter your 4-digit PIN<br/>4. Return here — order confirms automatically</div>
         </div>
+        `}
+
         <div class="loading-spinner" style="margin:0 auto 14px auto;"></div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;">Waiting for payment confirmation...</div>
-        <div style="font-size:11px;color:var(--text-muted);">TX Ref: ${txRef}</div>
+        <button class="btn-secondary" style="background:var(--bg-surface);border:1px solid var(--border);color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;" onclick="App.checkOrderStatus()">
+          🔄 Check Status
+        </button>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">TX Ref: ${txRef}</div>
       </div>
     `);
   },

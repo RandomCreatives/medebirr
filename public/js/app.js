@@ -671,10 +671,11 @@ const App = {
     }
 
     const pkg = State.cart[shopId];
+    const payMethod = document.querySelector('input[name="payMethod"]:checked')?.value || 'telebirr';
     const telebirrPhone = document.getElementById('telebirrPhone')?.value?.trim();
     const contactPhone = document.getElementById('contactPhone')?.value?.trim() || telebirrPhone;
 
-    if (!telebirrPhone) {
+    if (payMethod === 'telebirr' && !telebirrPhone) {
       this.toast('Please enter your Telebirr phone number', 'error');
       document.getElementById('telebirrPhone')?.focus();
       return;
@@ -687,7 +688,6 @@ const App = {
     let deliveryNote = '';
 
     if (selectedDelivery.startsWith('saved_')) {
-      // Saved address
       const addressId = selectedDelivery.replace('saved_', '');
       const addr = State.addresses.find(a => a.address_id === addressId);
       if (addr) {
@@ -699,7 +699,6 @@ const App = {
       const house = document.getElementById('addrHouse')?.value?.trim();
       if (!subCity) { this.toast('Please select your sub-city', 'error'); return; }
       deliveryAddress = { sub_city: subCity, woreda, house_number: house, phone: contactPhone };
-      // Save address if checkbox ticked
       if (document.getElementById('saveThisAddress')?.checked && subCity) {
         Api.users.addAddress({ label: 'Home', sub_city: subCity, woreda, house_number: house, phone: contactPhone, is_default: false }).catch(() => {});
       }
@@ -724,10 +723,6 @@ const App = {
       deliveryNote = 'BUS_DISPATCH';
     }
 
-    // Payment method — cash if selected, else telebirr
-    const cashOption = document.querySelector('input[name="payMethod"]:checked');
-    const paymentMethod = cashOption?.value === 'cash' ? 'cash' : 'telebirr';
-
     const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
 
     try {
@@ -737,19 +732,26 @@ const App = {
         items,
         delivery_address: { ...deliveryAddress, delivery_note: deliveryNote, delivery_method: selectedDelivery },
         delivery_fee_override: deliveryFee,
-        payment_method: paymentMethod,
-        telebirr_phone: telebirrPhone
+        payment_method: payMethod,
+        telebirr_phone: payMethod === 'telebirr' ? telebirrPhone : undefined
       });
       const order = orderData.order;
 
-      if (paymentMethod === 'telebirr') {
+      if (payMethod === 'telebirr') {
         const payData = await Api.payments.initiateTelebirr(order.order_id);
-        Modals.showPaymentProcessing(payData.txRef, order.total_etb, telebirrPhone);
+        Modals.showPaymentProcessing(payData.txRef, order.total_etb, telebirrPhone, 'telebirr');
         this._pendingOrderId = order.order_id;
         this._pendingStoreId = shopId;
         this._pendingOrderRef = order.order_ref;
         this._pendingStoreName = order.store?.store_name || pkg.shopName;
-      } else if (paymentMethod === 'cash') {
+      } else if (payMethod === 'chapa') {
+        const payData = await Api.payments.initiateChapa(order.order_id);
+        Modals.showPaymentProcessing(payData.txRef || payData.checkout_url, order.total_etb, '', 'chapa');
+        this._pendingOrderId = order.order_id;
+        this._pendingStoreId = shopId;
+        this._pendingOrderRef = order.order_ref;
+        this._pendingStoreName = order.store?.store_name || pkg.shopName;
+      } else {
         await Api.payments.confirmCash(order.order_id);
         State.clearStoreCart(shopId);
         this.renderNavigation();
@@ -776,6 +778,25 @@ const App = {
       } catch (err) {
         this.toast('Payment confirmation failed', 'error');
       }
+    }
+  },
+
+  async checkOrderStatus() {
+    if (!this._pendingOrderId) { this.toast('No pending order', 'error'); return; }
+    try {
+      const data = await Api.orders.get(this._pendingOrderId);
+      const order = data.order;
+      if (order.payment_status === 'completed' || order.order_status === 'confirmed' || order.order_status === 'dispatched') {
+        State.clearStoreCart(this._pendingStoreId);
+        this.renderNavigation();
+        Modals.showOrderConfirmed(this._pendingOrderRef, this._pendingStoreName || 'Store', this._pendingOrderId);
+        this.refreshOrders();
+        this._pendingOrderId = null;
+      } else {
+        this.toast('Payment still pending — please complete the payment', 'info');
+      }
+    } catch (err) {
+      this.toast('Could not check order status', 'error');
     }
   },
 
