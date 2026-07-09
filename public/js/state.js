@@ -56,10 +56,10 @@ const State = {
         shopName: product.store_name,
         location: product.location_sub_city || '',
         returnPolicy: product.return_policy_type || 'no_return',
-        deliveryFee: product.addis_delivery_fee || 150,
+        deliveryFee: Number(product.addis_delivery_fee) || 150,  // Always numeric
         telebirrCode: product.telebirr_merchant_id || '',
         chapaEnabled: product.chapa_enabled || false,
-        cashEnabled: product.cash_on_delivery || true,
+        cashEnabled: product.cash_on_delivery !== false,
         items: []
       };
     }
@@ -106,20 +106,26 @@ const State = {
   loadCart() {
     try {
       const saved = localStorage.getItem('em_cart');
-      if (saved) this.cart = JSON.parse(saved);
+      if (saved) {
+        this.cart = JSON.parse(saved);
+        // Ensure all deliveryFees are numeric (may have been saved as strings)
+        Object.values(this.cart).forEach(pkg => {
+          pkg.deliveryFee = Number(pkg.deliveryFee) || 150;
+        });
+      }
     } catch (e) {
       this.cart = {};
     }
   },
 
   pkgSubtotal(shopId) {
-    return this.cart[shopId]?.items.reduce((s, i) => s + i.product.price_etb * i.qty, 0) || 0;
+    return this.cart[shopId]?.items.reduce((s, i) => s + Number(i.product.price_etb) * i.qty, 0) || 0;
   },
 
   pkgTotal(shopId) {
     const pkg = this.cart[shopId];
     if (!pkg) return 0;
-    return this.pkgSubtotal(shopId) + (pkg.deliveryFee || 0);
+    return this.pkgSubtotal(shopId) + Number(pkg.deliveryFee || 0);
   },
 
   policyLabel(type) {

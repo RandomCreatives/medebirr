@@ -107,8 +107,8 @@ const App = {
     return new Promise((resolve) => {
       document.getElementById('loadingScreen').innerHTML = `
         <div style="width:100%;max-width:400px;padding:24px 20px;text-align:center;">
-          <div class="logo-mark" style="margin:0 auto 10px auto;">eM</div>
-          <div style="font-size:20px;font-weight:900;margin-bottom:4px;">e-Merkato</div>
+          <div class="logo-mark" style="margin:0 auto 10px auto;">M</div>
+          <div style="font-size:20px;font-weight:900;margin-bottom:4px;">መደብር | Medebirr</div>
           <div style="font-size:12px;color:#9DA3AE;margin-bottom:24px;">Ethiopia's Telegram Marketplace</div>
 
           <div style="background:#15171C;border:1px solid #2D303A;border-radius:18px;padding:20px;text-align:left;margin-bottom:16px;">
@@ -147,7 +147,7 @@ const App = {
           </div>
 
           <div style="font-size:10px;color:#646A78;">
-            <a href="https://t.me/eMerkatoBot" target="_blank" style="color:#FCCD04;text-decoration:none;font-weight:700;">Open @eMerkatoBot in Telegram →</a>
+            <a href="https://t.me/medebirrbot" target="_blank" style="color:#FCCD04;text-decoration:none;font-weight:700;">Open @medebirrbot in Telegram →</a>
           </div>
         </div>
       `;
@@ -159,7 +159,7 @@ const App = {
     if (App._loginResolve) {
       document.getElementById('loadingScreen').innerHTML = `
         <div style="text-align:center;">
-          <div class="logo-mark" style="margin:0 auto 16px auto;">eM</div>
+          <div class="logo-mark" style="margin:0 auto 16px auto;">M</div>
           <div class="loading-spinner"></div>
           <div style="margin-top:12px;font-size:13px;color:#9DA3AE;">Signing in...</div>
         </div>`;
@@ -245,16 +245,28 @@ const App = {
 
     if (State.role === 'buyer') {
       badge.className = 'role-badge buyer-badge';
-      badge.textContent = '🛒 Buyer Hub';
-      sub.textContent = '1,000+ Verified Ethiopian Shops';
-      btn.innerHTML = isSeller ? 'Seller Studio <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>' : '';
-      btn.style.display = isSeller ? 'flex' : 'none';
+      badge.innerHTML = '🛒 Medebirr Discovery Hub';
+      sub.textContent = isSeller
+        ? `${State.user.firstName} · Buyer Mode`
+        : `Navigating 1,000+ Verified Ethiopian Shops`;
+      if (isSeller) {
+        btn.innerHTML = `🏬 Seller Studio <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>`;
+        btn.style.display = 'flex';
+        btn.style.background = 'rgba(252,205,4,0.15)';
+        btn.style.borderColor = 'rgba(252,205,4,0.4)';
+        btn.style.color = 'var(--accent)';
+      } else {
+        btn.style.display = 'none';
+      }
     } else {
       badge.className = 'role-badge seller-badge';
-      badge.textContent = '🏬 Seller Studio';
-      sub.textContent = State.stores[0]?.store_name || 'Your Shop';
-      btn.innerHTML = 'Buyer Hub <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>';
+      badge.innerHTML = '🏬 Seller Studio';
+      sub.textContent = State.stores[0]?.store_name || 'Your Shop Dashboard';
+      btn.innerHTML = `🛒 Buyer Hub <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>`;
       btn.style.display = 'flex';
+      btn.style.background = 'rgba(59,130,246,0.15)';
+      btn.style.borderColor = 'rgba(59,130,246,0.4)';
+      btn.style.color = '#60A5FA';
     }
   },
 
@@ -456,50 +468,78 @@ const App = {
     }
 
     const pkg = State.cart[shopId];
-    const paymentMethod = document.querySelector('input[name="payMethod"]:checked')?.value || 'telebirr';
     const telebirrPhone = document.getElementById('telebirrPhone')?.value?.trim();
-    const addressSelect = document.getElementById('checkoutAddress');
-    const addressId = addressSelect?.value;
+    const contactPhone = document.getElementById('contactPhone')?.value?.trim() || telebirrPhone;
 
-    // Validate Telebirr phone for telebirr payment
-    if (paymentMethod === 'telebirr' && !telebirrPhone) {
+    if (!telebirrPhone) {
       this.toast('Please enter your Telebirr phone number', 'error');
       document.getElementById('telebirrPhone')?.focus();
       return;
     }
 
-    let deliveryAddress;
-    if (!addressId || addressId === 'new') {
-      const subCity = document.getElementById('newSubCity')?.value?.trim();
-      const woreda = document.getElementById('newWoreda')?.value?.trim();
-      const house = document.getElementById('newHouse')?.value?.trim();
-      const phone = document.getElementById('newPhone')?.value?.trim() || telebirrPhone;
-      if (!subCity) { this.toast('Please enter your sub-city', 'error'); return; }
-      if (!phone) { this.toast('Please enter your phone number', 'error'); return; }
-      deliveryAddress = { sub_city: subCity, woreda, house_number: house, phone };
-    } else {
+    // ── Read delivery method & build address ──────────
+    const selectedDelivery = document.querySelector('input[name="deliveryMethod"]:checked')?.value || 'home';
+    const deliveryFee = Modals._currentDeliveryFee ?? pkg.deliveryFee;
+    let deliveryAddress = {};
+    let deliveryNote = '';
+
+    if (selectedDelivery.startsWith('saved_')) {
+      // Saved address
+      const addressId = selectedDelivery.replace('saved_', '');
       const addr = State.addresses.find(a => a.address_id === addressId);
-      deliveryAddress = { sub_city: addr.sub_city, woreda: addr.woreda, house_number: addr.house_number, landmark: addr.landmark, phone: addr.phone };
+      if (addr) {
+        deliveryAddress = { sub_city: addr.sub_city, woreda: addr.woreda, house_number: addr.house_number, landmark: addr.landmark, phone: addr.phone || contactPhone };
+      }
+    } else if (selectedDelivery === 'home') {
+      const subCity = document.getElementById('addrSubCity')?.value?.trim();
+      const woreda = document.getElementById('addrWoreda')?.value?.trim();
+      const house = document.getElementById('addrHouse')?.value?.trim();
+      if (!subCity) { this.toast('Please select your sub-city', 'error'); return; }
+      deliveryAddress = { sub_city: subCity, woreda, house_number: house, phone: contactPhone };
+      // Save address if checkbox ticked
+      if (document.getElementById('saveThisAddress')?.checked && subCity) {
+        Api.users.addAddress({ label: 'Home', sub_city: subCity, woreda, house_number: house, phone: contactPhone, is_default: false }).catch(() => {});
+      }
+    } else if (selectedDelivery === 'telegram_loc') {
+      const hint = document.getElementById('addrHouse')?.value?.trim();
+      deliveryAddress = { sub_city: 'Via Telegram Location', house_number: hint || 'Buyer will share live location', phone: contactPhone };
+      deliveryNote = 'TELEGRAM_LOCATION';
+    } else if (selectedDelivery === 'landmark') {
+      const subCity = document.getElementById('addrSubCity')?.value?.trim();
+      const landmark = document.getElementById('addrHouse')?.value?.trim();
+      if (!landmark) { this.toast('Please describe the meeting landmark', 'error'); return; }
+      deliveryAddress = { sub_city: subCity || 'Addis Ababa', house_number: landmark, phone: contactPhone };
+      deliveryNote = 'LANDMARK_MEETUP';
+    } else if (selectedDelivery === 'pickup') {
+      deliveryAddress = { sub_city: pkg.location || 'Store', house_number: 'Customer collects from store directly', phone: contactPhone };
+      deliveryNote = 'STORE_PICKUP';
+    } else if (selectedDelivery === 'bus') {
+      const city = document.getElementById('addrSubCity')?.value?.trim();
+      const details = document.getElementById('addrHouse')?.value?.trim();
+      if (!city) { this.toast('Please select destination city', 'error'); return; }
+      deliveryAddress = { sub_city: city, house_number: details || city + ' Bus Terminal', phone: contactPhone };
+      deliveryNote = 'BUS_DISPATCH';
     }
+
+    // Payment method — cash if selected, else telebirr
+    const cashOption = document.querySelector('input[name="payMethod"]:checked');
+    const paymentMethod = cashOption?.value === 'cash' ? 'cash' : 'telebirr';
 
     const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
 
     try {
       this.toast('Placing order...', 'info');
       const orderData = await Api.orders.create({
-        store_id: shopId, items, delivery_address: deliveryAddress,
+        store_id: shopId,
+        items,
+        delivery_address: { ...deliveryAddress, delivery_note: deliveryNote, delivery_method: selectedDelivery },
+        delivery_fee_override: deliveryFee,
         payment_method: paymentMethod,
-        address_id: (addressId && addressId !== 'new') ? addressId : undefined,
         telebirr_phone: telebirrPhone
       });
       const order = orderData.order;
 
-      if (paymentMethod === 'chapa') {
-        const payData = await Api.payments.initiateChapa(order.order_id);
-        if (payData.checkoutUrl) {
-          window.location.href = payData.checkoutUrl;
-        }
-      } else if (paymentMethod === 'telebirr') {
+      if (paymentMethod === 'telebirr') {
         const payData = await Api.payments.initiateTelebirr(order.order_id);
         Modals.showPaymentProcessing(payData.txRef, order.total_etb, telebirrPhone);
         this._pendingOrderId = order.order_id;
@@ -514,7 +554,7 @@ const App = {
         this.refreshOrders();
       }
     } catch (err) {
-      this.toast(err.message || 'Order failed', 'error');
+      this.toast(err.message || 'Order failed — please try again', 'error');
     }
   },
 

@@ -21,81 +21,232 @@ const Modals = {
     const sub = State.pkgSubtotal(shopId);
     const total = State.pkgTotal(shopId);
 
-    // Build address options
-    const hasAddresses = State.addresses.length > 0;
-    const addressOptions = hasAddresses
-      ? State.addresses.map(a => `<option value="${a.address_id}"${a.is_default?' selected':''}>${a.label}: ${a.sub_city}${a.woreda?', '+a.woreda:''} · ${a.phone}</option>`).join('') + '<option value="new">+ New address</option>'
-      : '<option value="new">+ Add delivery address</option>';
+    // Saved addresses as options
+    const savedAddressesHtml = State.addresses.length
+      ? State.addresses.map(a => `
+          <label class="delivery-option" onclick="Modals._selectDelivery(this,'saved')" style="cursor:pointer;">
+            <input type="radio" name="deliveryMethod" value="saved_${a.address_id}" style="accent-color:var(--accent);flex-shrink:0;"/>
+            <div style="flex:1;">
+              <div style="font-weight:800;font-size:13px;">${a.label} ${a.is_default ? '<span style="background:rgba(252,205,4,0.2);color:var(--accent);font-size:9px;padding:1px 6px;border-radius:10px;font-weight:800;">DEFAULT</span>' : ''}</div>
+              <div style="font-size:11px;color:var(--text-secondary);">📍 ${a.sub_city}${a.woreda?', '+a.woreda:''} ${a.house_number?'· '+a.house_number:''}</div>
+              <div style="font-size:11px;color:var(--text-secondary);">📞 ${a.phone}</div>
+            </div>
+          </label>`).join('')
+      : '';
 
     this.open(`
       <div class="modal-handle"></div>
       <div class="modal-title">Checkout: ${pkg.shopName}</div>
-      <div class="modal-sub" style="color:var(--success);">✅ ${State.policyLabel(pkg.returnPolicy)}</div>
+      <div style="font-size:11px;color:var(--success);font-weight:700;margin-bottom:16px;">✅ ${State.policyLabel(pkg.returnPolicy)}</div>
 
-      <div class="form-group">
-        <label class="form-label">📍 Delivery Destination</label>
-        <select class="form-select" id="checkoutAddress" onchange="Modals._handleAddressChange(this.value)">
-          ${addressOptions}
-        </select>
-        <div id="newAddressForm" style="${hasAddresses ? 'display:none;' : ''}margin-top:10px;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div class="form-group"><label class="form-label">Sub-City</label><input class="form-input" id="newSubCity" placeholder="Bole, Kirkos, Yeka..."/></div>
-            <div class="form-group"><label class="form-label">Woreda</label><input class="form-input" id="newWoreda" placeholder="Woreda 03"/></div>
-          </div>
-          <div class="form-group"><label class="form-label">House / Landmark</label><input class="form-input" id="newHouse" placeholder="Near Edna Mall, House 412"/></div>
-          <div class="form-group"><label class="form-label">Your Phone Number</label><input class="form-input" id="newPhone" placeholder="+251 9XX XXX XXX" type="tel"/></div>
-        </div>
+      <!-- ── STEP 1: How to receive your order ── -->
+      <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">
+        📦 Step 1 — How would you like to receive your order?
       </div>
 
-      <div class="form-group">
-        <label class="form-label">📱 Payment via Telebirr</label>
-        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-            <span style="font-size:24px;">📱</span>
-            <div>
-              <div style="font-size:13px;font-weight:800;color:white;">Telebirr SuperApp</div>
-              <div style="font-size:11px;color:var(--text-secondary);">Direct to ${pkg.shopName}'s verified account</div>
-            </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;" id="deliveryOptions">
+
+        <!-- Option A: Home/Office Delivery -->
+        <label class="delivery-option selected" onclick="Modals._selectDelivery(this,'home')" style="cursor:pointer;">
+          <input type="radio" name="deliveryMethod" value="home" checked style="accent-color:var(--accent);flex-shrink:0;"/>
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:13px;">🏠 Deliver to my Address</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Rider brings it to your door — delivery fee applies</div>
           </div>
-          <label class="form-label">Your Telebirr Phone Number</label>
-          <input class="form-input" id="telebirrPhone" type="tel" placeholder="+251 9XX XXX XXX"
-            value="${State.user?.phone || ''}"
-            style="font-size:15px;letter-spacing:1px;"/>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">
-            📌 Enter the phone number registered to your Telebirr account. A push notification will be sent to confirm payment.
+          <div style="font-size:11px;color:var(--accent);font-weight:800;">+${State.formatETB(Number(pkg.deliveryFee))}</div>
+        </label>
+
+        <!-- Option B: Telegram Location Pin -->
+        <label class="delivery-option" onclick="Modals._selectDelivery(this,'telegram_loc')" style="cursor:pointer;">
+          <input type="radio" name="deliveryMethod" value="telegram_loc" style="accent-color:var(--accent);flex-shrink:0;"/>
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:13px;">📍 Share My Telegram Location</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Pin your exact GPS location for the rider</div>
           </div>
-        </div>
-        ${pkg.cashEnabled ? `
-        <label class="payment-option" onclick="Modals._selectPayment(this,'cash')" style="margin-top:8px;">
-          <input type="radio" name="payMethod" value="cash"/>
-          <div><div class="payment-name">💵 Cash on Delivery</div><div class="payment-desc">Pay the seller's rider at your door.</div></div>
-        </label>` : ''}
+          <div style="font-size:11px;color:var(--accent);font-weight:800;">+${State.formatETB(Number(pkg.deliveryFee))}</div>
+        </label>
+
+        <!-- Option C: Meet at a landmark -->
+        <label class="delivery-option" onclick="Modals._selectDelivery(this,'landmark')" style="cursor:pointer;">
+          <input type="radio" name="deliveryMethod" value="landmark" style="accent-color:var(--accent);flex-shrink:0;"/>
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:13px;">🗺️ Meet at a Landmark / Kiosk</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Pick up at a public meeting point (e.g. near Total station, Edna Mall)</div>
+          </div>
+          <div style="font-size:11px;color:var(--accent);font-weight:800;">+${State.formatETB(Math.round(Number(pkg.deliveryFee) * 0.5))}</div>
+        </label>
+
+        <!-- Option D: Store Pickup -->
+        <label class="delivery-option" onclick="Modals._selectDelivery(this,'pickup')" style="cursor:pointer;">
+          <input type="radio" name="deliveryMethod" value="pickup" style="accent-color:var(--accent);flex-shrink:0;"/>
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:13px;">🏪 Collect from Store Directly</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Visit the seller's shop — no delivery fee</div>
+          </div>
+          <div style="font-size:11px;color:var(--success);font-weight:800;">Free</div>
+        </label>
+
+        <!-- Option E: Bus Terminal Dispatch (Regional) -->
+        <label class="delivery-option" onclick="Modals._selectDelivery(this,'bus')" style="cursor:pointer;">
+          <input type="radio" name="deliveryMethod" value="bus" style="accent-color:var(--accent);flex-shrink:0;"/>
+          <div style="flex:1;">
+            <div style="font-weight:800;font-size:13px;">🚌 Bus Terminal Dispatch (Regional)</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Seller ships to your city via bus terminal (Hawassa, Bahir Dar, Dire Dawa...)</div>
+          </div>
+          <div style="font-size:11px;color:var(--warning);font-weight:800;">+${State.formatETB(Number(pkg.deliveryFee) * 2 || 400)}</div>
+        </label>
+
+        ${savedAddressesHtml ? `
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-top:4px;padding:4px 0;">── Saved Addresses ──</div>
+        ${savedAddressesHtml}` : ''}
       </div>
 
-      <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">
+      <!-- Dynamic form that changes based on delivery method -->
+      <div id="deliveryFormArea"></div>
+
+      <!-- ── STEP 2: Contact & Phone ── -->
+      <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;margin-top:4px;">
+        📱 Step 2 — Your Contact
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+        <div>
+          <label class="form-label">Phone Number</label>
+          <input class="form-input" id="contactPhone" type="tel" placeholder="+251 9XX XXX XXX" value="${State.user?.phone || ''}"/>
+        </div>
+        <div>
+          <label class="form-label">Telebirr Number</label>
+          <input class="form-input" id="telebirrPhone" type="tel" placeholder="+251 9XX XXX XXX" value="${State.user?.phone || ''}"/>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:16px;background:var(--bg-surface);padding:10px;border-radius:8px;">
+        📌 Telebirr number: the phone registered to your Telebirr account. A push notification will be sent to confirm payment.
+      </div>
+
+      <!-- ── Policy + Summary ── -->
+      <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
           <input type="checkbox" id="policyAgreement" style="accent-color:var(--accent);margin-top:2px;flex-shrink:0;">
           <span style="color:var(--text-secondary);font-size:12px;line-height:1.5;">I agree to <strong style="color:white;">${pkg.shopName}'s ${State.policyLabel(pkg.returnPolicy)}</strong> policy for this order.</span>
         </label>
       </div>
 
-      <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;">
+      <div id="orderSummaryBox" style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:16px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;"><span style="color:var(--text-secondary);">Subtotal</span><span>${State.formatETB(sub)}</span></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;"><span style="color:var(--text-secondary);">Delivery (${pkg.location})</span><span>${State.formatETB(pkg.deliveryFee)}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;"><span style="color:var(--text-secondary);">Delivery</span><span id="summaryDelivery">${State.formatETB(pkg.deliveryFee)}</span></div>
         <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:900;border-top:1px solid var(--border);padding-top:8px;">
-          <span>Total</span><span style="color:var(--accent);">${State.formatETB(total)}</span>
+          <span>Total</span><span style="color:var(--accent);" id="summaryTotal">${State.formatETB(total)}</span>
         </div>
       </div>
 
       <button class="btn-primary" onclick="App.placeOrder('${shopId}')">
-        🛒 Place Order — ${State.formatETB(total)}
+        🛒 Confirm Order — <span id="btnTotal">${State.formatETB(total)}</span>
       </button>
     `);
 
-    // Show new address form if no addresses
-    if (!hasAddresses) {
-      const form = document.getElementById('newAddressForm');
-      if (form) form.style.display = 'block';
+    // Init delivery form for default 'home' option
+    Modals._renderDeliveryForm('home', pkg);
+  },
+
+  _selectDelivery(label, method) {
+    document.querySelectorAll('.delivery-option').forEach(el => el.classList.remove('selected'));
+    label.classList.add('selected');
+    // Find the current shopId from cart
+    const shopId = Object.keys(State.cart)[0];
+    const pkg = shopId ? State.cart[shopId] : null;
+    if (pkg) Modals._renderDeliveryForm(method, pkg);
+  },
+
+  _renderDeliveryForm(method, pkg) {
+    const area = document.getElementById('deliveryFormArea');
+    if (!area) return;
+
+    const baseDelivery = Number(pkg.deliveryFee) || 150;
+    // Update delivery cost in summary
+    const deliveryCosts = {
+      home: baseDelivery,
+      telegram_loc: baseDelivery,
+      landmark: Math.round(baseDelivery * 0.5),
+      pickup: 0,
+      bus: baseDelivery * 2 || 400,
+      saved: baseDelivery
+    };
+    const cost = Number(deliveryCosts[method] ?? baseDelivery);
+    const sub = Object.values(State.cart).reduce((s, p) =>
+      s + p.items.reduce((ss, i) => ss + Number(i.product.price_etb) * i.qty, 0), 0);
+    const newTotal = sub + cost;
+    const summaryDel = document.getElementById('summaryDelivery');
+    const summaryTotal = document.getElementById('summaryTotal');
+    const btnTotal = document.getElementById('btnTotal');
+    if (summaryDel) summaryDel.textContent = State.formatETB(cost);
+    if (summaryTotal) summaryTotal.textContent = State.formatETB(newTotal);
+    if (btnTotal) btnTotal.textContent = State.formatETB(newTotal);
+    Modals._currentDeliveryFee = cost;
+
+    if (method === 'home') {
+      area.innerHTML = `
+        <div style="margin-bottom:16px;">
+          <label class="form-label">📍 Delivery Address</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div><label class="form-label" style="font-size:10px;">Sub-City</label>
+              <select class="form-select" id="addrSubCity">
+                ${['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio'].map(s=>`<option>${s}</option>`).join('')}
+              </select>
+            </div>
+            <div><label class="form-label" style="font-size:10px;">Woreda</label>
+              <input class="form-input" id="addrWoreda" placeholder="e.g. Woreda 03"/>
+            </div>
+          </div>
+          <input class="form-input" id="addrHouse" placeholder="House No / Landmark (e.g. Near Edna Mall, House 412)" style="margin-bottom:8px;"/>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;margin-top:4px;">
+            <input type="checkbox" id="saveThisAddress" style="accent-color:var(--accent);"> Save this address for future orders
+          </label>
+        </div>`;
+    } else if (method === 'telegram_loc') {
+      area.innerHTML = `
+        <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;color:#60A5FA;margin-bottom:8px;">📍 Share Your Location via Telegram</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px;">
+            After placing the order, the seller will contact you on Telegram to request your live location pin. You can share it directly in the chat.
+          </div>
+          <input class="form-input" id="addrHouse" placeholder="Area / Landmark hint (optional, e.g. Near CMC Michael Church)" />
+        </div>`;
+    } else if (method === 'landmark') {
+      area.innerHTML = `
+        <div style="margin-bottom:16px;">
+          <label class="form-label">🗺️ Meeting Point Details</label>
+          <select class="form-select" id="addrSubCity" style="margin-bottom:8px;">
+            ${['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio'].map(s=>`<option>${s}</option>`).join('')}
+          </select>
+          <input class="form-input" id="addrHouse" placeholder="Specific landmark (e.g. Total Station Bole, Edna Mall entrance, Friendship Mall gate 2)"/>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Rider will meet you at this point. Reduced delivery fee applies.</div>
+        </div>`;
+    } else if (method === 'pickup') {
+      area.innerHTML = `
+        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;color:var(--success);margin-bottom:6px;">🏪 Store Pickup — Free</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+            📍 <strong style="color:white;">${pkg.shopName}</strong><br/>
+            ${pkg.location ? pkg.location : 'Contact seller for exact address.'}<br/>
+            After placing your order, the seller will confirm a pickup time via Telegram.
+          </div>
+        </div>`;
+    } else if (method === 'bus') {
+      area.innerHTML = `
+        <div style="margin-bottom:16px;">
+          <label class="form-label">🚌 Bus Terminal Dispatch</label>
+          <select class="form-select" id="addrSubCity" style="margin-bottom:8px;">
+            <option value="Hawassa">Hawassa Bus Terminal</option>
+            <option value="Bahir Dar">Bahir Dar Bus Terminal</option>
+            <option value="Dire Dawa">Dire Dawa Bus Terminal</option>
+            <option value="Adama">Adama (Nazret) Terminal</option>
+            <option value="Jimma">Jimma Bus Terminal</option>
+            <option value="Mekele">Mekele Bus Terminal</option>
+            <option value="Gondar">Gondar Bus Terminal</option>
+            <option value="Other">Other City</option>
+          </select>
+          <input class="form-input" id="addrHouse" placeholder="Your exact pickup contact / address in destination city"/>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Seller will dispatch via intercity bus. You collect from the terminal. Tracking sent via Telegram.</div>
+        </div>`;
     }
   },
 
@@ -205,7 +356,7 @@ const Modals = {
         Publish immediately (goes live in buyer hub)
       </label>
       <button class="btn-primary" onclick="App.${isEdit ? `updateProduct('${product.product_id}')` : 'createProduct()'}">
-        ${isEdit ? 'Save Changes' : '🚀 Publish to e-Merkato Hub'}
+        ${isEdit ? 'Save Changes' : '🚀 Publish to Medebirr Hub'}
       </button>
     `);
   },

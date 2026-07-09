@@ -306,3 +306,13 @@ body { background: #050507; color: var(--text-primary); display: flex;
 .product-price-lg { font-size: 28px; font-weight: 900; color: var(--accent); margin-bottom: 4px; }
 .product-store-link { font-size: 12px; color: var(--info); cursor: pointer; font-weight: 700; }
 .policy-box { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3); border-radius: var(--radius-sm); padding: 10px 12px; margin: 12px 0; font-size: 12px; line-height: 1.6; }
+
+/* Delivery Option Cards */
+.delivery-option {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  transition: border-color 0.2s; margin-bottom: 0;
+}
+.delivery-option.selected { border-color: var(--accent); background: rgba(252,205,4,0.04); }
+.delivery-option input[type=radio] { accent-color: var(--accent); width: 15px; height: 15px; }
