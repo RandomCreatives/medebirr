@@ -195,14 +195,30 @@ const App = {
     document.getElementById('app').style.display = 'flex';
     document.getElementById('app').style.flexDirection = 'column';
 
-    const user = State.user;
-    if (user) {
-      document.getElementById('userAvatar').textContent = (user.firstName || 'U')[0].toUpperCase();
-      document.getElementById('headerUsername').textContent = `${user.firstName} ${user.lastName || ''}`.trim();
-      document.getElementById('headerLocation').textContent = 'Addis Ababa, Ethiopia';
+    const u = State.user;
+    if (u) {
+      // Normalise field names — API returns either camelCase (from auth) or snake_case (from /me)
+      const firstName = u.firstName || u.first_name || 'User';
+      const lastName  = u.lastName  || u.last_name  || '';
+      const username  = u.username  || '';
+
+      // Cache normalised values back onto state so everything else can use camelCase
+      u.firstName = firstName;
+      u.lastName  = lastName;
+      u.username  = username;
+      // isSeller = has at least one store
+      u.isSeller  = (u.isSeller !== undefined) ? u.isSeller : State.stores.length > 0;
+
+      document.getElementById('userAvatar').textContent = firstName[0].toUpperCase();
+      document.getElementById('headerUsername').textContent = `${firstName} ${lastName}`.trim();
+      document.getElementById('headerLocation').textContent = username ? `@${username}` : 'Addis Ababa, Ethiopia';
     }
 
-    // Add switch account button in header (browser only — not inside Telegram)
+    // Clickable avatar — opens profile / account modal
+    document.getElementById('userAvatar').style.cursor = 'pointer';
+    document.getElementById('userAvatar').onclick = () => App.openProfileModal();
+
+    // Switch-account button (browser only)
     if (!window.Telegram?.WebApp?.initData) {
       const headerRight = document.getElementById('appHeader').querySelector('.header-right');
       if (headerRight && !document.getElementById('switchBtn')) {
@@ -210,7 +226,7 @@ const App = {
         btn.id = 'switchBtn';
         btn.title = 'Switch account';
         btn.onclick = () => App._switchUser();
-        btn.style.cssText = 'background:none;border:none;color:#9DA3AE;cursor:pointer;font-size:11px;margin-left:8px;padding:4px 8px;border-radius:8px;border:1px solid #2D303A;';
+        btn.style.cssText = 'background:none;border:1px solid #2D303A;color:#9DA3AE;cursor:pointer;font-size:11px;margin-left:8px;padding:4px 8px;border-radius:8px;white-space:nowrap;';
         btn.textContent = '⇄ Switch';
         headerRight.appendChild(btn);
       }
@@ -239,34 +255,33 @@ const App = {
 
   renderRoleBar() {
     const badge = document.getElementById('roleBadge');
-    const sub = document.getElementById('roleSub');
-    const btn = document.getElementById('roleSwitchBtn');
-    const isSeller = State.user?.isSeller && State.stores.length > 0;
+    const sub   = document.getElementById('roleSub');
+    const btn   = document.getElementById('roleSwitchBtn');
+    // A user is a seller if they have any registered stores
+    const isSeller = State.stores.length > 0;
 
     if (State.role === 'buyer') {
       badge.className = 'role-badge buyer-badge';
       badge.innerHTML = '🛒 Medebirr Discovery Hub';
-      sub.textContent = isSeller
-        ? `${State.user.firstName} · Buyer Mode`
-        : `Navigating 1,000+ Verified Ethiopian Shops`;
+      sub.textContent = '1,000+ Verified Ethiopian Shops';
+
       if (isSeller) {
-        btn.innerHTML = `🏬 Seller Studio <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>`;
-        btn.style.display = 'flex';
-        btn.style.background = 'rgba(252,205,4,0.15)';
-        btn.style.borderColor = 'rgba(252,205,4,0.4)';
-        btn.style.color = 'var(--accent)';
+        btn.innerHTML = '🏬 My Seller Studio →';
+        btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.5);color:#FCCD04;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer;';
       } else {
-        btn.style.display = 'none';
+        // Non-seller buyers see an "Open a Shop" CTA
+        btn.innerHTML = '🏪 Open a Shop';
+        btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);color:#10B981;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;';
       }
+      btn.onclick = isSeller ? () => App.toggleRole() : () => App.openRegisterStoreModal();
+
     } else {
       badge.className = 'role-badge seller-badge';
       badge.innerHTML = '🏬 Seller Studio';
       sub.textContent = State.stores[0]?.store_name || 'Your Shop Dashboard';
-      btn.innerHTML = `🛒 Buyer Hub <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>`;
-      btn.style.display = 'flex';
-      btn.style.background = 'rgba(59,130,246,0.15)';
-      btn.style.borderColor = 'rgba(59,130,246,0.4)';
-      btn.style.color = '#60A5FA';
+      btn.innerHTML = '🛒 Buyer Hub →';
+      btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#60A5FA;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;';
+      btn.onclick = () => App.toggleRole();
     }
   },
 
@@ -724,6 +739,184 @@ const App = {
       this.renderContent();
     } catch (err) {
       this.toast(err.message || 'Dispatch failed', 'error');
+    }
+  },
+
+  // ── Profile Modal ─────────────────────────────────
+  openProfileModal() {
+    const u = State.user;
+    if (!u) return;
+    const isSeller = State.stores.length > 0;
+    Modals.open(`
+      <div class="modal-handle"></div>
+
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#FCCD04,#F59E0B);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#111;flex-shrink:0;">
+          ${(u.firstName||'U')[0].toUpperCase()}
+        </div>
+        <div>
+          <div style="font-size:17px;font-weight:900;">${u.firstName} ${u.lastName||''}</div>
+          <div style="font-size:12px;color:var(--text-secondary);">${u.username ? '@'+u.username : 'Telegram User'}</div>
+          <div style="margin-top:4px;">
+            <span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:800;${isSeller ? 'background:rgba(252,205,4,0.2);color:#FCCD04;' : 'background:rgba(59,130,246,0.2);color:#60A5FA;'}">
+              ${isSeller ? '🏬 Verified Seller' : '🛒 Buyer'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      ${isSeller ? `
+      <div style="margin:14px 0;">
+        <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Your Stores</div>
+        ${State.stores.map(s => `
+          <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;font-weight:800;">${s.store_name}</div>
+              <div style="font-size:11px;color:${s.status==='verified'?'var(--success)':'var(--warning)'};">
+                ${s.status==='verified'?'✓ Verified':'⏳ Pending Verification'}
+              </div>
+            </div>
+            <button onclick="App.toggleRole();Modals.close();" style="background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.3);color:#FCCD04;padding:7px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">
+              Open Studio →
+            </button>
+          </div>`).join('')}
+      </div>
+      <div class="divider"></div>` : ''}
+
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+        ${!isSeller ? `
+        <button onclick="Modals.close();App.openRegisterStoreModal();" class="btn-primary" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35);color:var(--success);">
+          🏪 Open a Shop on Medebirr — Free
+        </button>` : ''}
+
+        <button onclick="App.switchTab('orders');Modals.close();" class="btn-secondary">
+          📦 My Orders & Deliveries
+        </button>
+
+        ${!window.Telegram?.WebApp?.initData ? `
+        <button onclick="App._switchUser();Modals.close();" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;width:100%;">
+          ⇄ Switch Account
+        </button>` : ''}
+      </div>
+    `);
+  },
+
+  // ── Register Store Modal ──────────────────────────
+  openRegisterStoreModal() {
+    Modals.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">🏪 Open Your Shop on Medebirr</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;line-height:1.6;">
+        List your products, reach buyers across Addis Ababa and Ethiopia. Zero commission fees. Payments go directly to your Telebirr account.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Store / Shop Name</label>
+        <input class="form-input" id="regStoreName" placeholder="e.g. Bole Fashion House, Kaffa Coffee Direct"/>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">What do you sell?</label>
+        <select class="form-select" id="regCategory">
+          <option value="fashion">👗 Fashion & Traditional Clothing</option>
+          <option value="electronics">📱 Electronics & Phones</option>
+          <option value="groceries">☕ Coffee, Food & Groceries</option>
+          <option value="footwear">👟 Footwear & Shoes</option>
+          <option value="furniture">🪑 Furniture & Home</option>
+          <option value="beauty">💄 Beauty & Personal Care</option>
+          <option value="other">📦 Other</option>
+        </select>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+        <div class="form-group">
+          <label class="form-label">Sub-City</label>
+          <select class="form-select" id="regSubCity">
+            ${['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio','Outside Addis'].map(s=>`<option>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Business Phone</label>
+          <input class="form-input" id="regPhone" type="tel" placeholder="+251 9XX XXX XXX"/>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Your Telebirr Shortcode / Phone (for direct payments)</label>
+        <input class="form-input" id="regTelebirr" type="tel" placeholder="e.g. 891204 or +251 9XX XXX XXX"/>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Buyers will pay directly to this Telebirr account — zero marketplace holding.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Brief Description (optional)</label>
+        <textarea class="form-textarea" id="regDesc" placeholder="What makes your shop special? Describe your products..."></textarea>
+      </div>
+
+      <button class="btn-primary" onclick="App.submitRegisterStore()">
+        🚀 Register My Store — Free
+      </button>
+
+      <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text-secondary);">
+        After registration, your store is reviewed within 24 hours.<br/>
+        You can start adding products immediately.
+      </div>
+    `);
+  },
+
+  async submitRegisterStore() {
+    const storeName = document.getElementById('regStoreName')?.value?.trim();
+    const phone = document.getElementById('regPhone')?.value?.trim();
+    const subCity = document.getElementById('regSubCity')?.value;
+    const telebirrId = document.getElementById('regTelebirr')?.value?.trim();
+    const desc = document.getElementById('regDesc')?.value?.trim();
+
+    if (!storeName) { this.toast('Store name is required', 'error'); return; }
+    if (!phone) { this.toast('Business phone is required', 'error'); return; }
+
+    try {
+      this.toast('Registering your store...', 'info');
+      const data = await Api.stores.create({
+        store_name: storeName,
+        location_sub_city: subCity,
+        business_phone: phone,
+        telebirr_merchant_id: telebirrId || null,
+        description: desc || null
+      });
+
+      // Reload user stores
+      const meData = await Api.users.me();
+      State.stores = meData.stores || [];
+      if (State.stores.length > 0) {
+        State.currentStoreId = State.stores[0].store_id;
+        State.user.isSeller = true;
+      }
+
+      Modals.open(`
+        <div class="modal-handle"></div>
+        <div style="text-align:center;padding:20px 0;">
+          <div style="font-size:52px;margin-bottom:16px;">🎉</div>
+          <div style="font-size:20px;font-weight:900;margin-bottom:8px;color:var(--success);">Store Registered!</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;">
+            <strong style="color:white;">${storeName}</strong> is now registered.<br/>
+            Status: <span style="color:var(--warning);">⏳ Pending Verification</span><br/>
+            You can start adding products now while we review your account.
+          </div>
+          <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-md);padding:14px;margin-bottom:20px;font-size:12px;color:var(--success);text-align:left;line-height:1.8;">
+            ✅ Store profile created<br/>
+            ✅ Telebirr account linked<br/>
+            ⏳ Admin verification in progress (24h)<br/>
+            📦 You can add products immediately
+          </div>
+          <button class="btn-primary" onclick="App.toggleRole();Modals.close();">
+            🏬 Open Seller Studio →
+          </button>
+        </div>
+      `);
+      this.render();
+    } catch (err) {
+      this.toast(err.message || 'Registration failed', 'error');
     }
   },
 
