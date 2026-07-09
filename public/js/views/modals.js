@@ -269,11 +269,28 @@ const Modals = {
 
   // ── Product Detail Page (Full PDP) ────────────────
   openProductDetail(product) {
+    try {
+      this._renderPDP(product);
+    } catch (err) {
+      console.warn('PDP render error, showing fallback:', err);
+      this.open(`
+        <div class="modal-handle"></div>
+        <div class="modal-title">${product.title || 'Product Details'}</div>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${product.description || 'No description available.'}</p>
+        <div style="display:flex;gap:16px;align-items:center;margin-top:16px;">
+          <span style="font-size:28px;font-weight:900;color:var(--accent);">${State.formatETB(product.price_etb)}</span>
+          <button class="pdp-btn-primary" onclick="App.addToCart('${product.product_id}');this.innerHTML='✓ Added!'">🛒 Add to Cart</button>
+        </div>
+      `);
+    }
+  },
+
+  _renderPDP(product) {
     const inWishlist = State.wishlist.has(product.product_id);
     const gradient = BuyerViews._categoryGradient(product.category);
     const emoji = this._categoryEmoji(product.category);
     const savings = product.compare_price ? Math.round((1 - product.price_etb / product.compare_price) * 100) : 0;
-    const images = (product.image_urls && product.image_urls.length > 0) ? product.image_urls : null;
+    const images = Array.isArray(product.image_urls) && product.image_urls.length > 0 ? product.image_urls : null;
 
     this._currentProduct = product;
 
@@ -398,10 +415,11 @@ const Modals = {
 
   _switchImage(index, productId) {
     const product = State.products.find(p => p.product_id === productId) || this._currentProduct;
-    if (!product || !product.image_urls || !product.image_urls[index]) return;
+    const urls = Array.isArray(product?.image_urls) ? product.image_urls : null;
+    if (!product || !urls || !urls[index]) return;
     const main = document.getElementById('pdpMainImage');
     if (!main) return;
-    main.innerHTML = `<img src="${product.image_urls[index]}" alt="${product.title}" draggable="false"/>`;
+    main.innerHTML = `<img src="${urls[index]}" alt="${product.title}" draggable="false"/>`;
     document.querySelectorAll('.pdp-thumb').forEach((el, i) => el.classList.toggle('active', i === index));
   },
 
@@ -426,7 +444,7 @@ const Modals = {
     });
     main.addEventListener('mouseleave', () => {
       main.classList.remove('zoomed');
-      main.style.transform = '';
+      main.style.transformOrigin = '';
     });
     main.addEventListener('mousemove', (e) => {
       if (!main.classList.contains('zoomed')) return;
@@ -435,15 +453,35 @@ const Modals = {
       const y = ((e.clientY - rect.top) / rect.height) * 100;
       main.querySelector('img').style.transformOrigin = `${x}% ${y}%`;
     });
-    // Mobile touch zoom
-    let touchZoom = false;
+    // Mobile touch double-tap zoom + pan
+    let lastTap = 0;
+    let panStart = null;
     main.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 2) touchZoom = true;
+      if (e.touches.length === 1 && main.querySelector('img')) {
+        const now = Date.now();
+        if (now - lastTap < 300) {
+          main.classList.toggle('zoomed');
+          if (!main.classList.contains('zoomed')) main.style.transformOrigin = '';
+        }
+        lastTap = now;
+        if (main.classList.contains('zoomed')) {
+          panStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+      }
     }, { passive: true });
     main.addEventListener('touchmove', (e) => {
-      if (touchZoom) e.preventDefault();
-    }, { passive: false });
-    main.addEventListener('touchend', () => { touchZoom = false; });
+      if (e.touches.length === 1 && panStart && main.classList.contains('zoomed')) {
+        const dx = ((e.touches[0].clientX - panStart.x) / main.offsetWidth) * 100;
+        const dy = ((e.touches[0].clientY - panStart.y) / main.offsetHeight) * 100;
+        const cur = main.style.transformOrigin || '50% 50%';
+        const parts = cur.split(' ');
+        const px = Math.min(100, Math.max(0, parseFloat(parts[0]) + dx));
+        const py = Math.min(100, Math.max(0, parseFloat(parts[1] || '50') + dy));
+        main.style.transformOrigin = `${px}% ${py}%`;
+        panStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    }, { passive: true });
+    main.addEventListener('touchend', () => { panStart = null; });
   },
 
   // ── Variant Selectors ──────────────────────────────
