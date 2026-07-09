@@ -12,10 +12,8 @@ if (!process.env.VERCEL && process.env.NODE_ENV !== 'production') {
   require('dotenv').config({ path: require('path').join(__dirname, '../backend/.env') });
 }
 
-// Default to production when running on Vercel
-if (process.env.VERCEL && !process.env.NODE_ENV) {
-  process.env.NODE_ENV = 'production';
-}
+// Always production on Vercel regardless of NODE_ENV env var
+if (process.env.VERCEL) process.env.NODE_ENV = 'production';
 
 const express = require('express');
 const cors = require('cors');
