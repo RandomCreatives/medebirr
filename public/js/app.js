@@ -66,11 +66,19 @@ const App = {
     let initData;
 
     if (window.Telegram?.WebApp?.initData) {
+      // Real Telegram WebApp — use native initData
       initData = window.Telegram.WebApp.initData;
     } else {
-      // Demo mode — use mock user
-      const demoUserId = localStorage.getItem('em_demo_user') || '12893412';
-      initData = `mock:${demoUserId}`;
+      // Browser mode — check for saved session first
+      const savedId = localStorage.getItem('em_demo_user');
+      if (savedId) {
+        initData = `mock:${savedId}`;
+      } else {
+        // Show login screen and wait for user to pick a profile
+        const userId = await this._showBrowserLoginScreen();
+        localStorage.setItem('em_demo_user', userId);
+        initData = `mock:${userId}`;
+      }
     }
 
     const existingToken = Api.getToken();
@@ -79,9 +87,7 @@ const App = {
         const meData = await Api.users.me();
         State.user = meData.user;
         State.stores = meData.stores || [];
-        if (State.stores.length > 0) {
-          State.currentStoreId = State.stores[0].store_id;
-        }
+        if (State.stores.length > 0) State.currentStoreId = State.stores[0].store_id;
         return;
       } catch (err) {
         Api.clearToken();
@@ -92,9 +98,103 @@ const App = {
     Api.setToken(authData.token);
     State.user = authData.user;
     State.stores = authData.user.stores || [];
-    if (State.stores.length > 0) {
-      State.currentStoreId = State.stores[0].store_id;
+    if (State.stores.length > 0) State.currentStoreId = State.stores[0].store_id;
+  },
+
+  // Show a login screen in the browser when outside Telegram
+  _showBrowserLoginScreen() {
+    return new Promise((resolve) => {
+      document.getElementById('loadingScreen').innerHTML = `
+        <div style="width:100%;max-width:420px;padding:28px 24px;text-align:center;">
+          <div class="logo-mark" style="margin:0 auto 12px auto;">eM</div>
+          <div style="font-size:22px;font-weight:900;margin-bottom:6px;">e-Merkato</div>
+          <div style="font-size:13px;color:#9DA3AE;margin-bottom:28px;">Ethiopia's Telegram Marketplace</div>
+
+          <div style="background:#15171C;border:1px solid #2D303A;border-radius:20px;padding:24px;text-align:left;">
+            <div style="font-size:13px;font-weight:800;color:#9DA3AE;text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">Select Demo Profile</div>
+
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+              <button onclick="App._loginAs(12893412,'Mike Fikadu','Buyer')" style="background:#1E2027;border:1px solid #2D303A;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color 0.2s;text-align:left;width:100%;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
+                <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#3B82F6,#1D4ED8);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;flex-shrink:0;">M</div>
+                <div>
+                  <div style="font-size:14px;font-weight:800;color:white;">Mike Fikadu</div>
+                  <div style="font-size:11px;color:#9DA3AE;">@Mike_Fikadu · Buyer · Bole, Addis Ababa</div>
+                </div>
+                <div style="margin-left:auto;font-size:11px;background:rgba(59,130,246,0.2);color:#60A5FA;padding:3px 10px;border-radius:20px;font-weight:700;">BUYER</div>
+              </button>
+
+              <button onclick="App._loginAs(98760002,'Abebe Girma','Seller - Bole Apple & Tech Hub')" style="background:#1E2027;border:1px solid #2D303A;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;width:100%;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
+                <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#FCCD04,#F59E0B);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#111;flex-shrink:0;">A</div>
+                <div>
+                  <div style="font-size:14px;font-weight:800;color:white;">Abebe Girma</div>
+                  <div style="font-size:11px;color:#9DA3AE;">@BoleAppleAdmin · Bole Apple & Tech Hub</div>
+                </div>
+                <div style="margin-left:auto;font-size:11px;background:rgba(252,205,4,0.2);color:#FCCD04;padding:3px 10px;border-radius:20px;font-weight:700;">SELLER</div>
+              </button>
+
+              <button onclick="App._loginAs(98760003,'Tigist Kebede','Seller - Shiro Meda Textile')" style="background:#1E2027;border:1px solid #2D303A;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;width:100%;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
+                <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#EC4899,#F43F5E);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;flex-shrink:0;">T</div>
+                <div>
+                  <div style="font-size:14px;font-weight:800;color:white;">Tigist Kebede</div>
+                  <div style="font-size:11px;color:#9DA3AE;">@ShiroMedaAdmin · Shiro Meda Textile</div>
+                </div>
+                <div style="margin-left:auto;font-size:11px;background:rgba(252,205,4,0.2);color:#FCCD04;padding:3px 10px;border-radius:20px;font-weight:700;">SELLER</div>
+              </button>
+
+              <button onclick="App._loginAs(98760004,'Dawit Alemu','Seller - Kaffa Roastery')" style="background:#1E2027;border:1px solid #2D303A;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;width:100%;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
+                <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#10B981,#059669);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:white;flex-shrink:0;">D</div>
+                <div>
+                  <div style="font-size:14px;font-weight:800;color:white;">Dawit Alemu</div>
+                  <div style="font-size:11px;color:#9DA3AE;">@KaffaRoastAdmin · Kaffa & Sidama Roastery</div>
+                </div>
+                <div style="margin-left:auto;font-size:11px;background:rgba(252,205,4,0.2);color:#FCCD04;padding:3px 10px;border-radius:20px;font-weight:700;">SELLER</div>
+              </button>
+            </div>
+
+            <div style="border-top:1px solid #2D303A;padding-top:16px;">
+              <div style="font-size:11px;color:#9DA3AE;margin-bottom:8px;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Or enter Telegram User ID</div>
+              <div style="display:flex;gap:8px;">
+                <input id="customTgId" type="number" placeholder="e.g. 12893412" style="flex:1;background:#0B0C0E;border:1px solid #2D303A;border-radius:10px;padding:10px 12px;color:white;font-size:13px;outline:none;" />
+                <button onclick="App._loginWithCustomId()" style="background:#FCCD04;color:#111;border:none;border-radius:10px;padding:10px 16px;font-weight:800;font-size:13px;cursor:pointer;">Go</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;font-size:11px;color:#646A78;line-height:1.5;">
+            In production this screen is replaced by Telegram's native auth.<br/>
+            <span style="color:#FCCD04;cursor:pointer;" onclick="App._switchUser()">Switch account</span>
+          </div>
+        </div>
+      `;
+      // Store resolve so buttons can call it
+      App._loginResolve = resolve;
+    });
+  },
+
+  _loginAs(userId) {
+    if (App._loginResolve) {
+      // Show loading spinner while authenticating
+      document.getElementById('loadingScreen').innerHTML = `
+        <div style="text-align:center;">
+          <div class="logo-mark" style="margin:0 auto 16px auto;">eM</div>
+          <div class="loading-spinner"></div>
+          <div style="margin-top:12px;font-size:13px;color:#9DA3AE;">Signing in...</div>
+        </div>`;
+      App._loginResolve(userId);
+      App._loginResolve = null;
     }
+  },
+
+  _loginWithCustomId() {
+    const id = parseInt(document.getElementById('customTgId')?.value, 10);
+    if (!id || id < 1) { alert('Enter a valid Telegram User ID'); return; }
+    this._loginAs(id);
+  },
+
+  _switchUser() {
+    localStorage.removeItem('em_demo_user');
+    localStorage.removeItem('em_token');
+    location.reload();
   },
 
   async loadInitialData() {
@@ -112,12 +212,25 @@ const App = {
     document.getElementById('app').style.display = 'flex';
     document.getElementById('app').style.flexDirection = 'column';
 
-    // Update header
     const user = State.user;
     if (user) {
       document.getElementById('userAvatar').textContent = (user.firstName || 'U')[0].toUpperCase();
       document.getElementById('headerUsername').textContent = `${user.firstName} ${user.lastName || ''}`.trim();
       document.getElementById('headerLocation').textContent = 'Addis Ababa, Ethiopia';
+    }
+
+    // Add switch account button in header (browser only — not inside Telegram)
+    if (!window.Telegram?.WebApp?.initData) {
+      const headerRight = document.getElementById('appHeader').querySelector('.header-right');
+      if (headerRight && !document.getElementById('switchBtn')) {
+        const btn = document.createElement('button');
+        btn.id = 'switchBtn';
+        btn.title = 'Switch account';
+        btn.onclick = () => App._switchUser();
+        btn.style.cssText = 'background:none;border:none;color:#9DA3AE;cursor:pointer;font-size:11px;margin-left:8px;padding:4px 8px;border-radius:8px;border:1px solid #2D303A;';
+        btn.textContent = '⇄ Switch';
+        headerRight.appendChild(btn);
+      }
     }
   },
 
