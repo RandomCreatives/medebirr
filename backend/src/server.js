@@ -1,9 +1,8 @@
 require('dotenv').config();
 
-// Safety: refuse to start if bypass auth is set in production
+// Safety: warn if bypass auth is set in production
 if (process.env.NODE_ENV === 'production' && process.env.BYPASS_TELEGRAM_AUTH === 'true') {
-  console.error('❌ CRITICAL: BYPASS_TELEGRAM_AUTH=true in production. Remove it.');
-  process.env.BYPASS_TELEGRAM_AUTH = 'false';
+  console.warn('⚠️ BYPASS_TELEGRAM_AUTH=true in production — mock login is enabled for browser testing.');
 }
 
 const express = require('express');

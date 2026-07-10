@@ -59,7 +59,7 @@ router.get('/:storeId', async (req, res, next) => {
               sp.cash_on_delivery, sp.telebirr_enabled
        FROM stores s
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
-       WHERE s.store_id = $1 OR s.store_slug = $1`,
+       WHERE s.store_id = $1 OR s.store_slug = $1::text`,
       [req.params.storeId]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Store not found' });
