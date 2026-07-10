@@ -87,7 +87,10 @@ router.post(
     body('store_name').trim().notEmpty().isLength({ min: 3, max: 255 }),
     body('location_sub_city').notEmpty(),
     body('business_phone').notEmpty(),
-    body('telebirr_merchant_id').optional().isString()
+    body('telebirr_merchant_id').optional().isString(),
+    body('cbe_account_number').optional().isString(),
+    body('telebirr_account_name').optional().isString(),
+    body('cbe_account_name').optional().isString()
   ],
   async (req, res, next) => {
     try {
@@ -97,7 +100,8 @@ router.post(
       const {
         store_name, tg_group_id, tg_channel_username, description,
         location_sub_city, location_woreda, location_detail,
-        physical_address, business_phone, telebirr_merchant_id, cbe_account_number
+        physical_address, business_phone, telebirr_merchant_id, cbe_account_number,
+        telebirr_account_name, cbe_account_name
       } = req.body;
 
       // Generate slug from store name
@@ -108,14 +112,16 @@ router.post(
           store_name, store_slug, admin_tg_user_id, tg_group_id, tg_channel_username,
           description, location_sub_city, location_woreda, location_detail,
           physical_address, business_phone, telebirr_merchant_id, cbe_account_number,
+          telebirr_account_name, cbe_account_name,
           status
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'pending')
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'pending')
         RETURNING store_id, store_name, store_slug, status`,
         [store_name, slug, req.user.tg_user_id, tg_group_id || null,
          tg_channel_username || null, description || null,
          location_sub_city, location_woreda || null, location_detail || null,
          physical_address || null, business_phone,
-         telebirr_merchant_id || null, cbe_account_number || null]
+         telebirr_merchant_id || null, cbe_account_number || null,
+         telebirr_account_name || null, cbe_account_name || null]
       );
 
       const store = result.rows[0];
@@ -141,7 +147,8 @@ router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res
   try {
     const {
       description, location_sub_city, location_woreda, location_detail,
-      physical_address, business_phone, tg_channel_username
+      physical_address, business_phone, tg_channel_username,
+      telebirr_merchant_id, cbe_account_number, telebirr_account_name, cbe_account_name
     } = req.body;
 
     const result = await query(
@@ -153,11 +160,17 @@ router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res
         physical_address = COALESCE($5, physical_address),
         business_phone = COALESCE($6, business_phone),
         tg_channel_username = COALESCE($7, tg_channel_username),
+        telebirr_merchant_id = COALESCE($8, telebirr_merchant_id),
+        cbe_account_number = COALESCE($9, cbe_account_number),
+        telebirr_account_name = COALESCE($10, telebirr_account_name),
+        cbe_account_name = COALESCE($11, cbe_account_name),
         updated_at = NOW()
-       WHERE store_id = $8
+       WHERE store_id = $12
        RETURNING store_id, store_name, store_slug, status, updated_at`,
       [description, location_sub_city, location_woreda, location_detail,
-       physical_address, business_phone, tg_channel_username, req.params.storeId]
+       physical_address, business_phone, tg_channel_username,
+       telebirr_merchant_id, cbe_account_number, telebirr_account_name, cbe_account_name,
+       req.params.storeId]
     );
     res.json({ store: result.rows[0] });
   } catch (err) {
@@ -174,7 +187,7 @@ router.put('/:storeId/policy', requireAuth, requireSellerOf('storeId'), async (r
     const {
       return_policy_type, custom_policy_text, addis_delivery_fee,
       regional_dispatch_fee, free_delivery_threshold, zone_fee_matrix,
-      cash_on_delivery, telebirr_enabled, chapa_enabled
+      cash_on_delivery, telebirr_enabled, cbe_enabled
     } = req.body;
 
     const result = await query(
@@ -187,14 +200,14 @@ router.put('/:storeId/policy', requireAuth, requireSellerOf('storeId'), async (r
         zone_fee_matrix = COALESCE($6, zone_fee_matrix),
         cash_on_delivery = COALESCE($7, cash_on_delivery),
         telebirr_enabled = COALESCE($8, telebirr_enabled),
-        chapa_enabled = COALESCE($9, chapa_enabled),
+        cbe_enabled = COALESCE($9, cbe_enabled),
         updated_at = NOW()
        WHERE store_id = $10
        RETURNING *`,
       [return_policy_type, custom_policy_text, addis_delivery_fee,
        regional_dispatch_fee, free_delivery_threshold,
        zone_fee_matrix ? JSON.stringify(zone_fee_matrix) : null,
-       cash_on_delivery, telebirr_enabled, chapa_enabled, req.params.storeId]
+       cash_on_delivery, telebirr_enabled, cbe_enabled, req.params.storeId]
     );
     res.json({ policy: result.rows[0] });
   } catch (err) {

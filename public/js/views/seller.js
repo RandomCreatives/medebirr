@@ -321,16 +321,44 @@ const SellerViews = {
           <label class="form-label">Payment Methods Accepted</label>
           <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;">
             <input type="checkbox" id="telebirrEnabled" ${store.telebirr_enabled!==false?'checked':''} style="accent-color:var(--accent);">
-            📱 Telebirr SuperApp (Direct to your Shortcode)
+            📱 Telebirr (Buyer pays to your number)
           </label>
           <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;">
-            <input type="checkbox" id="chapaEnabled" ${store.chapa_enabled?'checked':''} style="accent-color:var(--accent);">
-            💳 Chapa (Online Card / Mobile Money)
+            <input type="checkbox" id="cbeEnabled" ${store.cbe_enabled?'checked':''} style="accent-color:var(--accent);">
+            🏦 CBE Bank Transfer (Buyer transfers to your account)
           </label>
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
             <input type="checkbox" id="cashEnabled" ${store.cash_on_delivery!==false?'checked':''} style="accent-color:var(--accent);">
             💵 Cash on Delivery
           </label>
+        </div>
+
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:12px;">💳 Payment Account Details</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">
+            These details are shown to buyers at checkout so they can pay you directly.
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div>
+              <label class="form-label" style="font-size:11px;">Telebirr Number</label>
+              <input class="form-input" id="telebirrMerchantId" value="${store.telebirr_merchant_id || ''}" placeholder="+251 9XX XXX XXX"/>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px;">Telebirr Account Name</label>
+              <input class="form-input" id="telebirrAccountName" value="${store.telebirr_account_name || ''}" placeholder="Account holder name"/>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <label class="form-label" style="font-size:11px;">CBE Account Number</label>
+              <input class="form-input" id="cbeAccountNumber" value="${store.cbe_account_number || ''}" placeholder="1000XXXXXXX"/>
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px;">CBE Account Name</label>
+              <input class="form-input" id="cbeAccountName" value="${store.cbe_account_name || ''}" placeholder="Account holder name"/>
+            </div>
+          </div>
+          <button class="btn-secondary" style="margin-top:12px;width:100%;" onclick="App.savePaymentAccounts()">Save Payment Accounts</button>
         </div>
 
         <button class="btn-primary" onclick="App.savePolicy()">Save Store Settings</button>

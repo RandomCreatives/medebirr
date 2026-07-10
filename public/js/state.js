@@ -123,10 +123,16 @@ const State = {
         shopId,
         shopName: product.store_name,
         location: product.location_sub_city || '',
+        physicalAddress: product.physical_address || '',
         returnPolicy: product.return_policy_type || 'no_return',
-        deliveryFee: Number(product.addis_delivery_fee) || 150,  // Always numeric
+        deliveryFee: Number(product.addis_delivery_fee) || 150,
+        freeDeliveryThreshold: Number(product.free_delivery_threshold) || 0,
         telebirrCode: product.telebirr_merchant_id || '',
-        chapaEnabled: product.chapa_enabled || false,
+        telebirrAccountName: product.telebirr_account_name || '',
+        cbeAccountNumber: product.cbe_account_number || '',
+        cbeAccountName: product.cbe_account_name || '',
+        telebirrEnabled: product.telebirr_enabled !== false,
+        cbeEnabled: product.cbe_enabled || false,
         cashEnabled: product.cash_on_delivery !== false,
         items: []
       };

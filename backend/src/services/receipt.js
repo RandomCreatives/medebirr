@@ -122,7 +122,10 @@ async function generateReceiptPDF({ order, items, buyer, store, rider, qrBuffer 
     doc.fontSize(9).font('Helvetica').fillColor('#333333');
     doc.text(`Method: ${(order.payment_method || 'cash').toUpperCase()}`);
     doc.text(`Status: ${(order.payment_status || 'pending').toUpperCase()}`);
-    if (order.payment_tx_ref) doc.text(`Transaction: ${order.payment_tx_ref}`);
+    if (order.transaction_code) doc.text(`Transaction Code: ${order.transaction_code}`);
+    else if (order.payment_tx_ref) doc.text(`Transaction: ${order.payment_tx_ref}`);
+    const deliveryMethod = order.delivery_method === 'pickup' ? 'Collect from Store' : 'Delivery to Address';
+    doc.text(`Delivery: ${deliveryMethod}`);
     doc.moveDown(0.8);
 
     // ── Buyer Info ──

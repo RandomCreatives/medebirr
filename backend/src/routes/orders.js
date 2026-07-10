@@ -29,7 +29,7 @@ router.post(
     body('delivery_address').isObject(),
     body('delivery_address.sub_city').notEmpty(),
     body('delivery_address.phone').notEmpty(),
-    body('payment_method').isIn(['telebirr', 'chapa', 'cash'])
+    body('payment_method').isIn(['telebirr', 'cbe', 'cash'])
   ],
   async (req, res, next) => {
     const client = await getClient();
@@ -37,14 +37,15 @@ router.post(
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
 
-      const { store_id, items, delivery_address, payment_method, address_id } = req.body;
+      const { store_id, items, delivery_address, payment_method, address_id, delivery_method } = req.body;
+      const isPickup = delivery_method === 'pickup';
       await client.query('BEGIN');
 
       // Get store & policy
       const storeResult = await client.query(
         `SELECT s.*, sp.addis_delivery_fee, sp.regional_dispatch_fee, sp.zone_fee_matrix,
                 sp.return_policy_type, sp.custom_policy_text, sp.cash_on_delivery,
-                sp.telebirr_enabled, sp.telebirr_enabled, sp.free_delivery_threshold
+                sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
          FROM stores s
          LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
          WHERE s.store_id = $1 AND s.status = 'verified'`,
@@ -60,6 +61,10 @@ router.post(
       if (payment_method === 'telebirr' && !store.telebirr_enabled) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: 'Telebirr not enabled for this store' });
+      }
+      if (payment_method === 'cbe' && !store.cbe_enabled) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'CBE not enabled for this store' });
       }
       if (payment_method === 'cash' && !store.cash_on_delivery) {
         await client.query('ROLLBACK');
@@ -104,18 +109,21 @@ router.post(
         });
       }
 
-      // Calculate delivery fee based on sub-city
-      let deliveryFee = store.addis_delivery_fee || 150;
-      if (store.zone_fee_matrix) {
-        const matrix = typeof store.zone_fee_matrix === 'string'
-          ? JSON.parse(store.zone_fee_matrix)
-          : store.zone_fee_matrix;
-        const zoneFee = matrix[delivery_address.sub_city];
-        if (zoneFee !== undefined) deliveryFee = zoneFee;
-      }
-      // Free delivery threshold check
-      if (store.free_delivery_threshold && subtotal >= store.free_delivery_threshold) {
-        deliveryFee = 0;
+      // Calculate delivery fee (free for store pickup)
+      let deliveryFee = 0;
+      if (!isPickup) {
+        deliveryFee = store.addis_delivery_fee || 150;
+        if (store.zone_fee_matrix) {
+          const matrix = typeof store.zone_fee_matrix === 'string'
+            ? JSON.parse(store.zone_fee_matrix)
+            : store.zone_fee_matrix;
+          const zoneFee = matrix[delivery_address.sub_city];
+          if (zoneFee !== undefined) deliveryFee = zoneFee;
+        }
+        // Free delivery threshold check
+        if (store.free_delivery_threshold && subtotal >= store.free_delivery_threshold) {
+          deliveryFee = 0;
+        }
       }
       const total = subtotal + deliveryFee;
 
@@ -124,7 +132,10 @@ router.post(
         return_policy_type: store.return_policy_type,
         custom_policy_text: store.custom_policy_text,
         store_name: store.store_name,
-        telebirr_merchant_id: store.telebirr_merchant_id
+        telebirr_merchant_id: store.telebirr_merchant_id,
+        cbe_account_number: store.cbe_account_number,
+        telebirr_account_name: store.telebirr_account_name,
+        cbe_account_name: store.cbe_account_name
       };
 
       // Create order
@@ -133,12 +144,12 @@ router.post(
         `INSERT INTO orders (
           order_ref, buyer_tg_user_id, store_id, address_id, delivery_address,
           subtotal_etb, delivery_fee_etb, total_etb, payment_method,
-          payment_status, order_status, policy_snapshot
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10)
+          payment_status, order_status, policy_snapshot, delivery_method
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11)
         RETURNING *`,
         [orderRef, req.user.tg_user_id, store_id, address_id || null,
          JSON.stringify(delivery_address), subtotal, deliveryFee, total,
-         payment_method, JSON.stringify(policySnapshot)]
+         payment_method, JSON.stringify(policySnapshot), delivery_method || 'delivery']
       );
       const order = orderResult.rows[0];
 
@@ -158,7 +169,15 @@ router.post(
         order: {
           ...order,
           items: orderItems,
-          store: { store_id: store.store_id, store_name: store.store_name, telebirr_merchant_id: store.telebirr_merchant_id }
+          store: {
+            store_id: store.store_id,
+            store_name: store.store_name,
+            telebirr_merchant_id: store.telebirr_merchant_id,
+            telebirr_account_name: store.telebirr_account_name,
+            cbe_account_number: store.cbe_account_number,
+            cbe_account_name: store.cbe_account_name,
+            physical_address: store.physical_address
+          }
         }
       });
     } catch (err) {

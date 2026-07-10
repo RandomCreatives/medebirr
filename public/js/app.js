@@ -808,18 +808,16 @@ const App = {
 
     const pkg = State.cart[shopId];
     const payMethod = document.querySelector('input[name="payMethod"]:checked')?.value || 'telebirr';
-    const telebirrPhone = document.getElementById('telebirrPhone')?.value?.trim();
-    const contactPhone = document.getElementById('contactPhone')?.value?.trim() || telebirrPhone;
-
-    if (payMethod === 'telebirr' && !telebirrPhone) {
-      this.toast('Please enter your Telebirr phone number', 'error');
-      document.getElementById('telebirrPhone')?.focus();
+    const contactPhone = document.getElementById('contactPhone')?.value?.trim();
+    if (!contactPhone) {
+      this.toast('Please enter your phone number', 'error');
       return;
     }
 
     // ── Read delivery method & build address ──────────
-    const selectedDelivery = document.querySelector('input[name="deliveryMethod"]:checked')?.value || 'home';
-    const deliveryFee = Modals._currentDeliveryFee ?? pkg.deliveryFee;
+    const selectedDelivery = document.querySelector('input[name="deliveryMethod"]:checked')?.value || 'delivery';
+    const isPickup = selectedDelivery === 'pickup';
+    const deliveryFee = isPickup ? 0 : (Modals._currentDeliveryFee ?? pkg.deliveryFee);
     let deliveryAddress = {};
     let deliveryNote = '';
 
@@ -829,7 +827,7 @@ const App = {
       if (addr) {
         deliveryAddress = { sub_city: addr.sub_city, woreda: addr.woreda, house_number: addr.house_number, landmark: addr.landmark, phone: addr.phone || contactPhone };
       }
-    } else if (selectedDelivery === 'home') {
+    } else if (selectedDelivery === 'delivery') {
       const subCity = document.getElementById('addrSubCity')?.value?.trim();
       const woreda = document.getElementById('addrWoreda')?.value?.trim();
       const house = document.getElementById('addrHouse')?.value?.trim();
@@ -838,25 +836,16 @@ const App = {
       if (document.getElementById('saveThisAddress')?.checked && subCity) {
         Api.users.addAddress({ label: 'Home', sub_city: subCity, woreda, house_number: house, phone: contactPhone, is_default: false }).catch(() => {});
       }
-    } else if (selectedDelivery === 'telegram_loc') {
-      const hint = document.getElementById('addrHouse')?.value?.trim();
-      deliveryAddress = { sub_city: 'Via Telegram Location', house_number: hint || 'Buyer will share live location', phone: contactPhone };
-      deliveryNote = 'TELEGRAM_LOCATION';
-    } else if (selectedDelivery === 'landmark') {
-      const subCity = document.getElementById('addrSubCity')?.value?.trim();
-      const landmark = document.getElementById('addrHouse')?.value?.trim();
-      if (!landmark) { this.toast('Please describe the meeting landmark', 'error'); return; }
-      deliveryAddress = { sub_city: subCity || 'Addis Ababa', house_number: landmark, phone: contactPhone };
-      deliveryNote = 'LANDMARK_MEETUP';
-    } else if (selectedDelivery === 'pickup') {
-      deliveryAddress = { sub_city: pkg.location || 'Store', house_number: 'Customer collects from store directly', phone: contactPhone };
+    } else if (isPickup) {
+      deliveryAddress = { sub_city: pkg.location || 'Store', house_number: 'Customer collects from store', phone: contactPhone };
       deliveryNote = 'STORE_PICKUP';
-    } else if (selectedDelivery === 'bus') {
-      const city = document.getElementById('addrSubCity')?.value?.trim();
-      const details = document.getElementById('addrHouse')?.value?.trim();
-      if (!city) { this.toast('Please select destination city', 'error'); return; }
-      deliveryAddress = { sub_city: city, house_number: details || city + ' Bus Terminal', phone: contactPhone };
-      deliveryNote = 'BUS_DISPATCH';
+    }
+
+    // ── Read transaction code for Telebirr/CBE ────────
+    const txCode = document.getElementById('txCodeInput')?.value?.trim();
+    if ((payMethod === 'telebirr' || payMethod === 'cbe') && !txCode) {
+      this.toast('Please enter the transaction code after making payment', 'error');
+      return;
     }
 
     const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
@@ -866,30 +855,21 @@ const App = {
       const orderData = await Api.orders.create({
         store_id: shopId,
         items,
-        delivery_address: { ...deliveryAddress, delivery_note: deliveryNote, delivery_method: selectedDelivery },
-        delivery_fee_override: deliveryFee,
-        payment_method: payMethod,
-        telebirr_phone: payMethod === 'telebirr' ? telebirrPhone : undefined
+        delivery_address: { ...deliveryAddress, delivery_note: deliveryNote },
+        delivery_method: isPickup ? 'pickup' : 'delivery',
+        payment_method: payMethod
       });
       const order = orderData.order;
 
-      if (payMethod === 'telebirr') {
-        const payData = await Api.payments.initiateTelebirr(order.order_id);
-        Modals.showPaymentProcessing(payData.txRef, order.total_etb, telebirrPhone, 'telebirr');
-        this._pendingOrderId = order.order_id;
-        this._pendingStoreId = shopId;
-        this._pendingOrderRef = order.order_ref;
-        this._pendingStoreName = order.store?.store_name || pkg.shopName;
-        this._startPaymentPolling();
-      } else if (payMethod === 'chapa') {
-        const payData = await Api.payments.initiateChapa(order.order_id);
-        Modals.showPaymentProcessing(payData.txRef || payData.checkout_url, order.total_etb, '', 'chapa');
-        this._pendingOrderId = order.order_id;
-        this._pendingStoreId = shopId;
-        this._pendingOrderRef = order.order_ref;
-        this._pendingStoreName = order.store?.store_name || pkg.shopName;
-        this._startPaymentPolling();
+      if (payMethod === 'telebirr' || payMethod === 'cbe') {
+        // Submit transaction code for manual verification
+        await Api.payments.confirmTx(order.order_id, txCode);
+        State.clearStoreCart(shopId);
+        this.renderNavigation();
+        Modals.showOrderConfirmed(order.order_ref, order.store?.store_name || pkg.shopName, order.order_id);
+        this.refreshOrders();
       } else {
+        // Cash on delivery
         await Api.payments.confirmCash(order.order_id);
         State.clearStoreCart(shopId);
         this.renderNavigation();
@@ -1144,7 +1124,7 @@ const App = {
       addis_delivery_fee: parseFloat(document.getElementById('addisFee')?.value),
       regional_dispatch_fee: parseFloat(document.getElementById('regionalFee')?.value),
       telebirr_enabled: document.getElementById('telebirrEnabled')?.checked,
-      chapa_enabled: document.getElementById('chapaEnabled')?.checked,
+      cbe_enabled: document.getElementById('cbeEnabled')?.checked,
       cash_on_delivery: document.getElementById('cashEnabled')?.checked
     };
     try {
@@ -1153,6 +1133,25 @@ const App = {
       const storeData = await Api.stores.get(storeId);
       State.stores[0] = { ...State.stores[0], ...storeData.store };
       this.toast('Store settings saved!', 'success');
+    } catch (err) {
+      this.toast(err.message || 'Save failed', 'error');
+    }
+  },
+
+  async savePaymentAccounts() {
+    const storeId = State.currentStoreId;
+    if (!storeId) return;
+    const data = {
+      telebirr_merchant_id: document.getElementById('telebirrMerchantId')?.value?.trim() || null,
+      telebirr_account_name: document.getElementById('telebirrAccountName')?.value?.trim() || null,
+      cbe_account_number: document.getElementById('cbeAccountNumber')?.value?.trim() || null,
+      cbe_account_name: document.getElementById('cbeAccountName')?.value?.trim() || null
+    };
+    try {
+      await Api.stores.update(storeId, data);
+      const storeData = await Api.stores.get(storeId);
+      State.stores[0] = { ...State.stores[0], ...storeData.store };
+      this.toast('Payment accounts saved!', 'success');
     } catch (err) {
       this.toast(err.message || 'Save failed', 'error');
     }

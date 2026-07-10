@@ -27,12 +27,11 @@ const Modals = {
     if (!pkg) return;
 
     const sub = State.pkgSubtotal(shopId);
-    const total = State.pkgTotal(shopId);
 
     // Saved addresses as options
     const savedAddressesHtml = State.addresses.length
       ? State.addresses.map(a => `
-          <label class="delivery-option" onclick="Modals._selectDelivery(this,'saved')" style="cursor:pointer;">
+          <label class="delivery-option" onclick="Modals._selectDelivery(this,'saved_${a.address_id}')" style="cursor:pointer;">
             <input type="radio" name="deliveryMethod" value="saved_${a.address_id}" style="accent-color:var(--accent);flex-shrink:0;"/>
             <div style="flex:1;">
               <div style="font-weight:800;font-size:13px;">${a.label} ${a.is_default ? '<span style="background:rgba(252,205,4,0.2);color:var(--accent);font-size:9px;padding:1px 6px;border-radius:10px;font-weight:800;">DEFAULT</span>' : ''}</div>
@@ -47,112 +46,74 @@ const Modals = {
       <div class="modal-title">Checkout: ${pkg.shopName}</div>
       <div style="font-size:11px;color:var(--success);font-weight:700;margin-bottom:16px;">✅ ${State.policyLabel(pkg.returnPolicy)}</div>
 
-      <!-- ── STEP 1: How to receive your order ── -->
+      <!-- ── STEP 1: Delivery ── -->
       <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">
-        📦 Step 1 — How would you like to receive your order?
+        📦 Step 1 — Delivery
       </div>
-
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;" id="deliveryOptions">
-
-        <!-- Option A: Home/Office Delivery -->
-        <label class="delivery-option selected" onclick="Modals._selectDelivery(this,'home')" style="cursor:pointer;">
-          <input type="radio" name="deliveryMethod" value="home" checked style="accent-color:var(--accent);flex-shrink:0;"/>
+        <label class="delivery-option selected" onclick="Modals._selectDelivery(this,'delivery')" style="cursor:pointer;">
+          <input type="radio" name="deliveryMethod" value="delivery" checked style="accent-color:var(--accent);flex-shrink:0;"/>
           <div style="flex:1;">
-            <div style="font-weight:800;font-size:13px;">🏠 Deliver to my Address</div>
+            <div style="font-weight:800;font-size:13px;">🏠 Delivery to My Address</div>
             <div style="font-size:11px;color:var(--text-secondary);">Rider brings it to your door — delivery fee applies</div>
           </div>
           <div style="font-size:11px;color:var(--accent);font-weight:800;">+${State.formatETB(Number(pkg.deliveryFee))}</div>
         </label>
-
-        <!-- Option B: Telegram Location Pin -->
-        <label class="delivery-option" onclick="Modals._selectDelivery(this,'telegram_loc')" style="cursor:pointer;">
-          <input type="radio" name="deliveryMethod" value="telegram_loc" style="accent-color:var(--accent);flex-shrink:0;"/>
-          <div style="flex:1;">
-            <div style="font-weight:800;font-size:13px;">📍 Share My Telegram Location</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Pin your exact GPS location for the rider</div>
-          </div>
-          <div style="font-size:11px;color:var(--accent);font-weight:800;">+${State.formatETB(Number(pkg.deliveryFee))}</div>
-        </label>
-
-        <!-- Option C: Meet at a landmark -->
-        <label class="delivery-option" onclick="Modals._selectDelivery(this,'landmark')" style="cursor:pointer;">
-          <input type="radio" name="deliveryMethod" value="landmark" style="accent-color:var(--accent);flex-shrink:0;"/>
-          <div style="flex:1;">
-            <div style="font-weight:800;font-size:13px;">🗺️ Meet at a Landmark / Kiosk</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Pick up at a public meeting point (e.g. near Total station, Edna Mall)</div>
-          </div>
-          <div style="font-size:11px;color:var(--accent);font-weight:800;">+${State.formatETB(Math.round(Number(pkg.deliveryFee) * 0.5))}</div>
-        </label>
-
-        <!-- Option D: Store Pickup -->
         <label class="delivery-option" onclick="Modals._selectDelivery(this,'pickup')" style="cursor:pointer;">
           <input type="radio" name="deliveryMethod" value="pickup" style="accent-color:var(--accent);flex-shrink:0;"/>
           <div style="flex:1;">
-            <div style="font-weight:800;font-size:13px;">🏪 Collect from Store Directly</div>
+            <div style="font-weight:800;font-size:13px;">🏪 Collect from Store</div>
             <div style="font-size:11px;color:var(--text-secondary);">Visit the seller's shop — no delivery fee</div>
           </div>
           <div style="font-size:11px;color:var(--success);font-weight:800;">Free</div>
         </label>
-
-        <!-- Option E: Bus Terminal Dispatch (Regional) -->
-        <label class="delivery-option" onclick="Modals._selectDelivery(this,'bus')" style="cursor:pointer;">
-          <input type="radio" name="deliveryMethod" value="bus" style="accent-color:var(--accent);flex-shrink:0;"/>
-          <div style="flex:1;">
-            <div style="font-weight:800;font-size:13px;">🚌 Bus Terminal Dispatch (Regional)</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Seller ships to your city via bus terminal (Hawassa, Bahir Dar, Dire Dawa...)</div>
-          </div>
-          <div style="font-size:11px;color:var(--warning);font-weight:800;">+${State.formatETB(Number(pkg.deliveryFee) * 2 || 400)}</div>
-        </label>
-
         ${savedAddressesHtml ? `
         <div style="font-size:11px;color:var(--text-secondary);font-weight:700;margin-top:4px;padding:4px 0;">── Saved Addresses ──</div>
         ${savedAddressesHtml}` : ''}
       </div>
 
-      <!-- Dynamic form that changes based on delivery method -->
+      <!-- Dynamic delivery form area -->
       <div id="deliveryFormArea"></div>
 
-      <!-- ── STEP 2: Contact & Phone ── -->
+      <!-- ── STEP 2: Contact ── -->
       <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;margin-top:4px;">
         📱 Step 2 — Your Contact
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
-        <div>
-          <label class="form-label">Phone Number</label>
-          <input class="form-input" id="contactPhone" type="tel" placeholder="+251 9XX XXX XXX" value="${State.user?.phone || ''}"/>
-        </div>
-        <div id="telebirrField">
-          <label class="form-label">Telebirr Number</label>
-          <input class="form-input" id="telebirrPhone" type="tel" placeholder="+251 9XX XXX XXX" value="${State.user?.phone || ''}"/>
-          <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;" id="telebirrNote">Required for Telebirr payment</div>
-        </div>
+      <div style="margin-bottom:16px;">
+        <label class="form-label">Phone Number</label>
+        <input class="form-input" id="contactPhone" type="tel" placeholder="+251 9XX XXX XXX" value="${State.user?.phone || ''}"/>
       </div>
 
-      <!-- ── STEP 3: Payment Method ── -->
+      <!-- ── STEP 3: Payment ── -->
       <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">
-        💳 Step 3 — Choose Payment Method
+        💳 Step 3 — Payment
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr${pkg.chapaEnabled ? ' 1fr' : ''};gap:8px;margin-bottom:12px;" id="paymentMethodCards">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;" id="paymentMethodCards">
+        ${pkg.telebirrEnabled ? `
         <label class="payment-option selected" onclick="Modals._selectPayment(this,'telebirr')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
           <input type="radio" name="payMethod" value="telebirr" checked style="display:none;">
           <span style="font-size:24px;">📱</span>
           <span style="font-size:13px;font-weight:800;">Telebirr</span>
           <span style="font-size:10px;color:var(--text-secondary);">Mobile Money</span>
-        </label>
+        </label>` : ''}
+        ${pkg.cbeEnabled ? `
+        <label class="payment-option" onclick="Modals._selectPayment(this,'cbe')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
+          <input type="radio" name="payMethod" value="cbe" style="display:none;">
+          <span style="font-size:24px;">🏦</span>
+          <span style="font-size:13px;font-weight:800;">CBE</span>
+          <span style="font-size:10px;color:var(--text-secondary);">Bank Transfer</span>
+        </label>` : ''}
+        ${pkg.cashEnabled ? `
         <label class="payment-option" onclick="Modals._selectPayment(this,'cash')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
           <input type="radio" name="payMethod" value="cash" style="display:none;">
           <span style="font-size:24px;">💵</span>
-          <span style="font-size:13px;font-weight:800;">Cash on Delivery</span>
-          <span style="font-size:10px;color:var(--text-secondary);">Pay when received</span>
-        </label>
-        ${pkg.chapaEnabled ? `
-        <label class="payment-option" onclick="Modals._selectPayment(this,'chapa')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
-          <input type="radio" name="payMethod" value="chapa" style="display:none;">
-          <span style="font-size:24px;">💳</span>
-          <span style="font-size:13px;font-weight:800;">Chapa</span>
-          <span style="font-size:10px;color:var(--text-secondary);">Card / Bank Transfer</span>
+          <span style="font-size:13px;font-weight:800;">Cash</span>
+          <span style="font-size:10px;color:var(--text-secondary);">Pay on Delivery</span>
         </label>` : ''}
       </div>
+
+      <!-- Payment details area (shown for Telebirr/CBE) -->
+      <div id="paymentDetailsArea"></div>
 
       <!-- ── Policy + Summary ── -->
       <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
@@ -166,17 +127,19 @@ const Modals = {
         <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;"><span style="color:var(--text-secondary);">Subtotal</span><span>${State.formatETB(sub)}</span></div>
         <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;"><span style="color:var(--text-secondary);">Delivery</span><span id="summaryDelivery">${State.formatETB(pkg.deliveryFee)}</span></div>
         <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:900;border-top:1px solid var(--border);padding-top:8px;">
-          <span>Total</span><span style="color:var(--accent);" id="summaryTotal">${State.formatETB(total)}</span>
+          <span>Total</span><span style="color:var(--accent);" id="summaryTotal">${State.formatETB(sub + pkg.deliveryFee)}</span>
         </div>
       </div>
 
       <button class="btn-primary" onclick="App.placeOrder('${shopId}')">
-        🛒 Confirm Order — <span id="btnTotal">${State.formatETB(total)}</span>
+        🛒 Confirm Order — <span id="btnTotal">${State.formatETB(sub + pkg.deliveryFee)}</span>
       </button>
     `);
 
-    // Init delivery form for default 'home' option
-    Modals._renderDeliveryForm('home', pkg);
+    // Init for default delivery method
+    Modals._renderDeliveryForm('delivery', pkg);
+    // Init payment details for default payment method (telebirr)
+    Modals._renderPaymentDetails('telebirr', pkg);
   },
 
   _selectDelivery(label, method) {
@@ -192,17 +155,22 @@ const Modals = {
     const area = document.getElementById('deliveryFormArea');
     if (!area) return;
 
-    const baseDelivery = Number(pkg.deliveryFee) || 150;
-    // Update delivery cost in summary
-    const deliveryCosts = {
-      home: baseDelivery,
-      telegram_loc: baseDelivery,
-      landmark: Math.round(baseDelivery * 0.5),
-      pickup: 0,
-      bus: baseDelivery * 2 || 400,
-      saved: baseDelivery
-    };
-    const cost = Number(deliveryCosts[method] ?? baseDelivery);
+    // Determine if this is a saved address
+    const isSaved = method.startsWith('saved_');
+    const isPickup = method === 'pickup';
+    const isDelivery = method === 'delivery' || isSaved;
+
+    // Calculate delivery cost
+    let cost = 0;
+    if (isPickup) {
+      cost = 0;
+    } else if (isSaved) {
+      cost = Number(pkg.deliveryFee) || 150;
+    } else {
+      cost = Number(pkg.deliveryFee) || 150;
+    }
+
+    // Update summary
     const sub = Object.values(State.cart).reduce((s, p) =>
       s + p.items.reduce((ss, i) => ss + Number(i.product.price_etb) * i.qty, 0), 0);
     const newTotal = sub + cost;
@@ -214,7 +182,30 @@ const Modals = {
     if (btnTotal) btnTotal.textContent = State.formatETB(newTotal);
     Modals._currentDeliveryFee = cost;
 
-    if (method === 'home') {
+    if (isPickup) {
+      area.innerHTML = `
+        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;color:var(--success);margin-bottom:6px;">🏪 Store Pickup — Free</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+            📍 <strong style="color:white;">${pkg.shopName}</strong><br/>
+            ${pkg.physicalAddress || pkg.location ? (pkg.physicalAddress || pkg.location) : 'Contact seller for exact address.'}<br/>
+            After placing your order, the seller will confirm a pickup time via Telegram.
+          </div>
+        </div>`;
+    } else if (isSaved) {
+      const addrId = method.replace('saved_', '');
+      const addr = State.addresses.find(a => a.address_id === addrId);
+      area.innerHTML = `
+        <div style="background:var(--bg-surface);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:4px;">📍 ${addr?.label || 'Saved Address'}</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+            ${addr?.sub_city || ''}${addr?.woreda ? ', ' + addr.woreda : ''} ${addr?.house_number ? '· ' + addr.house_number : ''}<br/>
+            📞 ${addr?.phone || ''}
+          </div>
+          <input type="hidden" id="savedAddressId" value="${addrId}"/>
+        </div>`;
+    } else {
+      // Delivery: address form
       area.innerHTML = `
         <div style="margin-bottom:16px;">
           <label class="form-label">📍 Delivery Address</label>
@@ -233,60 +224,69 @@ const Modals = {
             <input type="checkbox" id="saveThisAddress" style="accent-color:var(--accent);"> Save this address for future orders
           </label>
         </div>`;
-    } else if (method === 'telegram_loc') {
-      area.innerHTML = `
-        <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:14px;margin-bottom:16px;">
-          <div style="font-size:13px;font-weight:800;color:#60A5FA;margin-bottom:8px;">📍 Share Your Location via Telegram</div>
-          <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px;">
-            After placing the order, the seller will contact you on Telegram to request your live location pin. You can share it directly in the chat.
-          </div>
-          <input class="form-input" id="addrHouse" placeholder="Area / Landmark hint (optional, e.g. Near CMC Michael Church)" />
-        </div>`;
-    } else if (method === 'landmark') {
-      area.innerHTML = `
-        <div style="margin-bottom:16px;">
-          <label class="form-label">🗺️ Meeting Point Details</label>
-          <select class="form-select" id="addrSubCity" style="margin-bottom:8px;">
-            ${['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio'].map(s=>`<option>${s}</option>`).join('')}
-          </select>
-          <input class="form-input" id="addrHouse" placeholder="Specific landmark (e.g. Total Station Bole, Edna Mall entrance, Friendship Mall gate 2)"/>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Rider will meet you at this point. Reduced delivery fee applies.</div>
-        </div>`;
-    } else if (method === 'pickup') {
-      area.innerHTML = `
-        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
-          <div style="font-size:13px;font-weight:800;color:var(--success);margin-bottom:6px;">🏪 Store Pickup — Free</div>
-          <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
-            📍 <strong style="color:white;">${pkg.shopName}</strong><br/>
-            ${pkg.location ? pkg.location : 'Contact seller for exact address.'}<br/>
-            After placing your order, the seller will confirm a pickup time via Telegram.
-          </div>
-        </div>`;
-    } else if (method === 'bus') {
-      area.innerHTML = `
-        <div style="margin-bottom:16px;">
-          <label class="form-label">🚌 Bus Terminal Dispatch</label>
-          <select class="form-select" id="addrSubCity" style="margin-bottom:8px;">
-            <option value="Hawassa">Hawassa Bus Terminal</option>
-            <option value="Bahir Dar">Bahir Dar Bus Terminal</option>
-            <option value="Dire Dawa">Dire Dawa Bus Terminal</option>
-            <option value="Adama">Adama (Nazret) Terminal</option>
-            <option value="Jimma">Jimma Bus Terminal</option>
-            <option value="Mekele">Mekele Bus Terminal</option>
-            <option value="Gondar">Gondar Bus Terminal</option>
-            <option value="Other">Other City</option>
-          </select>
-          <input class="form-input" id="addrHouse" placeholder="Your exact pickup contact / address in destination city"/>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Seller will dispatch via intercity bus. You collect from the terminal. Tracking sent via Telegram.</div>
-        </div>`;
     }
   },
 
   _selectPayment(label, value) {
     document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
     label.classList.add('selected');
-    const field = document.getElementById('telebirrField');
-    if (field) field.style.display = value === 'telebirr' ? '' : 'none';
+    const shopId = Object.keys(State.cart)[0];
+    const pkg = shopId ? State.cart[shopId] : null;
+    if (pkg) Modals._renderPaymentDetails(value, pkg);
+  },
+
+  _renderPaymentDetails(method, pkg) {
+    const area = document.getElementById('paymentDetailsArea');
+    if (!area) return;
+
+    if (method === 'telebirr') {
+      const name = pkg.telebirrAccountName || '';
+      const number = pkg.telebirrCode || '';
+      area.innerHTML = `
+        <div style="background:rgba(52,152,219,0.08);border:1px solid rgba(52,152,219,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;color:#3498DB;margin-bottom:8px;">📱 Pay via Telebirr</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.7;">
+            Send payment to the seller's Telebirr account:
+          </div>
+          <div style="background:var(--bg-primary);border-radius:8px;padding:12px;margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--text-secondary);">Account Name</div>
+            <div style="font-size:15px;font-weight:900;color:white;">${name || 'Not set by seller'}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Telebirr Number</div>
+            <div style="font-size:18px;font-weight:900;color:var(--accent);letter-spacing:1px;">${number || 'Not set'}</div>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">After transferring, enter your <strong style="color:white;">Transaction Code</strong> below:</div>
+          <input class="form-input" id="txCodeInput" placeholder="e.g. 2407101234567890" style="font-family:monospace;font-size:14px;letter-spacing:1px;"/>
+          <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">Found in your Telebirr SMS/app confirmation</div>
+        </div>`;
+    } else if (method === 'cbe') {
+      const name = pkg.cbeAccountName || '';
+      const account = pkg.cbeAccountNumber || '';
+      area.innerHTML = `
+        <div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;color:#E74C3C;margin-bottom:8px;">🏦 Pay via CBE Bank Transfer</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.7;">
+            Transfer to the seller's CBE account:
+          </div>
+          <div style="background:var(--bg-primary);border-radius:8px;padding:12px;margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--text-secondary);">Account Name</div>
+            <div style="font-size:15px;font-weight:900;color:white;">${name || 'Not set by seller'}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">CBE Account Number</div>
+            <div style="font-size:18px;font-weight:900;color:#E74C3C;letter-spacing:1px;">${account || 'Not set'}</div>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">After transferring, enter your <strong style="color:white;">Transaction Code</strong> below:</div>
+          <input class="form-input" id="txCodeInput" placeholder="e.g. TXN123456789" style="font-family:monospace;font-size:14px;letter-spacing:1px;"/>
+          <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">Found in your CBE SMS/app confirmation</div>
+        </div>`;
+    } else {
+      // Cash — no details needed
+      area.innerHTML = `
+        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;color:var(--success);margin-bottom:6px;">💵 Cash on Delivery</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
+            Pay in cash when your order is delivered or when you collect from the store.
+          </div>
+        </div>`;
+    }
   },
 
   _handleAddressChange(val) {

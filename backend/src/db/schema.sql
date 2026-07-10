@@ -394,3 +394,20 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS receipt_pdf_url TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_initiated_at TIMESTAMPTZ;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_reason TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ;
+
+-- ============================================================
+-- STORE COLUMNS: payment account display names
+-- ============================================================
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS telebirr_account_name VARCHAR(100);
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS cbe_account_name VARCHAR(100);
+
+-- ============================================================
+-- SELLER POLICIES: replace chapa with cbe toggle
+-- ============================================================
+ALTER TABLE seller_policies ADD COLUMN IF NOT EXISTS cbe_enabled BOOLEAN DEFAULT FALSE;
+
+-- ============================================================
+-- ORDER COLUMNS: transaction code + delivery method
+-- ============================================================
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS transaction_code VARCHAR(100);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_method VARCHAR(30) DEFAULT 'delivery'; -- delivery, pickup

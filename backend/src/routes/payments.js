@@ -453,4 +453,77 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
   }
 });
 
+/**
+ * POST /api/v1/payments/confirm-tx
+ * Buyer submits transaction code after paying via Telebirr/CBE directly to seller
+ */
+router.post('/confirm-tx', requireAuth, async (req, res, next) => {
+  try {
+    const { order_id, transaction_code } = req.body;
+    if (!order_id || !transaction_code) {
+      return res.status(400).json({ error: 'order_id and transaction_code are required' });
+    }
+
+    const orderResult = await query(
+      `SELECT o.*, s.telebirr_merchant_id, s.cbe_account_number, s.store_name
+       FROM orders o JOIN stores s ON o.store_id = s.store_id
+       WHERE o.order_id = $1 AND o.buyer_tg_user_id = $2`,
+      [order_id, req.user.tg_user_id]
+    );
+    if (orderResult.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+
+    const order = orderResult.rows[0];
+    if (!['telebirr', 'cbe'].includes(order.payment_method)) {
+      return res.status(400).json({ error: 'This order does not use a manual payment method' });
+    }
+    if (order.payment_status === 'paid') {
+      return res.status(400).json({ error: 'Order is already paid' });
+    }
+
+    // Store the transaction code and mark as pending verification
+    const gateway = order.payment_method;
+    await query(
+      `INSERT INTO payment_transactions (order_id, gateway, gateway_tx_ref, amount_etb, merchant_code, status)
+       VALUES ($1, $2, $3, $4, $5, 'completed')
+       ON CONFLICT DO NOTHING`,
+      [order_id, gateway, transaction_code, order.total_etb,
+       gateway === 'telebirr' ? order.telebirr_merchant_id : order.cbe_account_number]
+    );
+
+    // Mark order paid + confirmed
+    await query(
+      `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed',
+        transaction_code = $1, payment_tx_ref = $2, updated_at = NOW()
+       WHERE order_id = $3`,
+      [transaction_code, transaction_code, order_id]
+    );
+
+    // Deduct stock
+    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [order_id]);
+    for (const item of items.rows) {
+      await query(
+        `UPDATE products SET stock_quantity = GREATEST(0, stock_quantity - $1), reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2`,
+        [item.quantity, item.product_id]
+      );
+    }
+
+    // Generate QR + receipt
+    try { await generateQRAndReceipt(order_id); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
+
+    // Notify seller via Telegram
+    try {
+      const tgService = require('../services/telegram');
+      await tgService.tgCall('sendMessage', {
+        chat_id: order.admin_tg_user_id,
+        text: `💰 *Payment Received!*\n\nOrder *${order.order_ref}* — Br ${Number(order.total_etb).toLocaleString()}\nMethod: ${gateway.toUpperCase()}\nTransaction Code: \`${transaction_code}\`\n\nPlease prepare for dispatch.`,
+        parse_mode: 'MarkdownV2'
+      });
+    } catch (_) {}
+
+    res.json({ message: 'Payment confirmed with transaction code. Order confirmed.', order_id });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

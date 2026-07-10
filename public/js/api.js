@@ -95,7 +95,8 @@ const Api = {
   payments: {
     initiateTelebirr: (orderId) => Api.post('/payments/telebirr/initiate', { order_id: orderId }),
     initiateChapa:    (orderId) => Api.post('/payments/chapa/initiate',    { order_id: orderId }),
-    confirmCash:      (orderId) => Api.post('/payments/cash/confirm',      { order_id: orderId })
+    confirmCash:      (orderId) => Api.post('/payments/cash/confirm',      { order_id: orderId }),
+    confirmTx:        (orderId, transactionCode) => Api.post('/payments/confirm-tx', { order_id: orderId, transaction_code: transactionCode })
   },
 
   // ── Bot / Telegram Group ───────────────────────────
