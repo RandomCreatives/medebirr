@@ -170,9 +170,8 @@ const Modals = {
       cost = Number(pkg.deliveryFee) || 150;
     }
 
-    // Update summary
-    const sub = Object.values(State.cart).reduce((s, p) =>
-      s + p.items.reduce((ss, i) => ss + Number(i.product.price_etb) * i.qty, 0), 0);
+    // Update summary — use only THIS store's subtotal
+    const sub = pkg.items.reduce((ss, i) => ss + Number(i.product.price_etb) * i.qty, 0);
     const newTotal = sub + cost;
     const summaryDel = document.getElementById('summaryDelivery');
     const summaryTotal = document.getElementById('summaryTotal');
