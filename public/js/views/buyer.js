@@ -1109,7 +1109,7 @@ const BuyerViews = {
           <p>We share your information only as necessary to provide our services:</p>
           <ul>
             <li><strong>Sellers:</strong> Order details and delivery address for fulfillment</li>
-            <li><strong>Payment Processors:</strong> Telebirr, Chapa for secure payment handling</li>
+            <li><strong>Payment Processors:</strong> Telebirr, CBE, Cash on Delivery for secure payment handling</li>
             <li><strong>Delivery Partners:</strong> Name and phone for rider assignment</li>
             <li><strong>Legal Requirements:</strong> When required by Ethiopian law</li>
           </ul>

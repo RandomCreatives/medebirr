@@ -5,6 +5,8 @@ const { query, getClient } = require('../db');
 
 const router = express.Router();
 
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
 /**
  * Generate unique order reference
  */
@@ -336,8 +338,8 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
 
     const itemRows = items.rows.map(i => `
       <tr>
-        <td style="padding:10px 8px;border-bottom:1px solid #eee;">${i.title}</td>
-        <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;">${i.quantity}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #eee;">${esc(i.title)}</td>
+        <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:center;">${esc(i.quantity)}</td>
         <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:right;">Br ${parseFloat(i.price_etb).toLocaleString()}</td>
         <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:right;font-weight:700;">Br ${parseFloat(i.subtotal_etb).toLocaleString()}</td>
       </tr>`).join('');
@@ -394,17 +396,17 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
       <div class="info-grid">
         <div class="info-box">
           <h3>Seller / Store</h3>
-          <p><strong>${order.store_name}</strong><br/>
-          ${order.location_sub_city ? order.location_sub_city + ', Addis Ababa<br/>' : ''}
-          ${order.tg_channel_username ? '@' + order.tg_channel_username + '<br/>' : ''}
-          ${order.telebirr_merchant_id ? 'Telebirr: ' + order.telebirr_merchant_id : ''}</p>
+          <p><strong>${esc(order.store_name)}</strong><br/>
+          ${order.location_sub_city ? esc(order.location_sub_city) + ', Addis Ababa<br/>' : ''}
+          ${order.tg_channel_username ? '@' + esc(order.tg_channel_username) + '<br/>' : ''}
+          ${order.telebirr_merchant_id ? 'Telebirr: ' + esc(order.telebirr_merchant_id) : ''}</p>
         </div>
         <div class="info-box">
           <h3>Buyer</h3>
-          <p><strong>${order.first_name} ${order.last_name || ''}</strong><br/>
-          ${order.buyer_username ? '@' + order.buyer_username + '<br/>' : ''}
-          📍 ${addrStr || 'Address not specified'}<br/>
-          📞 ${addr.phone || 'N/A'}</p>
+          <p><strong>${esc(order.first_name)} ${esc(order.last_name || '')}</strong><br/>
+          ${order.buyer_username ? '@' + esc(order.buyer_username) + '<br/>' : ''}
+          📍 ${esc(addrStr || 'Address not specified')}<br/>
+          📞 ${esc(addr.phone || 'N/A')}</p>
         </div>
       </div>
 
@@ -419,7 +421,7 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
       </table>
 
       <div class="policy-box">
-        🛡️ <strong>${returnPolicy}:</strong> ${order.custom_policy_text || 'See store for full policy details.'}
+        🛡️ <strong>${esc(returnPolicy)}:</strong> ${esc(order.custom_policy_text || 'See store for full policy details.')}
       </div>
     </div>
 

@@ -138,28 +138,4 @@ router.post(
   }
 );
 
-/**
- * POST /api/v1/auth/refresh
- * Refresh JWT token
- */
-router.post('/refresh', async (req, res, next) => {
-  try {
-    const { token } = req.body;
-    if (!token) return res.status(400).json({ error: 'Token required' });
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
-    const result = await query('SELECT * FROM users WHERE tg_user_id = $1 AND is_active = TRUE', [decoded.tg_user_id]);
-    if (result.rows.length === 0) return res.status(401).json({ error: 'User not found' });
-
-    const newToken = jwt.sign(
-      { tg_user_id: decoded.tg_user_id, user_id: decoded.user_id },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-    );
-    res.json({ token: newToken });
-  } catch (err) {
-    next(err);
-  }
-});
-
 module.exports = router;

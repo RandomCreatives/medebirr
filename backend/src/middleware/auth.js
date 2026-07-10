@@ -29,7 +29,9 @@ function verifyTelegramInitData(initData, botToken) {
       .update(dataCheckString)
       .digest('hex');
 
-    if (calculatedHash !== hash) {
+    const hashBuf = Buffer.from(calculatedHash, 'hex');
+    const expectedBuf = Buffer.from(hash, 'hex');
+    if (hashBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(hashBuf, expectedBuf)) {
       return { valid: false, error: 'Hash mismatch' };
     }
 

@@ -37,7 +37,7 @@ router.get('/store/:storeId', requireAuth, async (req, res, next) => {
  * POST /api/v1/pending-products
  * Create a pending product (internal — called by bot webhook)
  */
-router.post('/', async (req, res, next) => {
+router.post('/', requireAuth, async (req, res, next) => {
   try {
     const { store_id, tg_group_id, tg_message_id, title, price_etb, image_urls, caption, auto_detected } = req.body;
 

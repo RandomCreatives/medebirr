@@ -43,6 +43,17 @@ const imageRoutes = require('../backend/src/routes/images');
 const deliveryRoutes = require('../backend/src/routes/delivery');
 const errorHandler = require('../backend/src/middleware/errorHandler');
 
+// ─── Validate required env vars at startup ──────────────────────────────────
+if (!process.env.JWT_SECRET) {
+  console.error('❌ FATAL: JWT_SECRET is not set. Auth will fail.');
+}
+if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
+  console.error('❌ FATAL: DATABASE_URL (or POSTGRES_URL) is not set. DB queries will fail.');
+}
+if (!process.env.TELEGRAM_BOT_TOKEN) {
+  console.warn('⚠️ TELEGRAM_BOT_TOKEN is not set. Bot features will not work.');
+}
+
 const app = express();
 
 // ─── Security ────────────────────────────────────────────────────────────────
@@ -50,16 +61,22 @@ app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false 
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow Vercel preview URLs, custom domain, and local dev
+    // Allow requests with no origin (Telegram WebView, curl, server-to-server)
+    if (!origin) return callback(null, true);
+
     const allowed = [
       process.env.FRONTEND_URL,
-      /\.vercel\.app$/,
-      /^http:\/\/localhost/
+      'https://medebirr.vercel.app',
+      /\.vercel\.app$/
     ].filter(Boolean);
-    if (!origin || allowed.some(p => typeof p === 'string' ? origin === p : p.test(origin))) {
+
+    if (allowed.some(p => typeof p === 'string' ? origin === p : p.test(origin))) {
+      callback(null, true);
+    } else if (!isProd) {
+      // Allow all origins in development (localhost, ngrok, etc.)
       callback(null, true);
     } else {
-      callback(null, true); // Permissive for TMA — Telegram WebView needs this
+      callback(null, true); // Permissive for TMA — Telegram WebView sends no Origin
     }
   },
   credentials: true

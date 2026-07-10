@@ -1041,25 +1041,12 @@ const Modals = {
 
   // ── Payment Processing ────────────────────────────
   showPaymentProcessing(txRef, amount, phoneOrUrl, method = 'telebirr') {
-    const isChapa = method === 'chapa';
     this.open(`
       <div class="modal-handle"></div>
       <div style="text-align:center;padding:20px 0;">
-        <div style="font-size:48px;margin-bottom:16px;">${isChapa ? '💳' : '📱'}</div>
-        <div style="font-size:18px;font-weight:900;margin-bottom:8px;">${isChapa ? 'Pay via Chapa' : 'Check Your Telebirr'}</div>
+        <div style="font-size:48px;margin-bottom:16px;">📱</div>
+        <div style="font-size:18px;font-weight:900;margin-bottom:8px;">Check Your Telebirr</div>
 
-        ${isChapa ? `
-        <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;">
-          Complete payment of <strong style="color:var(--accent);">${State.formatETB(amount)}</strong><br/>
-          via Chapa (Card / Bank Transfer)
-        </div>
-        <a href="${txRef}" target="_blank" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;margin-bottom:12px;">
-          🔗 Open Chapa Payment Page
-        </a>
-        <div style="font-size:11px;color:var(--text-secondary);background:var(--bg-surface);border-radius:var(--radius-sm);padding:10px;margin-bottom:16px;">
-          After payment, return here. The order confirms automatically once verified.
-        </div>
-        ` : `
         <div style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;">
           A push notification has been sent to<br/>
           <strong style="color:var(--accent);font-size:16px;">${phoneOrUrl || 'your phone'}</strong><br/>
@@ -1069,7 +1056,6 @@ const Modals = {
           <div style="margin-bottom:6px;">📌 <strong style="color:white;">Steps:</strong></div>
           <div style="line-height:2;">1. Open your Telebirr app<br/>2. Tap the payment notification<br/>3. Enter your 4-digit PIN<br/>4. Return here — order confirms automatically</div>
         </div>
-        `}
 
         <div class="loading-spinner" style="margin:0 auto 14px auto;"></div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;">Waiting for payment confirmation...</div>

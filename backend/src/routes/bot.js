@@ -152,6 +152,15 @@ router.get('/group-status/:storeId', requireAuth, async (req, res, next) => {
  */
 router.post('/webhook', async (req, res) => {
   try {
+    // Verify Telegram secret token to prevent fake updates
+    const secretToken = process.env.TELEGRAM_WEBHOOK_SECRET;
+    if (secretToken) {
+      const provided = req.headers['x-telegram-bot-api-secret-token'];
+      if (provided !== secretToken) {
+        return res.status(403).json({ error: 'Invalid secret token' });
+      }
+    }
+
     const update = req.body;
 
     // ── Handle callback queries (inline button presses) ──

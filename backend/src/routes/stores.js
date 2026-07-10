@@ -56,7 +56,7 @@ router.get('/:storeId', async (req, res, next) => {
     const result = await query(
       `SELECT s.*, sp.return_policy_type, sp.custom_policy_text, sp.addis_delivery_fee,
               sp.regional_dispatch_fee, sp.free_delivery_threshold, sp.zone_fee_matrix,
-              sp.cash_on_delivery, sp.telebirr_enabled, sp.chapa_enabled
+              sp.cash_on_delivery, sp.telebirr_enabled
        FROM stores s
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
        WHERE s.store_id = $1 OR s.store_slug = $1`,
@@ -66,7 +66,6 @@ router.get('/:storeId', async (req, res, next) => {
 
     const store = result.rows[0];
     // Don't expose sensitive payment keys publicly
-    delete store.chapa_secret_key;
     delete store.cbe_account_number;
     delete store.telebirr_merchant_id; // Expose only to buyer during checkout
 
