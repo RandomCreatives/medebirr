@@ -1099,6 +1099,21 @@ const App = {
     }
   },
 
+  async toggleAutoDetect(enabled) {
+    if (!State.currentStoreId) return;
+    try {
+      await Api.storeSettings.update(State.currentStoreId, { auto_detect_products: enabled });
+      // Update local state
+      if (State.stores[0]) State.stores[0].auto_detect_products = enabled;
+      this.toast(`Auto-detect ${enabled ? 'enabled' : 'disabled'}`, 'success');
+    } catch (err) {
+      this.toast(err.message || 'Failed to update setting', 'error');
+      // Revert toggle UI
+      const toggle = document.getElementById('autoDetectToggle');
+      if (toggle) toggle.checked = !enabled;
+    }
+  },
+
   async savePolicy() {
     const storeId = State.currentStoreId;
     if (!storeId) return;

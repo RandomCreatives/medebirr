@@ -270,6 +270,26 @@ const SellerViews = {
           <div id="policyGroupVerifyResult" style="margin-top:8px;"></div>
         </div>
 
+        <!-- Auto-Detect Products Toggle -->
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🔍 Auto-Detect Products</div>
+              <div style="font-size:11px;color:var(--text-secondary);">
+                When ON, any photo with a price in your group becomes a pending product.<br>
+                When OFF, only /sell commands trigger product creation.
+              </div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;margin-left:12px;">
+              <input type="checkbox" id="autoDetectToggle" ${store.auto_detect_products !== false ? 'checked' : ''}
+                     onchange="App.toggleAutoDetect(this.checked)" style="opacity:0;width:0;height:0;">
+              <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${store.auto_detect_products !== false ? 'var(--accent)' : 'var(--border)'};border-radius:12px;transition:0.3s;">
+                <span style="position:absolute;content:'';height:18px;width:18px;left:${store.auto_detect_products !== false ? '22px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:0.3s;"></span>
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label">Return Policy</label>
           <select class="form-select" id="policyType">
