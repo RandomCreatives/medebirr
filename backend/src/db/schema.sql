@@ -310,3 +310,58 @@ CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(order_status, payment_sta
 CREATE INDEX IF NOT EXISTS idx_users_tg_id ON users(tg_user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(tg_user_id, is_read);
 CREATE INDEX IF NOT EXISTS idx_payment_tx_ref ON payment_transactions(gateway_tx_ref);
+
+-- ============================================================
+-- PENDING PRODUCTS TABLE (Telegram → App pipeline)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS pending_products (
+    pending_id      UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    store_id        UUID NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE,
+    tg_group_id     BIGINT NOT NULL,
+    tg_message_id   BIGINT,
+    title           VARCHAR(255),
+    price_etb       DECIMAL(10,2),
+    image_urls      TEXT[] DEFAULT '{}',
+    caption         TEXT,
+    auto_detected   BOOLEAN DEFAULT TRUE,
+    detected_at     TIMESTAMPTZ DEFAULT NOW(),
+    completed_at    TIMESTAMPTZ,
+    published_at    TIMESTAMPTZ,
+    product_id      UUID REFERENCES products(product_id),
+    status          VARCHAR(20) DEFAULT 'pending' -- pending, completed, published, discarded
+);
+CREATE INDEX IF NOT EXISTS idx_pending_products_store ON pending_products(store_id, status);
+CREATE INDEX IF NOT EXISTS idx_pending_products_status ON pending_products(status);
+
+-- ============================================================
+-- SELLER VERIFICATIONS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS seller_verifications (
+    verification_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    store_id          UUID NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE,
+    submitted_at      TIMESTAMPTZ DEFAULT NOW(),
+    document_urls     TEXT[] DEFAULT '{}',
+    notes             TEXT,
+    status            VARCHAR(20) DEFAULT 'pending', -- pending, approved, rejected
+    reviewed_at       TIMESTAMPTZ,
+    reviewed_by       VARCHAR(100),
+    rejection_reason  TEXT,
+    verification_type VARCHAR(30) DEFAULT 'basic' -- basic, business, premium
+);
+CREATE INDEX IF NOT EXISTS idx_seller_verifications_store ON seller_verifications(store_id, status);
+
+-- ============================================================
+-- RATE LIMITS TABLE (Product creation throttling)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS product_rate_limits (
+    store_id        UUID PRIMARY KEY REFERENCES stores(store_id) ON DELETE CASCADE,
+    products_created INTEGER DEFAULT 0,
+    window_start    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ============================================================
+-- STORE COLUMNS: verification + auto-detect
+-- ============================================================
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS verification_tier VARCHAR(20) DEFAULT 'basic';
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS auto_detect_products BOOLEAN DEFAULT TRUE;
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS group_member_count INTEGER DEFAULT 0;

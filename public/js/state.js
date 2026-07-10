@@ -107,6 +107,7 @@ const State = {
   sellerStats: null,
   sellerProducts: [],
   storeReviews: [],
+  pendingProducts: [],
 
   // ── Cart helpers ──────────────────────────────────
   cartCount() {

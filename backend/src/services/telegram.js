@@ -8,6 +8,8 @@
  */
 
 const axios = require('axios');
+const { downloadAndUpload } = require('./storage');
+const crypto = require('crypto');
 
 const TG_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || 'medebirrbot';
@@ -232,6 +234,169 @@ function escapeMd(text) {
   return String(text).replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
 }
 
+/**
+ * Download images from a Telegram message and upload to Supabase Storage
+ * @param {Array} photoArray - Telegram photo array (multiple sizes)
+ * @param {string} storeId - Store UUID for path
+ * @param {string} pendingId - Pending product UUID for path
+ * @returns {Array<string>} Public URLs of downloaded images
+ */
+async function downloadProductImages(photoArray, storeId, pendingId) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) throw new Error('TELEGRAM_BOT_TOKEN not set');
+
+  const urls = [];
+  // Take up to 5 images (Telegram sends multiple sizes per photo, pick the largest = last)
+  const uniquePhotos = [];
+  const seenFileIds = new Set();
+  for (const p of photoArray) {
+    // Each "photo" in the array is a different size of the SAME image
+    // Telegram sends: [{file_id: "small"}, {file_id: "medium"}, {file_id: "large"}]
+    // We want the largest (last one) for each unique image
+    // But if multiple photos are sent, we get multiple arrays
+    // Actually, message.photo IS the array of sizes for ONE image
+    // To detect multiple images, we'd need media_group_id — but that's complex
+    // For now, each message has one photo array = one image, pick the largest
+  }
+
+  // Pick the largest size (last element)
+  const largestPhoto = photoArray[photoArray.length - 1];
+  if (!largestPhoto?.file_id) return urls;
+
+  try {
+    // Get file info from Telegram
+    const fileInfo = await tgCall('getFile', { file_id: largestPhoto.file_id });
+    if (!fileInfo.ok) return urls;
+
+    const filePath = fileInfo.result.file_path;
+    const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+
+    // Determine content type from file path
+    const ext = filePath.split('.').pop()?.toLowerCase() || 'jpg';
+    const contentType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+
+    // Download from Telegram and upload to Supabase Storage
+    const timestamp = Date.now();
+    const storagePath = `${storeId}/${pendingId}/${timestamp}_0.${ext}`;
+    const publicUrl = await downloadAndUpload(fileUrl, storagePath, contentType);
+    urls.push(publicUrl);
+  } catch (err) {
+    console.error('Failed to download product image:', err.message);
+  }
+
+  return urls;
+}
+
+/**
+ * Parse a Telegram caption for product title and price
+ * Looks for patterns like "1500 Br", "ETB 2500", "2,000 Birr"
+ */
+function parseCaptionForProduct(caption) {
+  if (!caption) return { title: null, price: null };
+
+  const lines = caption.split('\n').filter(l => l.trim());
+  let title = null;
+  let price = null;
+
+  // First non-empty line is usually the title
+  if (lines.length > 0) {
+    title = lines[0].replace(/\/(sell|newproduct)/i, '').trim().slice(0, 100);
+  }
+
+  // Look for price pattern: number + (Birr|Br|ETB)
+  const priceRegex = /(\d[\d,\.]*)\s*(Birr|Br|ETB)/i;
+  for (const line of lines) {
+    const match = line.match(priceRegex);
+    if (match) {
+      price = parseFloat(match[1].replace(/,/g, ''));
+      break;
+    }
+  }
+
+  // If no price found, check standalone number on its own line
+  if (price === null) {
+    for (const line of lines) {
+      const num = line.trim().replace(/,/g, '');
+      if (/^\d+(\.\d{1,2})?$/.test(num) && parseInt(num) > 0) {
+        price = parseFloat(num);
+        break;
+      }
+    }
+  }
+
+  return { title: title || null, price };
+}
+
+/**
+ * Check rate limit for product creation (max 8 per hour per store)
+ */
+async function checkProductRateLimit(storeId) {
+  const { query } = require('../db');
+
+  const result = await query(
+    'SELECT products_created, window_start FROM product_rate_limits WHERE store_id = $1',
+    [storeId]
+  );
+
+  const now = new Date();
+  const limit = result.rows[0];
+
+  // Reset if window expired (1 hour)
+  if (!limit || (now - new Date(limit.window_start)) > 3600000) {
+    await query(
+      `INSERT INTO product_rate_limits (store_id, products_created, window_start)
+       VALUES ($1, 1, NOW())
+       ON CONFLICT (store_id) DO UPDATE SET products_created = 1, window_start = NOW()`,
+      [storeId]
+    );
+    return { allowed: true, remaining: 7 };
+  }
+
+  // Check limit
+  if (limit.products_created >= 8) {
+    const resetIn = Math.ceil((3600000 - (now - new Date(limit.window_start))) / 60000);
+    return { allowed: false, remaining: 0, resetInMinutes: resetIn };
+  }
+
+  // Increment
+  await query(
+    'UPDATE product_rate_limits SET products_created = products_created + 1 WHERE store_id = $1',
+    [storeId]
+  );
+  return { allowed: true, remaining: 7 - limit.products_created };
+}
+
+/**
+ * Notify seller about a new pending product via DM
+ */
+async function notifySellerNewProduct(tgUserId, pendingProduct, store) {
+  const appUrl = process.env.FRONTEND_URL || 'https://medebirr.vercel.app';
+  const deepLink = `${appUrl}?start=complete_${pendingProduct.pending_id}`;
+
+  const priceStr = pendingProduct.price_etb ? `Br ${Number(pendingProduct.price_etb).toLocaleString()}` : 'No price set';
+  const imageCount = pendingProduct.image_urls?.length || 0;
+
+  await tgCall('sendMessage', {
+    chat_id: tgUserId,
+    text: [
+      `📦 *New product detected from ${escapeMd(store.store_name)}\\!*`,
+      ``,
+      `📱 ${escapeMd(pendingProduct.title || 'Untitled')}`,
+      `💰 ${escapeMd(priceStr)}`,
+      imageCount > 0 ? `🖼 ${imageCount} image${imageCount > 1 ? 's' : ''}` : `⚠️ No images`,
+      ``,
+      `Complete the listing to publish it to your group\\.`
+    ].join('\n'),
+    parse_mode: 'MarkdownV2',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '📝 Complete Listing', web_app: { url: deepLink } }],
+        [{ text: '❌ Discard', callback_data: `discard_pending_${pendingProduct.pending_id}` }]
+      ]
+    }
+  });
+}
+
 module.exports = {
   tgCall,
   resolveChatId,
@@ -240,5 +405,10 @@ module.exports = {
   notifySellerNewOrder,
   notifyBuyerRiderAssigned,
   sendWelcomeMessage,
-  getBotId
+  getBotId,
+  downloadProductImages,
+  parseCaptionForProduct,
+  checkProductRateLimit,
+  notifySellerNewProduct,
+  escapeMd
 };

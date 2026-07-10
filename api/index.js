@@ -39,6 +39,8 @@ const reviewRoutes = require('../backend/src/routes/reviews');
 const paymentMethodRoutes = require('../backend/src/routes/payment-methods');
 const couponRoutes = require('../backend/src/routes/coupons');
 const settingsRoutes = require('../backend/src/routes/settings');
+const pendingProductRoutes = require('../backend/src/routes/pending-products');
+const imageRoutes = require('../backend/src/routes/images');
 const errorHandler = require('../backend/src/middleware/errorHandler');
 
 const app = express();
@@ -95,13 +97,15 @@ app.use('/api/v1/users/me/settings', settingsRoutes);
 app.use('/api/v1/bot', botRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/coupons', couponRoutes);
+app.use('/api/v1/pending-products', pendingProductRoutes);
+app.use('/api/v1/images', imageRoutes);
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'e-Merkato API',
-    version: '1.0.3',
+    version: '1.1.0',
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'production',
     region: process.env.VERCEL_REGION || 'local',
@@ -143,7 +147,7 @@ if (process.env.VERCEL && process.env.TELEGRAM_BOT_TOKEN && process.env.APP_URL)
     try {
       const tg = require('../backend/src/services/telegram');
       const webhookUrl = `${process.env.APP_URL}/api/v1/bot/webhook`;
-      const result = await tg.tgCall('setWebhook', { url: webhookUrl, allowed_updates: ['message', 'channel_post', 'my_chat_member'] });
+      const result = await tg.tgCall('setWebhook', { url: webhookUrl, allowed_updates: ['message', 'channel_post', 'my_chat_member', 'callback_query'] });
       if (result.ok) console.log(`✅ Telegram webhook set: ${webhookUrl}`);
       else console.warn('⚠️ Telegram webhook setup failed:', result.description);
     } catch (e) {

@@ -131,5 +131,40 @@ const Api = {
   reviews: {
     create: (data) => Api.post('/reviews', data),
     list:   (productId) => Api.get(`/reviews/product/${productId}`)
+  },
+
+  // ── Pending Products (Telegram → App pipeline) ─────
+  pending: {
+    list:     (storeId)              => Api.get(`/pending-products/store/${storeId}`),
+    complete: (id, data)             => Api.put(`/pending-products/${id}/complete`, data),
+    publish:  (id, data = {})        => Api.post(`/pending-products/${id}/publish`, data),
+    discard:  (id)                   => Api.delete(`/pending-products/${id}`)
+  },
+
+  // ── Images ─────────────────────────────────────────
+  images: {
+    upload: async (storeId, files) => {
+      const formData = new FormData();
+      formData.append('store_id', storeId);
+      for (let i = 0; i < files.length; i++) {
+        formData.append('images', files[i]);
+      }
+      const token = Api.getToken();
+      const res = await fetch(`${API_BASE}/images/upload`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        body: formData
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      return data;
+    }
+  },
+
+  // ── Store Settings & Verification ──────────────────
+  storeSettings: {
+    update: (storeId, data) => Api.put(`/stores/${storeId}/settings`, data),
+    verification: (storeId) => Api.get(`/stores/${storeId}/verification`),
+    requestVerification: (storeId, data) => Api.post(`/stores/${storeId}/verify-request`, data)
   }
 };

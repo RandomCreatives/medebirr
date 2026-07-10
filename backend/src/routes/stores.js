@@ -292,4 +292,119 @@ router.delete('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, 
   }
 });
 
+/**
+ * PUT /api/v1/stores/:storeId/settings
+ * Update store settings (auto-detect products, etc.)
+ */
+router.put('/:storeId/settings', requireAuth, async (req, res, next) => {
+  try {
+    const { auto_detect_products } = req.body;
+
+    const storeCheck = await query(
+      'SELECT store_id FROM stores WHERE store_id = $1 AND admin_tg_user_id = $2',
+      [req.params.storeId, req.user.tg_user_id]
+    );
+    if (storeCheck.rows.length === 0) return res.status(403).json({ error: 'Not authorized' });
+
+    await query(
+      'UPDATE stores SET auto_detect_products = $1, updated_at = NOW() WHERE store_id = $2',
+      [auto_detect_products, req.params.storeId]
+    );
+
+    res.json({ success: true, auto_detect_products });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/v1/stores/:storeId/verification
+ * Get store verification status and tier
+ */
+router.get('/:storeId/verification', requireAuth, async (req, res, next) => {
+  try {
+    const result = await query(
+      `SELECT verification_tier, verification_requested_at, group_member_count,
+              total_orders, rating, rating_count, status
+       FROM stores WHERE store_id = $1`,
+      [req.params.storeId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Store not found' });
+
+    const store = result.rows[0];
+
+    // Check pending verification requests
+    const pendingVerif = await query(
+      `SELECT verification_id, status, submitted_at, verification_type
+       FROM seller_verifications
+       WHERE store_id = $1 AND status = 'pending'
+       ORDER BY submitted_at DESC LIMIT 1`,
+      [req.params.storeId]
+    );
+
+    res.json({
+      tier: store.verification_tier || 'none',
+      status: store.status,
+      total_orders: store.total_orders,
+      rating: store.rating,
+      rating_count: store.rating_count,
+      group_member_count: store.group_member_count,
+      pending_request: pendingVerif.rows[0] || null,
+      // Progress to next tier
+      next_tier: getNextTier(store)
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/v1/stores/:storeId/verify-request
+ * Submit a verification request
+ */
+router.post('/:storeId/verify-request', requireAuth, async (req, res, next) => {
+  try {
+    const { notes, verification_type } = req.body;
+
+    const storeCheck = await query(
+      'SELECT store_id FROM stores WHERE store_id = $1 AND admin_tg_user_id = $2',
+      [req.params.storeId, req.user.tg_user_id]
+    );
+    if (storeCheck.rows.length === 0) return res.status(403).json({ error: 'Not authorized' });
+
+    // Check if already pending
+    const existing = await query(
+      `SELECT verification_id FROM seller_verifications
+       WHERE store_id = $1 AND status = 'pending'`,
+      [req.params.storeId]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'You already have a pending verification request' });
+    }
+
+    const result = await query(
+      `INSERT INTO seller_verifications (store_id, notes, verification_type)
+       VALUES ($1, $2, $3) RETURNING *`,
+      [req.params.storeId, notes || null, verification_type || 'basic']
+    );
+
+    await query(
+      'UPDATE stores SET verification_requested_at = NOW() WHERE store_id = $1',
+      [req.params.storeId]
+    );
+
+    res.status(201).json({ verification: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+function getNextTier(store) {
+  const tier = store.verification_tier || 'none';
+  if (tier === 'trusted') return null;
+  if (tier === 'verified') return { tier: 'trusted', requirement: '50+ orders, 4.0+ rating, 30+ days active' };
+  if (tier === 'basic') return { tier: 'verified', requirement: '10+ completed orders or 500+ group members' };
+  return { tier: 'basic', requirement: 'Link your Telegram group' };
+}
+
 module.exports = router;

@@ -294,6 +294,47 @@ const App = {
 
     // Check notifications
     this._refreshNotificationDot();
+
+    // Handle deep links from Telegram (e.g. ?start=complete_{pendingId})
+    this._handleDeepLink();
+  },
+
+  _handleDeepLink() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const startParam = params.get('start');
+      if (!startParam) return;
+
+      if (startParam.startsWith('complete_')) {
+        const pendingId = startParam.replace('complete_', '');
+        // Switch to seller mode and open the pending product
+        if (State.role !== 'seller') {
+          State.role = 'seller';
+          State.currentTab = 'pending';
+          this.render();
+        }
+        // Wait for data to load then open modal
+        setTimeout(() => {
+          const pending = State.pendingProducts.find(p => p.pending_id === pendingId);
+          if (pending) {
+            Modals.openCompletePending(pendingId);
+          } else {
+            this.toast('Pending product not found. Refreshing...', 'info');
+            this.refreshPendingProducts().then(() => {
+              const p2 = State.pendingProducts.find(p => p.pending_id === pendingId);
+              if (p2) Modals.openCompletePending(pendingId);
+            });
+          }
+        }, 1000);
+
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if (startParam.startsWith('product_')) {
+        const productId = startParam.replace('product_', '');
+        setTimeout(() => this.openProduct(productId), 500);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    } catch (e) {}
   },
 
   showError(message) {
@@ -395,23 +436,25 @@ const App = {
       `;
     } else {
       const pendingCount = State.storeOrders.filter(o => o.order_status === 'confirmed' && o.payment_status === 'paid').length;
+      const pendingProductsCount = (State.pendingProducts || []).length;
       nav.innerHTML = `
         <button class="nav-item ${State.currentTab==='dashboard'?'active':''}" onclick="App.switchTab('dashboard')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          Sales Hub
+          Hub
+        </button>
+        <button class="nav-item ${State.currentTab==='pending'?'active':''}" onclick="App.switchTab('pending')">
+          ${pendingProductsCount > 0 ? `<span class="nav-badge">${pendingProductsCount}</span>` : ''}
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          From TG
         </button>
         <button class="nav-item ${State.currentTab==='inventory'?'active':''}" onclick="App.switchTab('inventory')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
-          My Items
-        </button>
-        <button class="nav-item ${State.currentTab==='policy'?'active':''}" onclick="App.switchTab('policy')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Policy
+          Items
         </button>
         <button class="nav-item ${State.currentTab==='dispatch'?'active':''}" onclick="App.switchTab('dispatch')">
           ${pendingCount > 0 ? `<span class="nav-badge">${pendingCount}</span>` : ''}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          Dispatch
+          Orders
         </button>
       `;
     }
@@ -426,10 +469,10 @@ const App = {
       else if (State.currentTab === 'profile')   BuyerViews.renderProfile(body);
       else if (State.currentTab === 'orders')    BuyerViews.renderOrders(body);
     } else {
-      if (State.currentTab === 'dashboard') SellerViews.renderDashboard(body);
-      else if (State.currentTab === 'inventory') SellerViews.renderInventory(body);
-      else if (State.currentTab === 'policy')    SellerViews.renderPolicy(body);
-      else if (State.currentTab === 'dispatch')  SellerViews.renderDispatch(body);
+      if (State.currentTab === 'dashboard')  SellerViews.renderDashboard(body);
+      else if (State.currentTab === 'pending')    SellerViews.renderPending(body);
+      else if (State.currentTab === 'inventory')  SellerViews.renderInventory(body);
+      else if (State.currentTab === 'dispatch')   SellerViews.renderDispatch(body);
     }
     document.getElementById('appBody').scrollTop = 0;
   },
@@ -629,16 +672,18 @@ const App = {
   async loadSellerData() {
     if (!State.currentStoreId) return;
     try {
-      const [statsData, productsData, ordersData, reviewsData] = await Promise.all([
+      const [statsData, productsData, ordersData, reviewsData, pendingData] = await Promise.all([
         Api.stores.stats(State.currentStoreId),
         Api.products.list({ store_id: State.currentStoreId, limit: 200 }),
         Api.orders.storeOrders(State.currentStoreId, { limit: 200 }),
-        Api.orders.reviews(State.currentStoreId).catch(() => ({ reviews: [] }))
+        Api.orders.reviews(State.currentStoreId).catch(() => ({ reviews: [] })),
+        Api.pending.list(State.currentStoreId).catch(() => ({ pending_products: [] }))
       ]);
       State.sellerStats = statsData;
       State.sellerProducts = productsData.products || [];
       State.storeOrders = ordersData.orders || [];
       State.storeReviews = reviewsData.reviews || [];
+      State.pendingProducts = pendingData.pending_products || [];
     } catch (err) {
       this.toast('Failed to load seller data', 'error');
     }
@@ -1119,6 +1164,73 @@ const App = {
       this.renderContent();
     } catch (err) {
       this.toast(err.message || 'Delete failed', 'error');
+    }
+  },
+
+  // ── Pending Products ──────────────────────────────
+  async discardPending(pendingId) {
+    try {
+      await Api.pending.discard(pendingId);
+      State.pendingProducts = State.pendingProducts.filter(p => p.pending_id !== pendingId);
+      this.toast('Product discarded', 'success');
+      this.renderContent();
+    } catch (err) {
+      this.toast(err.message || 'Discard failed', 'error');
+    }
+  },
+
+  async refreshPendingProducts() {
+    if (!State.currentStoreId) return;
+    try {
+      const data = await Api.pending.list(State.currentStoreId);
+      State.pendingProducts = data.pending_products || [];
+      this.renderContent();
+    } catch (err) {}
+  },
+
+  _getPendingFormData() {
+    return {
+      title: document.getElementById('pendingTitle')?.value?.trim(),
+      description: document.getElementById('pendingDesc')?.value?.trim(),
+      category: document.getElementById('pendingCategory')?.value,
+      sub_category: document.getElementById('pendingSubCategory')?.value?.trim(),
+      price_etb: parseFloat(document.getElementById('pendingPrice')?.value) || null,
+      compare_price: parseFloat(document.getElementById('pendingComparePrice')?.value) || null,
+      stock_quantity: parseInt(document.getElementById('pendingStock')?.value) || 1,
+      tags: document.getElementById('pendingTags')?.value?.split(',').map(t => t.trim()).filter(Boolean),
+      image_urls: [...document.querySelectorAll('.pending-img-url')].map(i => i.value.trim()).filter(Boolean)
+    };
+  },
+
+  async completeAndPublishPending(pendingId) {
+    const data = this._getPendingFormData();
+    if (!data.description) { this.toast('Description is required', 'error'); return; }
+    if (!data.category) { this.toast('Please select a category', 'error'); return; }
+
+    try {
+      // Complete the pending product
+      await Api.pending.complete(pendingId, data);
+      // Publish it (creates product + broadcasts to Telegram group)
+      const result = await Api.pending.publish(pendingId, data);
+      this.toast(result.message || 'Product published!', 'success');
+      Modals.close();
+      // Refresh seller data
+      await this.loadSellerData();
+      this.renderContent();
+    } catch (err) {
+      this.toast(err.message || 'Failed to publish', 'error');
+    }
+  },
+
+  async savePendingDraft(pendingId) {
+    const data = this._getPendingFormData();
+    try {
+      await Api.pending.complete(pendingId, data);
+      this.toast('Draft saved. Complete later to publish.', 'success');
+      Modals.close();
+      await this.refreshPendingProducts();
+    } catch (err) {
+      this.toast(err.message || 'Save failed', 'error');
     }
   },
 

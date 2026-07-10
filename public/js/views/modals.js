@@ -917,6 +917,106 @@ const Modals = {
     if (product) this.openAddProduct(product);
   },
 
+  openCompletePending(pendingId) {
+    const pending = State.pendingProducts.find(p => p.pending_id === pendingId);
+    if (!pending) { App.toast('Pending product not found', 'error'); return; }
+
+    const imgs = Array.isArray(pending.image_urls) ? pending.image_urls : [];
+    const imgPreviewHtml = imgs.length
+      ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+          ${imgs.map((url, i) => `
+            <div class="pending-img-thumb" data-idx="${i}" data-url="${url}"
+                 style="width:64px;height:64px;border-radius:8px;background:url(${url}) center/cover no-repeat var(--bg-surface);
+                        border:2px solid var(--accent);cursor:pointer;position:relative;">
+              <span style="position:absolute;top:-4px;right:-4px;background:var(--accent);color:white;border-radius:50%;width:16px;height:16px;font-size:9px;display:flex;align-items:center;justify-content:center;">✓</span>
+            </div>
+          `).join('')}
+        </div>
+        <div style="font-size:10px;color:var(--text-secondary);margin-bottom:12px;">Tap images to select for listing (max 5). Blue border = selected.</div>`
+      : `<div style="font-size:12px;color:var(--warning);margin-bottom:12px;">⚠️ No images detected. You can add image URLs below.</div>`;
+
+    const imgUrlFields = [0,1,2,3,4].map(i => `
+      <input class="form-input pending-img-url" data-idx="${i}" value="${imgs[i] || ''}"
+             placeholder="Image URL ${i+1} ${i===0?'(main image)':'(optional)'}"
+             style="font-size:12px;"/>
+    `).join('');
+
+    this.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">📝 Complete Product Listing</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">
+        Detected from Telegram · ${pending.auto_detected ? 'Auto-detected' : '/sell command'}
+      </p>
+      <p style="font-size:11px;color:var(--warning);margin-bottom:14px;">
+        📸 Image tips: Use natural lighting, clean background, show multiple angles. Min 800×600px.
+      </p>
+
+      <!-- Image Selection -->
+      <div class="form-group">
+        <label class="form-label">Product Images (${imgs.length}/5)</label>
+        ${imgPreviewHtml}
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${imgUrlFields}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Product Title</label>
+        <input class="form-input" id="pendingTitle" value="${pending.title || ''}" placeholder="e.g. Wireless Headphones"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description *</label>
+        <textarea class="form-textarea" id="pendingDesc" placeholder="Describe your product in detail — features, condition, materials, size...">${pending.description || ''}</textarea>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Price (ETB)</label>
+          <input class="form-input" id="pendingPrice" type="number" value="${pending.price_etb || ''}" placeholder="0"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Compare Price (ETB)</label>
+          <input class="form-input" id="pendingComparePrice" type="number" value="${pending.compare_price || ''}" placeholder="Original price"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
+          <label class="form-label">Stock Quantity</label>
+          <input class="form-input" id="pendingStock" type="number" value="${pending.stock_quantity || 1}" placeholder="1"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sub-Category</label>
+          <input class="form-input" id="pendingSubCategory" value="${pending.sub_category || ''}" placeholder="e.g. Phones, Chairs..."/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category *</label>
+        <select class="form-select" id="pendingCategory">
+          <option value="">Select category...</option>
+          <option value="electronics" ${pending.category==='electronics'?'selected':''}>📱 Electronics</option>
+          <option value="fashion" ${pending.category==='fashion'?'selected':''}>👗 Fashion & Traditional</option>
+          <option value="groceries" ${pending.category==='groceries'?'selected':''}>☕ Coffee & Food</option>
+          <option value="home" ${pending.category==='home'?'selected':''}>🏠 Home & Garden</option>
+          <option value="footwear" ${pending.category==='footwear'?'selected':''}>👟 Footwear</option>
+          <option value="furniture" ${pending.category==='furniture'?'selected':''}>🪑 Furniture</option>
+          <option value="beauty" ${pending.category==='beauty'?'selected':''}>💄 Beauty</option>
+          <option value="other" ${pending.category==='other'?'selected':''}>📦 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags (comma-separated)</label>
+        <input class="form-input" id="pendingTags" value="${Array.isArray(pending.tags) ? pending.tags.join(', ') : ''}" placeholder="e.g. wireless, bluetooth, premium"/>
+      </div>
+
+      <button class="btn-primary" style="margin-top:8px;" onclick="App.completeAndPublishPending('${pending.pending_id}')">
+        🚀 Publish & Broadcast to Group
+      </button>
+      <button class="btn-secondary" style="margin-top:8px;width:100%;" onclick="App.savePendingDraft('${pending.pending_id}')">
+        💾 Save Draft (publish later)
+      </button>
+    `);
+  },
+
   // ── Assign Rider ──────────────────────────────────
   openAssignRider(orderId) {
     this.open(`

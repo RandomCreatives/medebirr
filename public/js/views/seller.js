@@ -15,10 +15,13 @@ const SellerViews = {
     const { orders, products, recentOrders } = stats;
     const store = State.stores[0];
     const reviews = State.storeReviews || [];
+    const pending = State.pendingProducts || [];
+    const verificationTier = store?.verification_tier || 'none';
+    const tierBadge = { none: '', basic: '🟢 Basic', verified: '✅ Verified', trusted: '⭐ Trusted' };
     container.innerHTML = `
       <div class="section-header">
         <span class="section-title">Sales Hub</span>
-        <span style="font-size:11px;color:${store?.status === 'verified' ? 'var(--success)' : 'var(--warning)'};">● ${store?.status === 'verified' ? 'Verified Shop' : 'Pending Verification'}</span>
+        <span style="font-size:11px;color:${verificationTier === 'verified' || verificationTier === 'trusted' ? 'var(--success)' : 'var(--warning)'};">● ${tierBadge[verificationTier] || store?.status || 'Pending'}</span>
       </div>
 
       <div class="stat-grid">
@@ -40,6 +43,15 @@ const SellerViews = {
         </div>
       </div>
 
+      ${pending.length ? `
+      <div class="section-header" style="margin-top:6px;">
+        <span class="section-title" style="color:var(--accent);">📋 From Telegram (${pending.length})</span>
+        <span style="font-size:10px;color:var(--text-secondary);">Complete to publish</span>
+      </div>
+      ${pending.slice(0, 3).map(p => this._pendingProductCard(p)).join('')}
+      ${pending.length > 3 ? `<div style="text-align:center;"><span class="section-link" onclick="App.switchTab('pending')">View all ${pending.length} pending</span></div>` : ''}
+      ` : ''}
+
       <div class="section-header" style="margin-top:6px;">
         <span class="section-title">Recent Orders</span>
         <span class="section-link" onclick="App.switchTab('dispatch')">View All</span>
@@ -47,7 +59,6 @@ const SellerViews = {
 
       ${recentOrders.length ? recentOrders.map(o => this._recentOrderRow(o)).join('') : '<p style="font-size:13px;color:var(--text-secondary);">No orders yet. List your items to start selling.</p>'}
 
-      <!-- Reviews Section -->
       ${reviews.length ? `
       <div class="section-header" style="margin-top:16px;">
         <span class="section-title">⭐ Recent Reviews</span>
@@ -71,6 +82,42 @@ const SellerViews = {
     `;
   },
 
+  _pendingProductCard(p) {
+    const thumb = (Array.isArray(p.image_urls) && p.image_urls[0])
+      ? `<div style="width:56px;height:56px;border-radius:8px;background:url(${p.image_urls[0]}) center/cover no-repeat var(--bg-surface);border:1px solid var(--border);flex-shrink:0;"></div>`
+      : `<div style="width:56px;height:56px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📸</div>`;
+    const timeAgo = this._timeAgo(p.detected_at);
+    const priceStr = p.price_etb ? State.formatETB(p.price_etb) : 'No price';
+    return `
+      <div class="card" style="margin-bottom:10px;padding:12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          ${thumb}
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title || 'Untitled Product'}</div>
+            <div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:2px;">${priceStr}</div>
+            <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${timeAgo} · ${p.auto_detected ? 'Auto-detected' : '/sell command'}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <button class="btn-primary" style="flex:1;padding:8px;font-size:11px;" onclick="Modals.openCompletePending('${p.pending_id}')">📝 Complete</button>
+          <button class="btn-secondary" style="flex:1;padding:8px;font-size:11px;" onclick="App.discardPending('${p.pending_id}')">✕ Discard</button>
+        </div>
+      </div>
+    `;
+  },
+
+  _timeAgo(dateStr) {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+  },
+
   _recentOrderRow(o) {
     return `
       <div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
@@ -81,6 +128,59 @@ const SellerViews = {
         <div style="text-align:right;">
           <div style="color:var(--accent);font-weight:900;font-size:13px;">${State.formatETB(o.total_etb)}</div>
           <span class="order-status-badge status-${o.order_status}" style="font-size:9px;">${o.order_status}</span>
+        </div>
+      </div>
+    `;
+  },
+
+  // ── Pending Products from Telegram ────────────────
+  renderPending(container) {
+    const pending = State.pendingProducts || [];
+    container.innerHTML = `
+      <div class="section-header">
+        <span class="section-title">📋 From Telegram (${pending.length})</span>
+        <span class="section-link" onclick="App.refreshPendingProducts()">↻ Refresh</span>
+      </div>
+      <p style="font-size:11px;color:var(--text-secondary);margin:-4px 0 12px;line-height:1.4;">
+        Products detected from your Telegram group. Complete the details to publish them to Medebirr and broadcast back to your group.
+      </p>
+      ${!pending.length ? `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <div class="empty-title">No pending products</div>
+          <div class="empty-desc">Post a product image in your Telegram group to get started. The bot will detect it automatically.</div>
+        </div>
+      ` : pending.map(p => this._pendingProductCardFull(p)).join('')}
+    `;
+  },
+
+  _pendingProductCardFull(p) {
+    const imgs = Array.isArray(p.image_urls) ? p.image_urls : [];
+    const thumb = imgs[0]
+      ? `<div style="width:64px;height:64px;border-radius:8px;background:url(${imgs[0]}) center/cover no-repeat var(--bg-surface);border:1px solid var(--border);flex-shrink:0;"></div>`
+      : `<div style="width:64px;height:64px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📸</div>`;
+    const timeAgo = this._timeAgo(p.detected_at);
+    const priceStr = p.price_etb ? State.formatETB(p.price_etb) : 'No price set';
+    const statusColor = p.status === 'completed' ? 'var(--success)' : 'var(--warning)';
+    return `
+      <div class="card" style="margin-bottom:10px;padding:12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          ${thumb}
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div style="font-size:14px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${p.title || 'Untitled Product'}</div>
+              <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:${statusColor}22;color:${statusColor};flex-shrink:0;margin-left:6px;">${p.status}</span>
+            </div>
+            <div style="font-size:13px;color:var(--accent);font-weight:700;margin-top:2px;">${priceStr}</div>
+            <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${timeAgo} · ${imgs.length} image${imgs.length !== 1 ? 's' : ''} · ${p.auto_detected ? 'Auto-detected' : '/sell command'}</div>
+            ${p.caption ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.4;max-height:40px;overflow:hidden;">${p.caption.slice(0, 120)}${p.caption.length > 120 ? '...' : ''}</div>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <button class="btn-primary" style="flex:1;padding:8px;font-size:11px;" onclick="Modals.openCompletePending('${p.pending_id}')">
+            ${p.status === 'completed' ? '🚀 Publish' : '📝 Complete'}
+          </button>
+          <button class="btn-secondary" style="padding:8px 12px;font-size:11px;" onclick="App.discardPending('${p.pending_id}')">✕ Discard</button>
         </div>
       </div>
     `;
