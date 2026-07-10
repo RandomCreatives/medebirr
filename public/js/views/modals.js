@@ -1101,10 +1101,10 @@ const Modals = {
         </div>
 
         ${orderId ? `
-        <a href="/api/v1/orders/${orderId}/receipt" target="_blank"
-           style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:13px;margin-bottom:12px;color:white;text-decoration:none;font-size:13px;font-weight:700;">
+        <button onclick="Modals.close();setTimeout(()=>Modals.openOrderReceipt('${orderId}'),200)"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:13px;margin-bottom:12px;color:white;text-decoration:none;font-size:13px;font-weight:700;cursor:pointer;">
           📄 Download PDF Receipt
-        </a>` : ''}
+        </button>` : ''}
 
         <button class="btn-primary" onclick="Modals.close();App.switchTab('orders')">
           📦 Track My Order
