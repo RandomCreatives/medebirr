@@ -44,11 +44,15 @@ router.post(
       // Get store & policy
       const storeResult = await client.query(
         `SELECT s.*, sp.addis_delivery_fee, sp.regional_dispatch_fee, sp.zone_fee_matrix,
-                sp.return_policy_type, sp.custom_policy_text, sp.cash_on_delivery,
-                sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
+                sp.return_policy_type, sp.custom_policy_text,
+                COALESCE(sp.cash_on_delivery, TRUE) AS cash_on_delivery,
+                COALESCE(sp.telebirr_enabled, TRUE) AS telebirr_enabled,
+                COALESCE(sp.cbe_enabled, FALSE) AS cbe_enabled,
+                COALESCE(sp.free_delivery_threshold, 2000) AS free_delivery_threshold,
+                COALESCE(sp.addis_delivery_fee, 150) AS addis_delivery_fee_default
          FROM stores s
          LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
-         WHERE s.store_id = $1 AND s.status = 'verified'`,
+         WHERE s.store_id = $1 AND s.status IN ('verified', 'active')`,
         [store_id]
       );
       if (storeResult.rows.length === 0) {
@@ -57,16 +61,16 @@ router.post(
       }
       const store = storeResult.rows[0];
 
-      // Validate payment method availability
-      if (payment_method === 'telebirr' && !store.telebirr_enabled) {
+      // Validate payment method availability — defaults to enabled via COALESCE
+      if (payment_method === 'telebirr' && store.telebirr_enabled === false) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: 'Telebirr not enabled for this store' });
       }
-      if (payment_method === 'cbe' && !store.cbe_enabled) {
+      if (payment_method === 'cbe' && store.cbe_enabled === false) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: 'CBE not enabled for this store' });
       }
-      if (payment_method === 'cash' && !store.cash_on_delivery) {
+      if (payment_method === 'cash' && store.cash_on_delivery === false) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: 'Cash on delivery not available for this store' });
       }
