@@ -21,6 +21,41 @@ router.get('/me', requireAuth, async (req, res) => {
 });
 
 /**
+ * PUT /api/v1/users/me
+ * Update current user profile
+ */
+router.put('/me', requireAuth, async (req, res, next) => {
+  try {
+    const { first_name, last_name, email, phone, mfa_enabled } = req.body;
+    const updates = [];
+    const values = [];
+    let idx = 1;
+
+    if (first_name !== undefined) { updates.push(`first_name = $${idx++}`); values.push(first_name); }
+    if (last_name !== undefined)  { updates.push(`last_name = $${idx++}`);  values.push(last_name); }
+    if (email !== undefined)      { updates.push(`email = $${idx++}`);      values.push(email); }
+    if (phone !== undefined)      { updates.push(`phone = $${idx++}`);      values.push(phone); }
+    if (mfa_enabled !== undefined){ updates.push(`mfa_enabled = $${idx++}`); values.push(mfa_enabled); }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(req.user.tg_user_id);
+
+    const result = await query(
+      `UPDATE users SET ${updates.join(', ')} WHERE tg_user_id = $${idx} RETURNING *`,
+      values
+    );
+
+    res.json({ user: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * GET /api/v1/users/me/addresses
  */
 router.get('/me/addresses', requireAuth, async (req, res, next) => {
@@ -68,6 +103,31 @@ router.delete('/me/addresses/:addressId', requireAuth, async (req, res, next) =>
       [req.params.addressId, req.user.tg_user_id]
     );
     res.json({ message: 'Address deleted' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PUT /api/v1/users/me/addresses/:addressId
+ * Update an existing address
+ */
+router.put('/me/addresses/:addressId', requireAuth, async (req, res, next) => {
+  try {
+    const { label, sub_city, woreda, house_number, landmark, phone, is_default } = req.body;
+    if (is_default) {
+      await query('UPDATE delivery_addresses SET is_default = FALSE WHERE tg_user_id = $1', [req.user.tg_user_id]);
+    }
+    const result = await query(
+      `UPDATE delivery_addresses
+       SET label = COALESCE($1, label), sub_city = COALESCE($2, sub_city),
+           woreda = COALESCE($3, woreda), house_number = COALESCE($4, house_number),
+           landmark = COALESCE($5, landmark), phone = COALESCE($6, phone),
+           is_default = COALESCE($7, is_default)
+       WHERE address_id = $8 AND tg_user_id = $9 RETURNING *`,
+      [label, sub_city, woreda, house_number, landmark, phone, is_default, req.params.addressId, req.user.tg_user_id]
+    );
+    res.json({ address: result.rows[0] });
   } catch (err) {
     next(err);
   }

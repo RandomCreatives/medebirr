@@ -367,24 +367,46 @@ const App = {
     const cartCount = State.cartCount();
 
     if (State.role === 'buyer') {
-      const cartCount = State.cartCount();
+      const isActive = (tab) => State.currentTab === tab;
+      const hasWishlist = State.wishlist && State.wishlist.size > 0;
+      const u = State.user || {};
+      const initial = (u.firstName || 'U')[0].toUpperCase();
+      const gradients = ['linear-gradient(135deg,#FCCD04,#F59E0B)','linear-gradient(135deg,#3B82F6,#1D4ED8)','linear-gradient(135deg,#10B981,#059669)'];
+      const grad = gradients[(u.firstName||'U').charCodeAt(0) % gradients.length];
+
       nav.innerHTML = `
-        <button class="nav-item ${State.currentTab==='explore'?'active':''}" onclick="App.switchTab('explore')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          Explore
+        <button class="nav-item ${isActive('explore')?'active':''}" onclick="App.switchTab('explore')">
+          <div class="nav-icon-wrap">
+            ${isActive('explore')
+              ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="rgba(252,205,4,0.15)"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" opacity="0.3"/><circle cx="12" cy="12" r="4"/></svg>'
+              : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>'}
+          </div>
+          <span class="nav-label">Explore</span>
         </button>
-        <button class="nav-item ${State.currentTab==='shops'?'active':''}" onclick="App.switchTab('shops')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          Shops
+        <button class="nav-item ${isActive('wishlist')?'active':''}" onclick="App.switchTab('wishlist')">
+          <div class="nav-icon-wrap">
+            ${isActive('wishlist') || hasWishlist
+              ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
+              : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'}
+          </div>
+          <span class="nav-label">Wishlist</span>
         </button>
-        <button class="nav-item ${State.currentTab==='cart'?'active':''}" onclick="App.switchTab('cart')">
-          ${cartCount > 0 ? `<span class="nav-badge">${cartCount}</span>` : ''}
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-          Cart
+        <button class="nav-item ${isActive('cart')?'active':''}" onclick="App.switchTab('cart')">
+          <div class="nav-icon-wrap">
+            ${cartCount > 0 ? `<span class="nav-badge">${cartCount}</span>` : ''}
+            ${isActive('cart')
+              ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 1 2 2h14a2 2 0 0 1 2-2V6l-3-4z" fill="rgba(252,205,4,0.15)"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'
+              : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 1 2 2h14a2 2 0 0 1 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'}
+          </div>
+          <span class="nav-label">Cart</span>
         </button>
-        <button class="nav-item ${State.currentTab==='orders'?'active':''}" onclick="App.switchTab('orders')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Orders
+        <button class="nav-item ${isActive('profile')?'active':''}" onclick="App.switchTab('profile')">
+          <div class="nav-icon-wrap nav-avatar-wrap">
+            ${u.photo_url
+              ? `<img src="${u.photo_url}" class="nav-avatar-img ${isActive('profile')?'active':''}" />`
+              : `<div class="nav-avatar-placeholder ${isActive('profile')?'active':''}" style="background:${grad};">${initial}</div>`}
+          </div>
+          <span class="nav-label">Profile</span>
         </button>
       `;
     } else {
@@ -414,12 +436,11 @@ const App = {
   renderContent() {
     const body = document.getElementById('appBody');
     if (State.role === 'buyer') {
-      if (State.currentTab === 'explore')  BuyerViews.renderExplore(body);
-      else if (State.currentTab === 'shops')   BuyerViews.renderShops(body);
-      else if (State.currentTab === 'cart')    BuyerViews.renderCart(body);
-      else if (State.currentTab === 'wishlist') BuyerViews.renderWishlist(body);
-      else if (State.currentTab === 'orders')  BuyerViews.renderOrders(body);
-      else if (State.currentTab === 'profile') BuyerViews.renderProfile(body);
+      if (State.currentTab === 'explore')        BuyerViews.renderExplore(body);
+      else if (State.currentTab === 'wishlist')  BuyerViews.renderWishlist(body);
+      else if (State.currentTab === 'cart')      BuyerViews.renderCart(body);
+      else if (State.currentTab === 'profile')   BuyerViews.renderProfile(body);
+      else if (State.currentTab === 'orders')    BuyerViews.renderOrders(body);
     } else {
       if (State.currentTab === 'dashboard') SellerViews.renderDashboard(body);
       else if (State.currentTab === 'inventory') SellerViews.renderInventory(body);
@@ -432,6 +453,7 @@ const App = {
   // ── Navigation ────────────────────────────────────
   async switchTab(tab) {
     State.currentTab = tab;
+    State.profileSubSection = null;
     if (tab === 'orders' && !State.myOrders.length) {
       await this.refreshOrders();
     }
@@ -441,9 +463,6 @@ const App = {
         State.addresses = data.addresses || [];
       } catch (e) {}
     }
-    if (tab === 'shops' && !State.allStores) {
-      await this._loadAllStores();
-    }
     if (tab === 'wishlist' && !State.wishlistItems) {
       try {
         const data = await Api.users.wishlist();
@@ -451,10 +470,64 @@ const App = {
         State.wishlist = new Set(State.wishlistItems.map(p => p.product_id));
       } catch (e) { State.wishlistItems = []; }
     }
+    if (tab === 'profile') {
+      if (!State.paymentMethods) this._loadPaymentMethods();
+      if (!State.userCoupons) this._loadUserCoupons();
+      if (!State.userSettings) this._loadUserSettings();
+    }
     if (tab === 'dispatch' && State.role === 'seller' && !State.storeOrders.length) {
       await this.loadSellerData();
     }
     this.render();
+  },
+
+  async openProfileSubSection(section) {
+    State.profileSubSection = section;
+    if (section === 'orders' && !State.myOrders.length) {
+      await this.refreshOrders();
+    }
+    if (section === 'address' && !State.addresses.length) {
+      try {
+        const data = await Api.users.addresses();
+        State.addresses = data.addresses || [];
+      } catch (e) {}
+    }
+    if (section === 'payment' && !State.paymentMethods) {
+      await this._loadPaymentMethods();
+    }
+    if (section === 'coupons' && !State.userCoupons) {
+      await this._loadUserCoupons();
+    }
+    if (section === 'settings' && !State.userSettings) {
+      await this._loadUserSettings();
+    }
+    this.renderContent();
+  },
+
+  backToProfileHub() {
+    State.profileSubSection = null;
+    this.renderContent();
+  },
+
+  async _loadPaymentMethods() {
+    try {
+      const data = await Api.users.paymentMethods();
+      State.paymentMethods = data.methods || [];
+    } catch (e) { State.paymentMethods = []; }
+  },
+
+  async _loadUserCoupons() {
+    try {
+      const data = await Api.users.coupons();
+      State.userCoupons = data.coupons || [];
+    } catch (e) { State.userCoupons = []; }
+  },
+
+  async _loadUserSettings() {
+    try {
+      const data = await Api.users.settings();
+      State.userSettings = data.settings || { dark_mode: true, notif_orders: true, notif_promos: true, notif_chat: true, biometric_login: false };
+    } catch (e) { State.userSettings = { dark_mode: true, notif_orders: true, notif_promos: true, notif_chat: true, biometric_login: false }; }
   },
 
   async _loadAllStores() {
@@ -1031,15 +1104,77 @@ const App = {
     const phone     = document.getElementById('editPhone')?.value?.trim();
     const city      = document.getElementById('editCity')?.value?.trim();
     if (!firstName) { this.toast('First name is required', 'error'); return; }
-    // Update local state immediately
     State.user.firstName = firstName;
     State.user.lastName  = lastName;
     if (phone) State.user.phone = phone;
     if (city)  State.user.city  = city;
-    // Update header
     document.getElementById('userAvatar').textContent = firstName[0].toUpperCase();
     document.getElementById('headerUsername').textContent = `${firstName} ${lastName}`.trim();
     this.toast('Profile saved!', 'success');
+  },
+
+  _openAddressModal(opts) {
+    const subCities = ['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio'];
+    Modals.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">${opts.title || 'Add Address'}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div class="form-group">
+          <label class="form-label">Label</label>
+          <select class="form-select" id="modalAddrLabel">
+            <option ${opts.label==='Home'?'selected':''}>Home</option>
+            <option ${opts.label==='Work'?'selected':''}>Work</option>
+            <option ${opts.label==='Other'?'selected':''}>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sub-City</label>
+          <select class="form-select" id="modalAddrSubCity">
+            ${subCities.map(s=>`<option ${opts.sub_city===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Woreda</label><input class="form-input" id="modalAddrWoreda" value="${opts.woreda||''}" placeholder="e.g. Woreda 03"/></div>
+      <div class="form-group"><label class="form-label">House / Landmark</label><input class="form-input" id="modalAddrHouse" value="${opts.house_number||''}" placeholder="e.g. Near Edna Mall, House 412"/></div>
+      <div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="modalAddrPhone" type="tel" value="${opts.phone||''}" placeholder="+251 9XX XXX XXX"/></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:16px;cursor:pointer;">
+        <input type="checkbox" id="modalAddrDefault" style="accent-color:var(--accent);" ${opts.is_default?'checked':''}> Set as default address
+      </label>
+      <button class="btn-primary" onclick="App._saveModalAddress(${opts.onSave ? 'true' : 'false'})">Save Address</button>
+    `);
+    App._modalAddressOnSave = opts.onSave || null;
+  },
+
+  async _saveModalAddress(hasCustomSave) {
+    const data = {
+      label: document.getElementById('modalAddrLabel')?.value,
+      sub_city: document.getElementById('modalAddrSubCity')?.value,
+      woreda: document.getElementById('modalAddrWoreda')?.value?.trim(),
+      house_number: document.getElementById('modalAddrHouse')?.value?.trim(),
+      phone: document.getElementById('modalAddrPhone')?.value?.trim(),
+      is_default: document.getElementById('modalAddrDefault')?.checked,
+    };
+    if (!data.phone) { this.toast('Phone number is required', 'error'); return; }
+    if (App._modalAddressOnSave) {
+      App._modalAddressOnSave(data);
+    } else {
+      try {
+        const result = await Api.users.addAddress(data);
+        State.addresses.push(result.address);
+        Modals.close();
+        this.renderContent();
+        this.toast('Address saved!', 'success');
+      } catch (err) {
+        this.toast('Could not save address', 'error');
+      }
+    }
+  },
+
+  clearToken() {
+    Api.clearToken();
+    localStorage.removeItem('em_user');
+    localStorage.removeItem('em_demo_user');
+    State.user = null;
   },
 
   async deleteAddress(addressId) {

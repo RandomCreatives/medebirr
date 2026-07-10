@@ -106,13 +106,23 @@ const Api = {
   // ── Users ──────────────────────────────────────────
   users: {
     me:             ()          => Api.get('/users/me'),
+    updateMe:       (data)      => Api.put('/users/me', data),
     addresses:      ()          => Api.get('/users/me/addresses'),
     addAddress:     (data)      => Api.post('/users/me/addresses', data),
+    updateAddress:  (id, data)  => Api.put(`/users/me/addresses/${id}`, data),
     deleteAddress:  (id)        => Api.delete(`/users/me/addresses/${id}`),
     wishlist:       ()          => Api.get('/users/me/wishlist'),
     addWishlist:    (productId) => Api.post(`/users/me/wishlist/${productId}`, {}),
     removeWishlist: (productId) => Api.delete(`/users/me/wishlist/${productId}`),
-    notifications:  ()          => Api.get('/users/me/notifications')
+    notifications:  ()          => Api.get('/users/me/notifications'),
+    paymentMethods: ()          => Api.get('/users/me/payment-methods'),
+    addPaymentMethod:  (data)   => Api.post('/users/me/payment-methods', data),
+    deletePaymentMethod: (id)   => Api.delete(`/users/me/payment-methods/${id}`),
+    setDefaultPayment:   (id)   => Api.patch(`/users/me/payment-methods/${id}/default`, {}),
+    coupons:        ()          => Api.get('/users/me/coupons'),
+    validateCoupon: (code)      => Api.post('/coupons/validate', { code }),
+    settings:       ()          => Api.get('/users/me/settings'),
+    updateSettings: (data)      => Api.put('/users/me/settings', data),
   },
 
   // ── Reviews ────────────────────────────────────────

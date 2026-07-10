@@ -11,6 +11,7 @@ const State = {
   role: 'buyer',       // 'buyer' | 'seller'
   currentTab: 'explore',
   currentStoreId: null,
+  profileSubSection: null,  // null = hub, 'profile'|'address'|'payment'|'orders'|'coupons'|'settings'|'help'|'privacy'
 
   // Buyer state
   products: [],
@@ -25,6 +26,7 @@ const State = {
 
   // Wishlisted product IDs
   wishlist: new Set(),
+  wishlistItems: null,
 
   // Addresses
   addresses: [],
@@ -35,6 +37,18 @@ const State = {
 
   // Notifications
   notifications: [],
+
+  // Payment methods (saved cards)
+  paymentMethods: null,
+
+  // User coupons
+  userCoupons: null,
+
+  // User settings
+  userSettings: null,
+
+  // Orders filter tab (for profile sub-section)
+  ordersFilter: 'all',
 
   // Seller studio state
   sellerStats: null,

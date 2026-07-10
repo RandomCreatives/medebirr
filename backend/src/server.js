@@ -22,6 +22,9 @@ const paymentRoutes = require('./routes/payments');
 const userRoutes = require('./routes/users');
 const botRoutes = require('./routes/bot');
 const reviewRoutes = require('./routes/reviews');
+const paymentMethodRoutes = require('./routes/payment-methods');
+const couponRoutes = require('./routes/coupons');
+const settingsRoutes = require('./routes/settings');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -72,8 +75,11 @@ app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/users/me/payment-methods', paymentMethodRoutes);
+app.use('/api/v1/users/me/settings', settingsRoutes);
 app.use('/api/v1/bot', botRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/coupons', couponRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

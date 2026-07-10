@@ -233,6 +233,72 @@ CREATE TABLE IF NOT EXISTS wishlists (
 );
 
 -- ============================================================
+-- PAYMENT METHODS TABLE (Buyer saved cards — PCI compliant)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS payment_methods (
+    method_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tg_user_id      BIGINT NOT NULL REFERENCES users(tg_user_id) ON DELETE CASCADE,
+    card_brand      VARCHAR(20) NOT NULL,    -- visa, mastercard, amex
+    last_four       VARCHAR(4) NOT NULL,
+    exp_month       INTEGER,
+    exp_year        INTEGER,
+    cardholder_name VARCHAR(200),
+    is_default      BOOLEAN DEFAULT FALSE,
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_payment_methods_user ON payment_methods(tg_user_id);
+
+-- ============================================================
+-- COUPONS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS coupons (
+    coupon_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code            VARCHAR(50) UNIQUE NOT NULL,
+    discount_type   VARCHAR(20) NOT NULL,    -- percent, fixed
+    discount_value  DECIMAL(10,2) NOT NULL,
+    min_order_etb   DECIMAL(10,2) DEFAULT 0,
+    max_uses        INTEGER,
+    used_count      INTEGER DEFAULT 0,
+    expires_at      TIMESTAMP,
+    is_active       BOOLEAN DEFAULT TRUE,
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================================
+-- USER COUPONS TABLE (Coupons assigned to users)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_coupons (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tg_user_id      BIGINT NOT NULL REFERENCES users(tg_user_id) ON DELETE CASCADE,
+    coupon_id       UUID NOT NULL REFERENCES coupons(coupon_id),
+    is_redeemed     BOOLEAN DEFAULT FALSE,
+    redeemed_at     TIMESTAMP,
+    created_at      TIMESTAMP DEFAULT NOW(),
+    UNIQUE (tg_user_id, coupon_id)
+);
+CREATE INDEX IF NOT EXISTS idx_user_coupons_user ON user_coupons(tg_user_id);
+
+-- ============================================================
+-- USER SETTINGS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS user_settings (
+    tg_user_id      BIGINT PRIMARY KEY REFERENCES users(tg_user_id) ON DELETE CASCADE,
+    dark_mode       BOOLEAN DEFAULT TRUE,
+    notif_orders    BOOLEAN DEFAULT TRUE,
+    notif_promos    BOOLEAN DEFAULT TRUE,
+    notif_chat      BOOLEAN DEFAULT TRUE,
+    biometric_login BOOLEAN DEFAULT FALSE,
+    updated_at      TIMESTAMP DEFAULT NOW()
+);
+
+-- ============================================================
+-- USER PROFILE EXTENSIONS (email, phone, mfa)
+-- ============================================================
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(30);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN DEFAULT FALSE;
+
+-- ============================================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================================
 CREATE INDEX IF NOT EXISTS idx_products_store ON products(store_id);
