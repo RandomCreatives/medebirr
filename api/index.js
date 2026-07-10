@@ -41,6 +41,7 @@ const couponRoutes = require('../backend/src/routes/coupons');
 const settingsRoutes = require('../backend/src/routes/settings');
 const pendingProductRoutes = require('../backend/src/routes/pending-products');
 const imageRoutes = require('../backend/src/routes/images');
+const deliveryRoutes = require('../backend/src/routes/delivery');
 const errorHandler = require('../backend/src/middleware/errorHandler');
 
 const app = express();
@@ -99,6 +100,7 @@ app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/coupons', couponRoutes);
 app.use('/api/v1/pending-products', pendingProductRoutes);
 app.use('/api/v1/images', imageRoutes);
+app.use('/api/v1/delivery', deliveryRoutes);
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

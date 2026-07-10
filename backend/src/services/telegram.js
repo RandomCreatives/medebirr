@@ -227,6 +227,29 @@ async function sendWelcomeMessage(chatId, storeName, botUsername) {
 }
 
 /**
+ * Send a document (PDF) via Telegram
+ * @param {number} chatId - Telegram chat ID
+ * @param {Buffer} fileBuffer - File buffer
+ * @param {string} filename - File name
+ * @param {string} caption - Optional caption
+ */
+async function sendDocument(chatId, fileBuffer, filename, caption = '') {
+  const FormData = require('form-data');
+  const form = new FormData();
+  form.append('chat_id', String(chatId));
+  form.append('document', fileBuffer, { filename });
+  if (caption) form.append('caption', caption);
+
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const res = await axios.post(
+    `https://api.telegram.org/bot${botToken}/sendDocument`,
+    form,
+    { headers: form.getHeaders(), timeout: 30000, maxContentLength: 20 * 1024 * 1024 }
+  );
+  return res.data;
+}
+
+/**
  * Escape special characters for MarkdownV2
  */
 function escapeMd(text) {
@@ -410,5 +433,6 @@ module.exports = {
   parseCaptionForProduct,
   checkProductRateLimit,
   notifySellerNewProduct,
+  sendDocument,
   escapeMd
 };

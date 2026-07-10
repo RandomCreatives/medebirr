@@ -1156,5 +1156,191 @@ const Modals = {
       btn.disabled = false;
       btn.textContent = 'Submit Review';
     }
+  },
+
+  // ── QR Code Display ──────────────────────────────
+  async openShowQR(orderId, role) {
+    this.open('<div style="text-align:center;padding:20px;"><div class="loading-spinner"></div><p style="font-size:13px;color:var(--text-secondary);">Loading QR code...</p></div>');
+    try {
+      const data = await Api.delivery.qr(orderId);
+      const bothDone = data.verified_by_rider && data.verified_by_buyer;
+      this.open(`
+        <div class="modal-handle"></div>
+        <div class="modal-title">📱 Your QR Code</div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Order: <strong style="color:white;">${data.order_ref}</strong></p>
+        <p style="font-size:11px;color:var(--text-secondary);margin-bottom:16px;">
+          ${role === 'buyer' ? 'Show this to the rider for verification.' : 'Show this to the buyer for verification.'}
+        </p>
+        <div style="text-align:center;margin-bottom:16px;">
+          <img src="${data.qr_url}" alt="QR Code" style="width:220px;height:220px;border-radius:12px;border:2px solid var(--border);"/>
+        </div>
+        <div style="display:flex;justify-content:center;gap:16px;margin-bottom:16px;">
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:var(--text-secondary);">Rider</div>
+            <div style="font-size:14px;font-weight:800;color:${data.verified_by_rider ? 'var(--success)' : 'var(--warning)'};">${data.verified_by_rider ? '✓ Verified' : '⏳ Pending'}</div>
+          </div>
+          <div style="width:1px;background:var(--border);"></div>
+          <div style="text-align:center;">
+            <div style="font-size:11px;color:var(--text-secondary);">Buyer</div>
+            <div style="font-size:14px;font-weight:800;color:${data.verified_by_buyer ? 'var(--success)' : 'var(--warning)'};">${data.verified_by_buyer ? '✓ Verified' : '⏳ Pending'}</div>
+          </div>
+        </div>
+        ${bothDone ? '<div style="text-align:center;font-size:14px;font-weight:800;color:var(--success);">✅ Delivery Confirmed by Both Parties!</div>' : ''}
+        ${data.scan_attempts > 0 ? `<div style="text-align:center;font-size:11px;color:var(--text-secondary);">Scan attempts: ${data.scan_attempts}/5</div>` : ''}
+        <button class="btn-secondary" style="width:100%;margin-top:12px;" onclick="Modals.close()">Close</button>
+      `);
+    } catch (err) {
+      this.open(`
+        <div class="modal-handle"></div>
+        <div class="modal-title">⚠️ QR Not Available</div>
+        <p style="font-size:13px;color:var(--text-secondary);">${err.message || 'QR code not yet generated for this order.'}</p>
+        <button class="btn-secondary" style="width:100%;margin-top:12px;" onclick="Modals.close()">Close</button>
+      `);
+    }
+  },
+
+  // ── QR Scanner ───────────────────────────────────
+  openScanQR(orderId, role) {
+    this.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">📷 Scan ${role === 'rider' ? "Buyer's" : "Rider's"} QR</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Point your camera at the other party's QR code.</p>
+      <div id="qr-reader" style="width:100%;border-radius:12px;overflow:hidden;margin-bottom:12px;"></div>
+      <div id="qr-result" style="margin-bottom:12px;"></div>
+      <button class="btn-secondary" style="width:100%;" onclick="Modals._stopScanner();Modals.close()">Cancel</button>
+    `);
+
+    // Start camera scanner
+    setTimeout(() => this._startScanner(orderId, role), 100);
+  },
+
+  _qrHtml5QrCode: null,
+
+  async _startScanner(orderId, role) {
+    try {
+      // Dynamically load html5-qrcode library
+      if (!window.Html5Qrcode) {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+        document.head.appendChild(script);
+        await new Promise((resolve, reject) => {
+          script.onload = resolve;
+          script.onerror = reject;
+        });
+      }
+
+      const scanner = new window.Html5Qrcode('qr-reader');
+      this._qrHtml5QrCode = scanner;
+
+      await scanner.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        async (decodedText) => {
+          // QR scanned successfully
+          scanner.stop().catch(() => {});
+          document.getElementById('qr-result').innerHTML = `
+            <div style="text-align:center;padding:12px;background:var(--bg-surface);border-radius:8px;">
+              <div style="font-size:12px;color:var(--accent);margin-bottom:4px;">QR Code detected! Verifying...</div>
+            </div>
+          `;
+
+          try {
+            const scannedData = JSON.parse(decodedText);
+            const result = await Api.delivery.scan(orderId, {
+              scanned_data: scannedData,
+              scanner_role: role
+            });
+
+            if (result.already_confirmed) {
+              document.getElementById('qr-result').innerHTML = `
+                <div style="text-align:center;padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;">
+                  <div style="font-size:14px;font-weight:800;color:var(--success);">✅ Delivery Already Confirmed!</div>
+                </div>
+              `;
+              return;
+            }
+
+            if (result.success) {
+              document.getElementById('qr-result').innerHTML = `
+                <div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;">
+                  <div style="font-size:14px;font-weight:800;color:var(--success);margin-bottom:4px;">✅ QR Verified!</div>
+                  <div style="font-size:12px;color:var(--text-secondary);">
+                    Product: <strong style="color:white;">${result.product || 'N/A'}</strong><br>
+                    Price: <strong style="color:var(--accent);">Br ${(result.price || 0).toLocaleString()}</strong>
+                  </div>
+                  ${result.delivery_complete ? '<div style="font-size:13px;font-weight:800;color:var(--success);margin-top:8px;">🎉 Delivery Complete! Both parties confirmed.</div>' : `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Waiting for ${role === 'rider' ? 'buyer' : 'rider'} to confirm...</div>`}
+                </div>
+              `;
+            } else {
+              document.getElementById('qr-result').innerHTML = `
+                <div style="padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;">
+                  <div style="font-size:14px;font-weight:800;color:var(--danger);margin-bottom:4px;">❌ ${result.message}</div>
+                  <div style="font-size:11px;color:var(--text-secondary);">Attempt ${result.attempt || '?'} of 5 · ${result.remaining || '?'} remaining</div>
+                  ${(result.remaining || 0) <= 2 ? '<div style="font-size:11px;color:var(--warning);margin-top:4px;">⚠️ Warning: Too many failed attempts will trigger automatic return.</div>' : ''}
+                </div>
+              `;
+              // Restart scanner for another attempt
+              setTimeout(() => {
+                if (this._qrHtml5QrCode) {
+                  this._qrHtml5QrCode.start(
+                    { facingMode: 'environment' },
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    () => {}, () => {}
+                  ).catch(() => {});
+                }
+              }, 2000);
+            }
+          } catch (e) {
+            document.getElementById('qr-result').innerHTML = `
+              <div style="padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;">
+                <div style="font-size:13px;font-weight:800;color:var(--danger);">❌ Invalid QR Code</div>
+                <div style="font-size:11px;color:var(--text-secondary);">This doesn't appear to be a valid Medebirr order QR.</div>
+              </div>
+            `;
+          }
+        },
+        () => {} // ignore scan failures (no QR in frame)
+      );
+    } catch (err) {
+      document.getElementById('qr-reader').innerHTML = `
+        <div style="text-align:center;padding:20px;color:var(--danger);">
+          <div style="font-size:13px;font-weight:700;">Camera access required</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Please allow camera access to scan QR codes.</div>
+        </div>
+      `;
+    }
+  },
+
+  _stopScanner() {
+    if (this._qrHtml5QrCode) {
+      this._qrHtml5QrCode.stop().catch(() => {});
+      this._qrHtml5QrCode.clear().catch(() => {});
+      this._qrHtml5QrCode = null;
+    }
+  },
+
+  // ── Order Receipt ────────────────────────────────
+  async openOrderReceipt(orderId) {
+    this.open('<div style="text-align:center;padding:20px;"><div class="loading-spinner"></div><p style="font-size:13px;color:var(--text-secondary);">Loading receipt...</p></div>');
+    try {
+      const data = await Api.delivery.receipt(orderId);
+      this.open(`
+        <div class="modal-handle"></div>
+        <div class="modal-title">📄 Order Receipt</div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Receipt for order ${orderId.slice(0, 8)}...</p>
+        <iframe src="${data.receipt_url}" style="width:100%;height:400px;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;"></iframe>
+        <div style="display:flex;gap:8px;">
+          <a href="${data.receipt_url}" target="_blank" download class="btn-primary" style="flex:1;text-align:center;text-decoration:none;">📥 Download PDF</a>
+          <button class="btn-secondary" style="flex:1;" onclick="Modals.close()">Close</button>
+        </div>
+      `);
+    } catch (err) {
+      this.open(`
+        <div class="modal-handle"></div>
+        <div class="modal-title">⚠️ Receipt Not Available</div>
+        <p style="font-size:13px;color:var(--text-secondary);">${err.message || 'Receipt not yet generated.'}</p>
+        <button class="btn-secondary" style="width:100%;margin-top:12px;" onclick="Modals.close()">Close</button>
+      `);
+    }
   }
 };

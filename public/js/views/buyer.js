@@ -753,14 +753,16 @@ const BuyerViews = {
         ${o.rider_name ? `<div class="order-detail-rider">🛵 ${o.rider_name} · ${o.rider_phone}</div>` : ''}
         <div class="order-detail-actions">
           ${isActive && o.order_status === 'dispatched' ? `
-            <button class="order-action-btn primary" onclick="event.stopPropagation();App.confirmDelivery('${o.order_id}')">Confirm Delivery</button>
-            <button class="order-action-btn" onclick="event.stopPropagation();BuyerViews._trackOrder('${o.order_id}')">Track Live</button>
+            <button class="order-action-btn primary" onclick="event.stopPropagation();Modals.openShowQR('${o.order_id}','buyer')">📱 Show My QR</button>
+            <button class="order-action-btn" onclick="event.stopPropagation();Modals.openScanQR('${o.order_id}','buyer')">📷 Scan Rider's QR</button>
+            <button class="order-action-btn" onclick="event.stopPropagation();Modals.openOrderReceipt('${o.order_id}')">📄 Receipt</button>
           ` : ''}
-          ${isActive && o.order_status !== 'dispatched' ? `
+          ${isActive && o.order_status !== 'dispatched' && o.order_status !== 'delivered' ? `
             <button class="order-action-btn" onclick="event.stopPropagation();App.openOrderDetail('${o.order_id}')">View Details</button>
           ` : ''}
           ${isCompleted ? `
             <button class="order-action-btn primary" onclick="event.stopPropagation();App.openOrderDetail('${o.order_id}')">Write a Review</button>
+            <button class="order-action-btn" onclick="event.stopPropagation();Modals.openOrderReceipt('${o.order_id}')">📄 Receipt</button>
           ` : ''}
           ${o.order_status === 'cancelled' ? `
             <span style="font-size:11px;color:var(--danger);">${o.cancel_reason || 'Order was cancelled'}</span>

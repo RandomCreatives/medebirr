@@ -365,3 +365,32 @@ CREATE TABLE IF NOT EXISTS product_rate_limits (
 ALTER TABLE stores ADD COLUMN IF NOT EXISTS verification_tier VARCHAR(20) DEFAULT 'basic';
 ALTER TABLE stores ADD COLUMN IF NOT EXISTS auto_detect_products BOOLEAN DEFAULT TRUE;
 ALTER TABLE stores ADD COLUMN IF NOT EXISTS group_member_count INTEGER DEFAULT 0;
+
+-- ============================================================
+-- DELIVERY VERIFICATIONS TABLE (QR scan audit log)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS delivery_verifications (
+    verification_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id          UUID NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+    scanner_role      VARCHAR(10) NOT NULL,   -- 'rider' or 'buyer'
+    scanner_tg_id     BIGINT NOT NULL,
+    scanned_role      VARCHAR(10) NOT NULL,   -- 'buyer' or 'rider'
+    scanned_order_ref VARCHAR(50),
+    success           BOOLEAN NOT NULL,
+    attempt_number    INTEGER NOT NULL,
+    created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_delivery_verifications_order ON delivery_verifications(order_id);
+
+-- ============================================================
+-- ORDER COLUMNS: QR + receipt + return
+-- ============================================================
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qr_data JSONB;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qr_token VARCHAR(64);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qr_scan_attempts INTEGER DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qr_verified_by_rider BOOLEAN DEFAULT FALSE;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS qr_verified_by_buyer BOOLEAN DEFAULT FALSE;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS receipt_pdf_url TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_initiated_at TIMESTAMPTZ;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS return_reason TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS settled_at TIMESTAMPTZ;

@@ -996,6 +996,18 @@ const App = {
     }
   },
 
+  async settleOrder(orderId) {
+    if (!confirm('Confirm that delivery has been completed and settled?')) return;
+    try {
+      const result = await Api.delivery.settle(orderId);
+      this.toast(result.message || 'Order settled successfully!', 'success');
+      await this.refreshOrders();
+      this.renderContent();
+    } catch (err) {
+      this.toast(err.message || 'Failed to settle order', 'error');
+    }
+  },
+
   async openOrderDetail(orderId) {
     try {
       const data = await Api.orders.get(orderId);
@@ -1023,8 +1035,17 @@ const App = {
         ${o.rider_name ? `<div class="card" style="margin-bottom:10px;"><div class="card-title">🛵 Rider Details</div><div class="card-sub" style="margin-top:4px;">${o.rider_name} · ${o.rider_phone}</div></div>` : ''}
         ${policy ? `<div class="policy-box">🛡️ ${State.policyLabel(policy.return_policy_type)}: ${policy.custom_policy_text || ''}</div>` : ''}
         ${['pending','confirmed'].includes(o.order_status) ? `<button class="btn-danger" style="margin-top:14px;" onclick="App.cancelOrder('${orderId}')">✕ Cancel Order</button>` : ''}
-        ${o.order_status === 'dispatched' ? `<button class="btn-primary" style="margin-top:14px;" onclick="App.confirmDelivery('${orderId}');Modals.close();">✅ QR Handshake — Confirm Delivery</button>` : ''}
-        ${o.order_status === 'delivered' ? `<button class="btn-primary" style="margin-top:14px;background:var(--success);" onclick="Modals.close();setTimeout(()=>Modals.showReviewForm('${orderId}','${firstProductId}','${o.store_name}'),100)">⭐ Write a Review</button>` : ''}
+        ${o.order_status === 'dispatched' ? `
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn-primary" style="flex:1;" onclick="Modals.close();Modals.openShowQR('${orderId}','buyer')">📱 Show My QR</button>
+            <button class="btn-primary" style="flex:1;" onclick="Modals.close();Modals.openScanQR('${orderId}','buyer')">📷 Scan Rider</button>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn-secondary" style="flex:1;" onclick="Modals.close();Modals.openOrderReceipt('${orderId}')">📄 Receipt</button>
+          </div>
+        ` : ''}
+        ${o.order_status === 'delivered' ? `<div style="display:flex;gap:8px;margin-top:14px;"><button class="btn-primary" style="flex:1;background:var(--success);" onclick="Modals.close();setTimeout(()=>Modals.showReviewForm('${orderId}','${firstProductId}','${o.store_name}'),100)">⭐ Write a Review</button><button class="btn-secondary" style="flex:1;" onclick="Modals.close();Modals.openOrderReceipt('${orderId}')">📄 Receipt</button></div>` : ''}
+        ${o.qr_data && o.order_status === 'dispatched' ? `<div style="margin-top:12px;font-size:12px;color:var(--text-secondary);">Rider: ${o.verified_by_rider ? '✅ Confirmed' : '⏳ Waiting'} · Buyer: ${o.verified_by_buyer ? '✅ Confirmed' : '⏳ Waiting'} · Attempts: ${o.qr_scan_attempts || 0}/5</div>` : ''}
       `);
     } catch (err) {
       this.toast('Could not load order detail', 'error');

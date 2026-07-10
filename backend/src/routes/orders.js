@@ -190,6 +190,7 @@ router.get('/', requireAuth, async (req, res, next) => {
     const result = await query(
       `SELECT o.order_id, o.order_ref, o.total_etb, o.order_status, o.payment_status,
               o.payment_method, o.delivery_address, o.created_at, o.rider_name, o.rider_phone,
+              o.qr_scan_attempts, o.qr_verified_by_rider, o.qr_verified_by_buyer, o.receipt_pdf_url,
               s.store_name, s.store_slug, s.tg_channel_username
        FROM orders o
        JOIN stores s ON o.store_id = s.store_id
@@ -256,6 +257,7 @@ router.get('/store/:storeId', requireAuth, requireSellerOf('storeId'), async (re
     const result = await query(
       `SELECT o.order_id, o.order_ref, o.total_etb, o.order_status, o.payment_status,
               o.payment_method, o.delivery_address, o.created_at, o.rider_name, o.rider_phone,
+              o.qr_scan_attempts, o.qr_verified_by_rider, o.qr_verified_by_buyer, o.receipt_pdf_url,
               u.first_name, u.last_name, u.username AS buyer_username
        FROM orders o
        JOIN users u ON o.buyer_tg_user_id = u.tg_user_id

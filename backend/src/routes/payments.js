@@ -3,8 +3,79 @@ const crypto = require('crypto');
 const axios = require('axios');
 const { requireAuth } = require('../middleware/auth');
 const { query } = require('../db');
+const qrService = require('../services/qrcode');
+const receiptService = require('../services/receipt');
 
 const router = express.Router();
+
+/**
+ * Generate QR code and PDF receipt for a confirmed order
+ */
+async function generateQRAndReceipt(orderId) {
+  const orderResult = await query(
+    `SELECT o.*, s.store_name, s.location_sub_city, s.business_phone
+     FROM orders o JOIN stores s ON o.store_id = s.store_id
+     WHERE o.order_id = $1`,
+    [orderId]
+  );
+  if (orderResult.rows.length === 0) return;
+  const order = orderResult.rows[0];
+
+  // Skip if QR already generated
+  if (order.qr_data) return;
+
+  // Get buyer
+  const buyerResult = await query(
+    'SELECT first_name, last_name, username FROM users WHERE tg_user_id = $1',
+    [order.buyer_tg_user_id]
+  );
+
+  // Generate QR token + data
+  const token = qrService.generateToken();
+  const qrData = qrService.buildQRData(order, buyerResult.rows[0], { store_name: order.store_name });
+
+  await query(
+    'UPDATE orders SET qr_token = $1, qr_data = $2, updated_at = NOW() WHERE order_id = $3',
+    [token, JSON.stringify(qrData), orderId]
+  );
+
+  // Generate PDF receipt
+  const items = await query('SELECT * FROM order_items WHERE order_id = $1', [orderId]);
+  const qrBuffer = await qrService.generateQRBuffer(qrData);
+  const pdfUrl = await receiptService.generateAndUploadReceipt({
+    order: { ...order, qr_data: qrData },
+    items: items.rows,
+    buyer: buyerResult.rows[0] || null,
+    store: { store_name: order.store_name, location_sub_city: order.location_sub_city, business_phone: order.business_phone },
+    rider: null,
+    qrBuffer
+  });
+
+  await query('UPDATE orders SET receipt_pdf_url = $1 WHERE order_id = $2', [pdfUrl, orderId]);
+
+  // Send PDF receipt via Telegram to buyer and seller
+  try {
+    const tgService = require('../services/telegram');
+    const pdfResp = await axios.get(pdfUrl, { responseType: 'arraybuffer', timeout: 15000 });
+    const pdfBuffer = Buffer.from(pdfResp.data);
+
+    // Send to buyer
+    await tgService.sendDocument(
+      order.buyer_tg_user_id, pdfBuffer,
+      `Medebirr-Receipt-${order.order_ref}.pdf`,
+      `📄 Your receipt for order ${order.order_ref}`
+    );
+
+    // Send to seller
+    await tgService.sendDocument(
+      order.admin_tg_user_id, pdfBuffer,
+      `Medebirr-Receipt-${order.order_ref}.pdf`,
+      `📄 Receipt for order ${order.order_ref}`
+    );
+  } catch (e) {
+    console.warn('PDF Telegram delivery failed:', e.message);
+  }
+}
 
 /**
  * POST /api/v1/payments/telebirr/initiate
@@ -171,6 +242,13 @@ router.post('/telebirr/webhook', async (req, res, next) => {
 
       console.log(`✅ Telebirr payment confirmed: Order ${tx.order_id}, TX: ${transactionNo}`);
 
+      // Generate QR code + PDF receipt for the confirmed order
+      try {
+        await generateQRAndReceipt(tx.order_id);
+      } catch (e) {
+        console.warn('QR/Receipt generation failed:', e.message);
+      }
+
       // Notify seller via Telegram bot
       try {
         const tgService = require('../services/telegram');
@@ -318,6 +396,9 @@ router.post('/chapa/webhook', async (req, res, next) => {
           [item.quantity, item.product_id]
         );
       }
+
+      // Generate QR + receipt for confirmed order
+      try { await generateQRAndReceipt(tx.order_id); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
     } else {
       await query(
         'UPDATE payment_transactions SET status = $1, gateway_response = $2 WHERE gateway_tx_ref = $3',
@@ -362,6 +443,9 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
         [item.quantity, item.product_id]
       );
     }
+
+    // Generate QR + receipt for confirmed order
+    try { await generateQRAndReceipt(order_id); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
 
     res.json({ message: 'Cash payment confirmed. Order confirmed.' });
   } catch (err) {

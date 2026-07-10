@@ -166,5 +166,14 @@ const Api = {
     update: (storeId, data) => Api.put(`/stores/${storeId}/settings`, data),
     verification: (storeId) => Api.get(`/stores/${storeId}/verification`),
     requestVerification: (storeId, data) => Api.post(`/stores/${storeId}/verify-request`, data)
+  },
+
+  // ── Delivery Verification ─────────────────────────
+  delivery: {
+    qr:            (orderId)          => Api.get(`/delivery/${orderId}/qr`),
+    scan:          (orderId, data)     => Api.post(`/delivery/${orderId}/scan`, data),
+    settle:        (orderId)           => Api.post(`/delivery/${orderId}/settle`),
+    receipt:       (orderId)           => Api.get(`/delivery/${orderId}/receipt`),
+    initiateReturn:(orderId, data = {}) => Api.post(`/delivery/${orderId}/return`, data)
   }
 };

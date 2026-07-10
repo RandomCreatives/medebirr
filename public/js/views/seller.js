@@ -365,7 +365,12 @@ const SellerViews = {
         <div style="margin-top:8px;font-size:14px;font-weight:900;color:var(--accent);">${State.formatETB(o.total_etb)} — ${o.payment_method.toUpperCase()}</div>
         ${o.rider_name ? `<div style="margin-top:6px;font-size:11px;color:#A78BFA;">🛵 Rider assigned: ${o.rider_name} · ${o.rider_phone}</div>` : ''}
         <div class="dispatch-actions">
-          ${o.order_status === 'confirmed' ? `<button class="btn-dispatch" onclick="Modals.openAssignRider('${o.order_id}')">🛵 Assign Rider</button>` : `<button class="btn-dispatch" style="background:rgba(167,139,250,0.2);color:#A78BFA;">In Transit</button>`}
+          ${o.order_status === 'confirmed' ? `<button class="btn-dispatch" onclick="Modals.openAssignRider('${o.order_id}')">🛵 Assign Rider</button>` : ''}
+          ${o.order_status === 'dispatched' ? `
+            <button class="btn-dispatch" onclick="Modals.openShowQR('${o.order_id}','rider')">📱 Show QR</button>
+            <button class="btn-dispatch" onclick="Modals.openScanQR('${o.order_id}','rider')">📷 Scan Buyer</button>
+            <button class="btn-dispatch" onclick="App.settleOrder('${o.order_id}')">✅ Settled</button>
+          ` : ''}
           <button class="btn-call" onclick="window.open('tel:${addr.phone}')">📞 Call Buyer</button>
           ${['pending','confirmed'].includes(o.order_status) ? `<button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.confirmCancelOrder('${o.order_id}','${o.order_ref}')">✕ Cancel</button>` : ''}
         </div>
