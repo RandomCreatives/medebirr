@@ -25,47 +25,21 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════
-     ONBOARDING SLIDES (first-time users)
+     ONBOARDING SPLASH (first-time users)
 ═══════════════════════════════════════════════════ -->
 <div id="onboardingScreen" class="onboarding-screen" style="display:none;">
-  <div class="onboard-slides" id="onboardSlides">
-
-    <div class="onboard-slide" data-slide="0">
-      <div class="onboard-icon">🛒</div>
-      <div class="onboard-title">Welcome to Medebirr</div>
-      <div class="onboard-desc">Ethiopia's marketplace built on Telegram.<br/>Browse, order, and get it delivered — all in one place.</div>
-    </div>
-
-    <div class="onboard-slide" data-slide="1">
-      <div class="onboard-icon">📱</div>
-      <div class="onboard-title">From Telegram Groups</div>
-      <div class="onboard-desc">Sellers post products in their Telegram groups.<br/>Medebirr auto-detects them so you can buy instantly.</div>
-    </div>
-
-    <div class="onboard-slide" data-slide="2">
-      <div class="onboard-icon">🚚</div>
-      <div class="onboard-title">Delivered or Pick Up</div>
-      <div class="onboard-desc">Choose delivery to your door, or collect from the seller's store for free.</div>
-    </div>
-
-    <div class="onboard-slide" data-slide="3">
-      <div class="onboard-icon">💳</div>
-      <div class="onboard-title">Pay Your Way</div>
-      <div class="onboard-desc">Telebirr, CBE Bank Transfer, or Cash on Delivery.<br/>Pay directly to the seller — fast and simple.</div>
-    </div>
-
-    <div class="onboard-slide" data-slide="4">
-      <div class="onboard-icon">✅</div>
-      <div class="onboard-title">Verified Deliveries</div>
-      <div class="onboard-desc">QR code verification ensures every delivery is confirmed by both buyer and rider.</div>
-    </div>
-
+  <div class="onboard-splash">
+    <div class="onboard-logo">M</div>
+    <div class="onboard-brand">መደብር | Medebirr</div>
+    <div class="onboard-tagline">Ethiopia's Telegram Marketplace</div>
   </div>
-
-  <div class="onboard-footer">
-    <div class="onboard-dots" id="onboardDots"></div>
-    <button class="onboard-btn" id="onboardBtn" onclick="App._onboardNext()">Get Started</button>
-    <div class="onboard-skip" onclick="App._onboardSkip()">Skip</div>
+  <div class="slide-to-enter" id="slideToEnter">
+    <div class="slide-track">
+      <div class="slide-thumb" id="slideThumb">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="slide-label" id="slideLabel">Slide to enter →</div>
+    </div>
   </div>
 </div>
 
@@ -126,7 +100,7 @@
 
   <!-- Branding Footer -->
   <div class="app-footer">
-    Random Creatives Studio · v1.2.1 · © 2018 E.C.
+    Random Creatives Studio · v1.2.2 · © 2018 E.C.
   </div>
 
 </div>

@@ -349,57 +349,58 @@ const App = {
     } catch (e) {}
   },
 
-  // ── Onboarding ──────────────────────────────────────
-  _onboardSlideIdx: 0,
-
+  // ── Onboarding Splash ────────────────────────────────
   _showOnboarding() {
     const screen = document.getElementById('onboardingScreen');
-    const slides = document.getElementById('onboardSlides');
-    const dots   = document.getElementById('onboardDots');
-    const btn    = document.getElementById('onboardBtn');
-    const total  = slides.querySelectorAll('.onboard-slide').length;
-
-    // Build dots
-    dots.innerHTML = Array.from({ length: total }, (_, i) =>
-      `<div class="onboard-dot${i === 0 ? ' active' : ''}" data-dot="${i}"></div>`
-    ).join('');
-
-    this._onboardSlideIdx = 0;
-    this._onboardTotal = total;
-    btn.textContent = 'Get Started';
-
-    // Listen for scroll to update dots
-    slides.addEventListener('scroll', () => {
-      const idx = Math.round(slides.scrollLeft / slides.offsetWidth);
-      if (idx !== this._onboardSlideIdx) {
-        this._onboardSlideIdx = idx;
-        this._updateOnboardDots();
-      }
-    }, { passive: true });
-
     screen.style.display = 'flex';
-  },
 
-  _updateOnboardDots() {
-    const dots = document.querySelectorAll('.onboard-dot');
-    const btn  = document.getElementById('onboardBtn');
-    dots.forEach((d, i) => d.classList.toggle('active', i === this._onboardSlideIdx));
-    btn.textContent = this._onboardSlideIdx === this._onboardTotal - 1 ? 'Start Shopping' : 'Next';
-  },
+    const thumb  = document.getElementById('slideThumb');
+    const track  = thumb.parentElement;
+    const label  = document.getElementById('slideLabel');
+    const maxSlide = track.offsetWidth - thumb.offsetWidth - 8;
 
-  _onboardNext() {
-    const slides = document.getElementById('onboardSlides');
-    if (this._onboardSlideIdx < this._onboardTotal - 1) {
-      this._onboardSlideIdx++;
-      slides.scrollTo({ left: this._onboardSlideIdx * slides.offsetWidth, behavior: 'smooth' });
-      this._updateOnboardDots();
-    } else {
-      this._onboardFinish();
-    }
-  },
+    let dragging = false, startX = 0, thumbLeft = 4;
 
-  _onboardSkip() {
-    this._onboardFinish();
+    const onStart = (e) => {
+      dragging = true;
+      startX = (e.touches ? e.touches[0].clientX : e.clientX) - thumbLeft;
+      thumb.style.transition = 'none';
+    };
+    const onMove = (e) => {
+      if (!dragging) return;
+      e.preventDefault();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - startX;
+      thumbLeft = Math.max(4, Math.min(x, maxSlide));
+      thumb.style.left = thumbLeft + 'px';
+      // Fade label
+      const pct = Math.min(thumbLeft / maxSlide, 1);
+      label.style.opacity = 1 - pct * 1.5;
+    };
+    const onEnd = () => {
+      if (!dragging) return;
+      dragging = false;
+      thumb.style.transition = 'left 0.2s ease';
+      if (thumbLeft >= maxSlide * 0.8) {
+        // Completed
+        thumb.style.left = maxSlide + 'px';
+        track.classList.add('done');
+        label.textContent = '✓ Welcome!';
+        label.style.opacity = 1;
+        setTimeout(() => this._onboardFinish(), 400);
+      } else {
+        // Snap back
+        thumbLeft = 4;
+        thumb.style.left = '4px';
+        label.style.opacity = 1;
+      }
+    };
+
+    thumb.addEventListener('mousedown', onStart);
+    thumb.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
   },
 
   _onboardFinish() {

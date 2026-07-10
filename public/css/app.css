@@ -972,67 +972,64 @@ body { background: #050507; color: var(--text-primary); display: flex;
 .privacy-section li::before { content: '•'; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
 
 /* ═══════════════════════════════════════════════════════
-   ONBOARDING SLIDES
+   ONBOARDING SPLASH
 ═══════════════════════════════════════════════════════ */
 .onboarding-screen {
   position: fixed; inset: 0; z-index: 2000;
   background: var(--bg-main);
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   max-width: 480px; margin: 0 auto;
 }
-.onboard-slides {
-  flex: 1; display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+.onboard-splash {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  margin-bottom: 80px;
 }
-.onboard-slides::-webkit-scrollbar { display: none; }
-.onboard-slide {
-  min-width: 100%; scroll-snap-align: start;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 40px 32px; text-align: center; gap: 8px;
-}
-.onboard-icon {
-  font-size: 64px; margin-bottom: 16px;
-  animation: onboardBounce 0.6s ease-out;
-}
-.onboard-title {
-  font-size: 22px; font-weight: 900; color: var(--text-primary);
-  margin-bottom: 4px;
-}
-.onboard-desc {
-  font-size: 14px; color: var(--text-secondary); line-height: 1.7;
-  max-width: 300px;
-}
-@keyframes onboardBounce {
-  0%   { transform: scale(0.5); opacity: 0; }
-  60%  { transform: scale(1.1); }
-  100% { transform: scale(1); opacity: 1; }
-}
-.onboard-footer {
-  padding: 20px 24px 32px; display: flex; flex-direction: column; align-items: center; gap: 14px;
-}
-.onboard-dots {
-  display: flex; gap: 8px;
-}
-.onboard-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--border); transition: all 0.3s ease;
-}
-.onboard-dot.active {
-  background: var(--accent); width: 24px; border-radius: 4px;
-}
-.onboard-btn {
-  width: 100%; padding: 14px; border: none; border-radius: 14px;
+.onboard-logo {
+  width: 88px; height: 88px; border-radius: 24px; margin-bottom: 12px;
   background: linear-gradient(135deg, #FCCD04 0%, #F59E0B 100%);
-  color: #111; font-size: 15px; font-weight: 900; cursor: pointer;
-  box-shadow: 0 4px 20px rgba(252,205,4,0.3);
-  transition: transform 0.15s, box-shadow 0.15s;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; font-weight: 900; color: #111;
+  box-shadow: 0 8px 40px rgba(252,205,4,0.35);
+  animation: splashPulse 2s ease-in-out infinite;
 }
-.onboard-btn:active { transform: scale(0.97); box-shadow: 0 2px 10px rgba(252,205,4,0.2); }
-.onboard-skip {
-  font-size: 13px; color: var(--text-secondary); cursor: pointer;
-  padding: 4px 12px; border-radius: 8px; transition: color 0.2s;
+@keyframes splashPulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 8px 40px rgba(252,205,4,0.35); }
+  50%      { transform: scale(1.04); box-shadow: 0 12px 50px rgba(252,205,4,0.5); }
 }
-.onboard-skip:hover { color: var(--text-primary); }
+.onboard-brand { font-size: 26px; font-weight: 900; color: var(--text-primary); }
+.onboard-tagline { font-size: 13px; color: var(--text-secondary); }
+
+/* Slide-to-enter */
+.slide-to-enter {
+  position: absolute; bottom: 60px; left: 28px; right: 28px;
+}
+.slide-track {
+  position: relative; height: 56px; border-radius: 28px;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  overflow: hidden; display: flex; align-items: center;
+}
+.slide-thumb {
+  position: absolute; left: 4px; top: 4px; bottom: 4px; width: 48px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #FCCD04 0%, #F59E0B 100%);
+  display: flex; align-items: center; justify-content: center;
+  color: #111; cursor: grab; z-index: 2;
+  transition: left 0.1s ease;
+  touch-action: pan-x;
+  user-select: none; -webkit-user-select: none;
+}
+.slide-thumb:active { cursor: grabbing; }
+.slide-label {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--text-secondary);
+  pointer-events: none; z-index: 1;
+  letter-spacing: 0.5px;
+}
+.slide-track.done {
+  background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4);
+}
+.slide-track.done .slide-label { color: var(--success); }
 
 /* ═══════════════════════════════════════════════════════
    BRANDING FOOTER
