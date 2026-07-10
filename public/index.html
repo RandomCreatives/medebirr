@@ -7,7 +7,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<link rel="stylesheet" href="css/app.css?v=4">
+<link rel="stylesheet" href="css/app.css?v=5">
 </head>
 <body>
 
@@ -30,18 +30,21 @@
 
   <!-- Top Header -->
   <header class="app-header" id="appHeader">
-    <div class="header-left" onclick="App.openProfileModal ? App.openProfileModal() : null">
-      <div class="user-avatar" id="userAvatar">M</div>
-      <div class="header-user-info">
-        <div class="header-username" id="headerUsername">Loading...</div>
-        <div class="header-location" id="headerLocation">Medebirr Hub</div>
+    <div class="header-left">
+      <div class="header-logo">M</div>
+      <div class="header-brand">
+        <div class="header-username" id="headerUsername" data-i18n="appTitle">መደብር | Medebirr</div>
+        <div class="header-location" id="headerLocation" data-i18n="appTagline">Ethiopia's Marketplace</div>
       </div>
     </div>
     <div class="header-right">
-      <div class="live-badge">
-        <div class="pulse-dot"></div>
-        <span id="liveCount">1,000+ Shops</span>
-      </div>
+      <button class="header-icon-btn" id="notifBtn" onclick="App.toggleNotifications()" aria-label="Notifications">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="notif-dot" id="notifDot" style="display:none;"></span>
+      </button>
+      <button class="header-icon-btn lang-swap" id="langBtn" onclick="App.cycleLanguage()" aria-label="Switch Language" title="Switch Language">
+        <span id="langLabel">EN</span>
+      </button>
     </div>
   </header>
 
@@ -49,7 +52,7 @@
   <div class="role-bar" id="roleBar">
     <div class="role-info">
       <span class="role-badge buyer-badge" id="roleBadge">🛒 Buyer Hub</span>
-      <div class="role-sub" id="roleSub">1,000+ Verified Ethiopian Shops</div>
+      <div class="role-sub" id="roleSub">Verified Ethiopian Shops</div>
     </div>
     <button class="role-switch-btn" id="roleSwitchBtn" onclick="App.toggleRole()">
       Seller Studio
@@ -78,11 +81,11 @@
 </div>
 
 <!-- Core app logic -->
-<script src="js/api.js?v=4"></script>
-<script src="js/state.js?v=4"></script>
-<script src="js/views/buyer.js?v=4"></script>
-<script src="js/views/seller.js?v=4"></script>
-<script src="js/views/modals.js?v=4"></script>
-<script src="js/app.js?v=4"></script>
+<script src="js/api.js?v=5"></script>
+<script src="js/state.js?v=5"></script>
+<script src="js/views/buyer.js?v=5"></script>
+<script src="js/views/seller.js?v=5"></script>
+<script src="js/views/modals.js?v=5"></script>
+<script src="js/app.js?v=5"></script>
 </body>
 </html>

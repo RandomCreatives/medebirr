@@ -86,7 +86,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'e-Merkato API',
-    version: '1.0.0',
+    version: '1.0.2',
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV
   });

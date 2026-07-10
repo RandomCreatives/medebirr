@@ -966,7 +966,7 @@ const Modals = {
         </button>
       </div>
     `);
-  }
+  },
 
   showReviewForm(orderId, productId, storeName) {
     this.open(`
@@ -983,7 +983,7 @@ const Modals = {
         <button id="submitReviewBtn" class="btn-primary" style="margin-top:14px;width:100%;" disabled onclick="Modals._submitReview('${orderId}','${productId}')">Submit Review</button>
       </div>
     `);
-  }
+  },
 
   _setReviewRating(val) {
     document.querySelectorAll('.review-stars .star').forEach(el => {
@@ -992,7 +992,7 @@ const Modals = {
     });
     document.getElementById('submitReviewBtn').disabled = false;
     this._rating = val;
-  }
+  },
 
   async _submitReview(orderId, productId) {
     const rating = this._rating;

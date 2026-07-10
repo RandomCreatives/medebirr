@@ -11,7 +11,7 @@ const BuyerViews = {
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
         <input type="text" class="search-input" id="searchInput"
-               placeholder="Search shops, items, or locations..."
+               placeholder="${State.t('searchPlaceholder')}"
                value="${State.searchQuery}"
                oninput="App.handleSearch(this.value)" />
       </div>
@@ -50,11 +50,11 @@ const BuyerViews = {
 
   _filterPills() {
     const filters = [
-      { key: 'all',         label: '🌐 All'         },
-      { key: 'electronics', label: '📱 Electronics'  },
-      { key: 'fashion',     label: '👗 Fashion'      },
-      { key: 'groceries',   label: '☕ Food & Coffee' },
-      { key: 'footwear',    label: '👟 Footwear'     },
+      { key: 'all',         label: State.t('filterAll') },
+      { key: 'electronics', label: State.t('filterElectronics') },
+      { key: 'fashion',     label: State.t('filterFashion') },
+      { key: 'groceries',   label: State.t('filterFood') },
+      { key: 'footwear',    label: State.t('filterFootwear') },
     ];
     return filters.map(f => `
       <button class="filter-pill ${State.activeFilter === f.key ? 'active' : ''}" onclick="App.handleFilter('${f.key}')">${f.label}</button>
@@ -79,7 +79,7 @@ const BuyerViews = {
             <div style="display:flex;align-items:baseline;gap:4px;">
               <span class="item-price">${State.formatETB(p.price_etb)}</span>${compare}
             </div>
-            <button class="btn-add-cart" onclick="event.stopPropagation();App.addToCart('${p.product_id}')">+ Add to Cart</button>
+            <button class="btn-add-cart" onclick="event.stopPropagation();App.addToCart('${p.product_id}')">${State.t('addToCart')}</button>
           </div>
         </div>
       </div>
@@ -181,14 +181,14 @@ const BuyerViews = {
     const couponCount = (State.userCoupons || []).filter(c => !c.is_redeemed).length;
 
     const menuItems = [
-      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`, label: 'Your Profile', desc: 'Name, email, phone & security', section: 'profile' },
-      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`, label: 'Manage Address', desc: 'Delivery locations & map', section: 'address' },
-      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`, label: 'Payment Methods', desc: 'Cards & digital wallet', section: 'payment' },
-      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`, label: 'My Orders', desc: orderCount ? `${orderCount} orders` : 'Track purchases & deliveries', section: 'orders', badge: orderCount || null },
-      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`, label: 'My Coupons', desc: couponCount ? `${couponCount} available` : 'Discounts & promo codes', section: 'coupons', badge: couponCount || null },
-      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`, label: 'Settings', desc: 'Dark mode, notifications, biometrics', section: 'settings' },
-      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`, label: 'Help Center', desc: 'FAQs, chat support & contact', section: 'help' },
-      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`, label: 'Privacy Policy', desc: 'Data usage & legal terms', section: 'privacy' },
+      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`, label: State.t('profile'), desc: 'Name, email, phone & security', section: 'profile' },
+      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`, label: State.t('address'), desc: 'Delivery locations & map', section: 'address' },
+      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`, label: State.t('payment'), desc: 'Cards & digital wallet', section: 'payment' },
+      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`, label: State.t('orders'), desc: orderCount ? `${orderCount} orders` : 'Track purchases & deliveries', section: 'orders', badge: orderCount || null },
+      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`, label: State.t('coupons'), desc: couponCount ? `${couponCount} available` : 'Discounts & promo codes', section: 'coupons', badge: couponCount || null },
+      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`, label: State.t('settings'), desc: 'Dark mode, notifications, biometrics', section: 'settings' },
+      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`, label: State.t('help'), desc: 'FAQs, chat support & contact', section: 'help' },
+      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`, label: State.t('privacy'), desc: 'Data usage & legal terms', section: 'privacy' },
     ];
 
     container.innerHTML = `
@@ -323,8 +323,6 @@ const BuyerViews = {
     try {
       const data = await Api.users.updateMe({ first_name, last_name, email, phone });
       State.user = { ...State.user, ...data.user };
-      document.getElementById('userAvatar').textContent = first_name[0].toUpperCase();
-      document.getElementById('headerUsername').textContent = fullName;
       App.toast('Profile updated!', 'success');
       App.backToProfileHub();
     } catch (err) {
@@ -1166,8 +1164,8 @@ const BuyerViews = {
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">🛍️</div>
-          <div class="empty-title">Your cart is empty</div>
-          <div class="empty-desc">Explore 1,000+ Ethiopian shops and add items.<br/>Each seller's items are grouped for direct checkout.</div>
+          <div class="empty-title">${State.t('emptyCart')}</div>
+          <div class="empty-desc">${State.t('emptyCartDesc')}</div>
           <button class="btn-primary" style="margin-top:20px;" onclick="App.switchTab('explore')">Browse Shops</button>
         </div>`;
       return;
@@ -1232,8 +1230,8 @@ const BuyerViews = {
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">❤️</div>
-          <div class="empty-title">No saved items</div>
-          <div class="empty-desc">Heart items while browsing to save them here.</div>
+          <div class="empty-title">${State.t('emptyWishlist')}</div>
+          <div class="empty-desc">${State.t('emptyWishlistDesc')}</div>
           <button class="btn-primary" style="margin-top:20px;" onclick="App.switchTab('explore')">Start Exploring</button>
         </div>`;
       return;

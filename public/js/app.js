@@ -14,6 +14,10 @@ const App = {
 
     State.loadCart();
 
+    // Restore language preference
+    const savedLang = localStorage.getItem('em_lang');
+    if (savedLang && State.languages.includes(savedLang)) State.language = savedLang;
+
     // ── Phase 1: Show UI instantly with cached data ──────────────
     // Restore cached user + products so the screen renders in <100ms
     this._restoreCache();
@@ -273,41 +277,23 @@ const App = {
 
     const u = State.user;
     if (u) {
-      // Normalise field names — API returns either camelCase (from auth) or snake_case (from /me)
+      // Normalise field names
       const firstName = u.firstName || u.first_name || 'User';
       const lastName  = u.lastName  || u.last_name  || '';
       const username  = u.username  || '';
-
-      // Cache normalised values back onto state so everything else can use camelCase
       u.firstName = firstName;
       u.lastName  = lastName;
       u.username  = username;
-      // isSeller = has at least one store
       u.isSeller  = (u.isSeller !== undefined) ? u.isSeller : State.stores.length > 0;
-
-      document.getElementById('userAvatar').textContent = firstName[0].toUpperCase();
-      document.getElementById('headerUsername').textContent = `${firstName} ${lastName}`.trim();
-      document.getElementById('headerLocation').textContent = username ? `@${username}` : 'Addis Ababa, Ethiopia';
     }
 
-    // Clickable avatar — opens profile tab
-    document.getElementById('userAvatar').style.cursor = 'pointer';
-    document.getElementById('userAvatar').onclick = () => App.switchTab('profile');
-    document.getElementById('appHeader').querySelector('.header-left').onclick = () => App.switchTab('profile');
+    // Set language label
+    const langMap = { en: 'EN', am: 'አማ', or: 'OR' };
+    const langLabel = document.getElementById('langLabel');
+    if (langLabel) langLabel.textContent = langMap[State.language] || 'EN';
 
-    // Switch-account button (browser only)
-    if (!window.Telegram?.WebApp?.initData) {
-      const headerRight = document.getElementById('appHeader').querySelector('.header-right');
-      if (headerRight && !document.getElementById('switchBtn')) {
-        const btn = document.createElement('button');
-        btn.id = 'switchBtn';
-        btn.title = 'Switch account';
-        btn.onclick = () => App._switchUser();
-        btn.style.cssText = 'background:none;border:1px solid #2D303A;color:#9DA3AE;cursor:pointer;font-size:11px;margin-left:8px;padding:4px 8px;border-radius:8px;white-space:nowrap;';
-        btn.textContent = '⇄ Switch';
-        headerRight.appendChild(btn);
-      }
-    }
+    // Check notifications
+    this._refreshNotificationDot();
   },
 
   showError(message) {
@@ -334,19 +320,17 @@ const App = {
     const badge = document.getElementById('roleBadge');
     const sub   = document.getElementById('roleSub');
     const btn   = document.getElementById('roleSwitchBtn');
-    // A user is a seller if they have any registered stores
     const isSeller = State.stores.length > 0;
 
     if (State.role === 'buyer') {
       badge.className = 'role-badge buyer-badge';
-      badge.innerHTML = '🛒 Medebirr Discovery Hub';
-      sub.textContent = '1,000+ Verified Ethiopian Shops';
+      badge.innerHTML = `🛒 ${State.t('tabExplore')} Hub`;
+      sub.textContent = State.stores.length ? `${State.stores.length} ${State.t('badgeShops')}` : 'Verified Ethiopian Shops';
 
       if (isSeller) {
-        btn.innerHTML = '🏬 My Seller Studio →';
+        btn.innerHTML = `🏬 ${State.t('badgeSeller')} →`;
         btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.5);color:#FCCD04;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer;';
       } else {
-        // Non-seller buyers see an "Open a Shop" CTA
         btn.innerHTML = '🏪 Open a Shop';
         btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);color:#10B981;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;';
       }
@@ -354,9 +338,9 @@ const App = {
 
     } else {
       badge.className = 'role-badge seller-badge';
-      badge.innerHTML = '🏬 Seller Studio';
+      badge.innerHTML = `🏬 ${State.t('badgeSeller')}`;
       sub.textContent = State.stores[0]?.store_name || 'Your Shop Dashboard';
-      btn.innerHTML = '🛒 Buyer Hub →';
+      btn.innerHTML = `🛒 ${State.t('tabExplore')} Hub →`;
       btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#60A5FA;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;';
       btn.onclick = () => App.toggleRole();
     }
@@ -381,7 +365,7 @@ const App = {
               ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="rgba(252,205,4,0.15)"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" opacity="0.3"/><circle cx="12" cy="12" r="4"/></svg>'
               : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>'}
           </div>
-          <span class="nav-label">Explore</span>
+          <span class="nav-label">${State.t('tabExplore')}</span>
         </button>
         <button class="nav-item ${isActive('wishlist')?'active':''}" onclick="App.switchTab('wishlist')">
           <div class="nav-icon-wrap">
@@ -389,7 +373,7 @@ const App = {
               ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
               : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'}
           </div>
-          <span class="nav-label">Wishlist</span>
+          <span class="nav-label">${State.t('tabWishlist')}</span>
         </button>
         <button class="nav-item ${isActive('cart')?'active':''}" onclick="App.switchTab('cart')">
           <div class="nav-icon-wrap">
@@ -398,7 +382,7 @@ const App = {
               ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 1 2 2h14a2 2 0 0 1 2-2V6l-3-4z" fill="rgba(252,205,4,0.15)"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'
               : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 1 2 2h14a2 2 0 0 1 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'}
           </div>
-          <span class="nav-label">Cart</span>
+          <span class="nav-label">${State.t('tabCart')}</span>
         </button>
         <button class="nav-item ${isActive('profile')?'active':''}" onclick="App.switchTab('profile')">
           <div class="nav-icon-wrap nav-avatar-wrap">
@@ -406,7 +390,7 @@ const App = {
               ? `<img src="${u.photo_url}" class="nav-avatar-img ${isActive('profile')?'active':''}" />`
               : `<div class="nav-avatar-placeholder ${isActive('profile')?'active':''}" style="background:${grad};">${initial}</div>`}
           </div>
-          <span class="nav-label">Profile</span>
+          <span class="nav-label">${State.t('tabProfile')}</span>
         </button>
       `;
     } else {
@@ -668,12 +652,15 @@ const App = {
 
   // ── Product Actions ───────────────────────────────
   async openProduct(productId) {
+    if (!productId) { this.toast('Invalid product', 'error'); return; }
     let product;
     try {
       const data = await Api.products.get(productId);
       product = data?.product;
-    } catch (_) {
+    } catch (err) {
+      // Fallback: find in local state (demo products or cached)
       product = State.products.find(p => p.product_id === productId);
+      if (!product) console.warn('Product not found in API or local state:', productId, err?.message);
     }
     if (!product) { this.toast('Product not found', 'error'); return; }
     Modals.openProductDetail(product);
@@ -1108,8 +1095,6 @@ const App = {
     State.user.lastName  = lastName;
     if (phone) State.user.phone = phone;
     if (city)  State.user.city  = city;
-    document.getElementById('userAvatar').textContent = firstName[0].toUpperCase();
-    document.getElementById('headerUsername').textContent = `${firstName} ${lastName}`.trim();
     this.toast('Profile saved!', 'success');
   },
 
@@ -1627,6 +1612,35 @@ const App = {
     el.className = `toast show ${type}`;
     clearTimeout(this._toastTimer);
     this._toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  },
+
+  // ── Language ──────────────────────────────────────
+  cycleLanguage() {
+    const langs = State.languages;
+    const idx = langs.indexOf(State.language);
+    State.language = langs[(idx + 1) % langs.length];
+    localStorage.setItem('em_lang', State.language);
+    const langMap = { en: 'EN', am: 'አማ', or: 'OR' };
+    document.getElementById('langLabel').textContent = langMap[State.language] || 'EN';
+    this.render();
+    this.toast(`Language: ${State.language.toUpperCase()}`, 'info');
+  },
+
+  // ── Notifications ─────────────────────────────────
+  toggleNotifications() {
+    this.switchTab('profile');
+    State.profileSubSection = 'notifications';
+    this.renderContent();
+  },
+
+  async _refreshNotificationDot() {
+    try {
+      const data = await Api.users.notifications();
+      State.notifications = data.notifications || [];
+      const unread = State.notifications.filter(n => !n.read_at).length;
+      const dot = document.getElementById('notifDot');
+      if (dot) dot.style.display = unread > 0 ? 'block' : 'none';
+    } catch (_) {}
   }
 };
 
