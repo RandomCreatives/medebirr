@@ -272,6 +272,18 @@ const App = {
 
   showApp() {
     document.getElementById('loadingScreen').style.display = 'none';
+
+    // ── First-time onboarding ──
+    const hasOnboarded = localStorage.getItem('em_onboarded');
+    if (!hasOnboarded) {
+      this._showOnboarding();
+      return;
+    }
+
+    this._revealApp();
+  },
+
+  _revealApp() {
     document.getElementById('app').style.display = 'flex';
     document.getElementById('app').style.flexDirection = 'column';
 
@@ -335,6 +347,65 @@ const App = {
         window.history.replaceState({}, '', window.location.pathname);
       }
     } catch (e) {}
+  },
+
+  // ── Onboarding ──────────────────────────────────────
+  _onboardSlideIdx: 0,
+
+  _showOnboarding() {
+    const screen = document.getElementById('onboardingScreen');
+    const slides = document.getElementById('onboardSlides');
+    const dots   = document.getElementById('onboardDots');
+    const btn    = document.getElementById('onboardBtn');
+    const total  = slides.querySelectorAll('.onboard-slide').length;
+
+    // Build dots
+    dots.innerHTML = Array.from({ length: total }, (_, i) =>
+      `<div class="onboard-dot${i === 0 ? ' active' : ''}" data-dot="${i}"></div>`
+    ).join('');
+
+    this._onboardSlideIdx = 0;
+    this._onboardTotal = total;
+    btn.textContent = 'Get Started';
+
+    // Listen for scroll to update dots
+    slides.addEventListener('scroll', () => {
+      const idx = Math.round(slides.scrollLeft / slides.offsetWidth);
+      if (idx !== this._onboardSlideIdx) {
+        this._onboardSlideIdx = idx;
+        this._updateOnboardDots();
+      }
+    }, { passive: true });
+
+    screen.style.display = 'flex';
+  },
+
+  _updateOnboardDots() {
+    const dots = document.querySelectorAll('.onboard-dot');
+    const btn  = document.getElementById('onboardBtn');
+    dots.forEach((d, i) => d.classList.toggle('active', i === this._onboardSlideIdx));
+    btn.textContent = this._onboardSlideIdx === this._onboardTotal - 1 ? 'Start Shopping' : 'Next';
+  },
+
+  _onboardNext() {
+    const slides = document.getElementById('onboardSlides');
+    if (this._onboardSlideIdx < this._onboardTotal - 1) {
+      this._onboardSlideIdx++;
+      slides.scrollTo({ left: this._onboardSlideIdx * slides.offsetWidth, behavior: 'smooth' });
+      this._updateOnboardDots();
+    } else {
+      this._onboardFinish();
+    }
+  },
+
+  _onboardSkip() {
+    this._onboardFinish();
+  },
+
+  _onboardFinish() {
+    localStorage.setItem('em_onboarded', '1');
+    document.getElementById('onboardingScreen').style.display = 'none';
+    this._revealApp();
   },
 
   showError(message) {
