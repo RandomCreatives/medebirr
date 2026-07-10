@@ -460,8 +460,8 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
 router.post('/confirm-tx', requireAuth, async (req, res, next) => {
   try {
     const { order_id, transaction_code } = req.body;
-    if (!order_id || !transaction_code) {
-      return res.status(400).json({ error: 'order_id and transaction_code are required' });
+    if (!order_id) {
+      return res.status(400).json({ error: 'order_id is required' });
     }
 
     const orderResult = await query(
@@ -480,13 +480,14 @@ router.post('/confirm-tx', requireAuth, async (req, res, next) => {
       return res.status(400).json({ error: 'Order is already paid' });
     }
 
-    // Store the transaction code and mark as pending verification
+    // Store the transaction code and mark as paid
     const gateway = order.payment_method;
+    const txRef = transaction_code || `TXN-${Date.now()}`;
     await query(
       `INSERT INTO payment_transactions (order_id, gateway, gateway_tx_ref, amount_etb, merchant_code, status)
        VALUES ($1, $2, $3, $4, $5, 'completed')
        ON CONFLICT DO NOTHING`,
-      [order_id, gateway, transaction_code, order.total_etb,
+      [order_id, gateway, txRef, order.total_etb,
        gateway === 'telebirr' ? order.telebirr_merchant_id : order.cbe_account_number]
     );
 
@@ -495,7 +496,7 @@ router.post('/confirm-tx', requireAuth, async (req, res, next) => {
       `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed',
         transaction_code = $1, payment_tx_ref = $2, updated_at = NOW()
        WHERE order_id = $3`,
-      [transaction_code, transaction_code, order_id]
+      [txRef, txRef, order_id]
     );
 
     // Deduct stock

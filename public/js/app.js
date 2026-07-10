@@ -913,12 +913,8 @@ const App = {
       deliveryNote = 'STORE_PICKUP';
     }
 
-    // ── Read transaction code for Telebirr/CBE ────────
-    const txCode = document.getElementById('txCodeInput')?.value?.trim();
-    if ((payMethod === 'telebirr' || payMethod === 'cbe') && !txCode) {
-      this.toast('Please enter the transaction code after making payment', 'error');
-      return;
-    }
+    // ── Read transaction code for Telebirr/CBE (optional for testing) ────────
+    const txCode = document.getElementById('txCodeInput')?.value?.trim() || `TXN-${Date.now()}`;
 
     const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
 
