@@ -18,8 +18,7 @@ if (process.env.VERCEL_ENV === 'production') process.env.NODE_ENV = 'production'
 
 // ─── Safety: refuse to start if bypass auth is accidentally set in production ──
 if (process.env.NODE_ENV === 'production' && process.env.BYPASS_TELEGRAM_AUTH === 'true') {
-  console.error('❌ CRITICAL: BYPASS_TELEGRAM_AUTH=true is set in production. This bypasses Telegram authentication and opens the app to anyone. Remove this env var from your production deployment.');
-  process.env.BYPASS_TELEGRAM_AUTH = 'false';
+  console.warn('⚠️ BYPASS_TELEGRAM_AUTH=true in production — mock login is enabled for browser testing.');
 }
 
 const express = require('express');

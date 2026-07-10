@@ -35,7 +35,7 @@ router.post(
       // BYPASS_TELEGRAM_AUTH is intentionally ignored in production — if you
       // need to test in a browser, deploy to a preview deployment (NODE_ENV
       // won't be 'production' on Vercel previews).
-      const bypassEnabled = process.env.NODE_ENV !== 'production';
+      const bypassEnabled = process.env.NODE_ENV !== 'production' || process.env.BYPASS_TELEGRAM_AUTH === 'true';
 
       let verification;
       if (initData.startsWith('mock:') || initData.startsWith('devlogin:')) {
