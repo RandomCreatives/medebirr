@@ -40,6 +40,14 @@ router.post('/', requireAuth, async (req, res, next) => {
       [product_id]
     );
 
+    // Also update store-level rating
+    await query(
+      `UPDATE stores SET rating = (SELECT ROUND(AVG(rating)::numeric, 1) FROM reviews WHERE store_id = $1),
+                         rating_count = (SELECT COUNT(*) FROM reviews WHERE store_id = $1)
+       WHERE store_id = $1`,
+      [store_id]
+    );
+
     res.status(201).json({ review: result.rows[0] });
   } catch (err) {
     next(err);
@@ -57,6 +65,30 @@ router.get('/product/:productId', async (req, res, next) => {
        ORDER BY r.created_at DESC
        LIMIT 50`,
       [req.params.productId]
+    );
+    res.json({ reviews: result.rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/v1/reviews/store/:storeId
+ * All reviews for a store (for seller dashboard)
+ */
+router.get('/store/:storeId', requireAuth, async (req, res, next) => {
+  try {
+    const result = await query(
+      `SELECT r.review_id, r.rating, r.comment, r.created_at,
+              r.product_id, p.title AS product_title,
+              u.first_name, u.last_name, u.username
+       FROM reviews r
+       JOIN products p ON r.product_id = p.product_id
+       JOIN users u ON r.reviewer_tg_id = u.tg_user_id
+       WHERE r.store_id = $1
+       ORDER BY r.created_at DESC
+       LIMIT 100`,
+      [req.params.storeId]
     );
     res.json({ reviews: result.rows });
   } catch (err) {

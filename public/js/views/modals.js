@@ -819,10 +819,16 @@ const Modals = {
   // ── Add / Edit Product ────────────────────────────
   openAddProduct(product = null) {
     const isEdit = !!product;
+    const imgs = isEdit && Array.isArray(product.image_urls) ? product.image_urls : [''];
+    const imgFields = [0,1,2].map(i => `
+      <input class="form-input prod-img-url" data-idx="${i}" value="${imgs[i] || ''}"
+             placeholder="Image URL ${i+1} ${i===0?'(required)':'(optional)'}"
+             style="font-size:12px;"/>
+    `).join('');
     this.open(`
       <div class="modal-handle"></div>
       <div class="modal-title">${isEdit ? 'Edit Item' : '+ Publish New Item'}</div>
-      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Item will appear in the 100k buyer discovery feed and auto-broadcast to your Telegram group.</p>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Item will appear in the buyer discovery feed and auto-broadcast to your Telegram group.</p>
 
       <div class="form-group">
         <label class="form-label">Item Title</label>
@@ -832,14 +838,37 @@ const Modals = {
         <label class="form-label">Description</label>
         <textarea class="form-textarea" id="prodDesc">${isEdit ? (product.description || '') : ''}</textarea>
       </div>
+
+      <!-- Image URLs -->
+      <div class="form-group">
+        <label class="form-label">Product Images (paste image URLs)</label>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${imgFields}
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Paste direct image links (jpg/png/webp). First image is the thumbnail.</div>
+      </div>
+
+      <!-- Image preview -->
+      <div class="prod-img-preview-row" style="display:flex;gap:6px;margin-bottom:14px;"></div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group">
           <label class="form-label">Price (ETB)</label>
           <input class="form-input" id="prodPrice" type="number" value="${isEdit ? product.price_etb : ''}" placeholder="0"/>
         </div>
         <div class="form-group">
+          <label class="form-label">Compare Price (ETB)</label>
+          <input class="form-input" id="prodComparePrice" type="number" value="${isEdit ? (product.compare_price || '') : ''}" placeholder="Optional original price"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="form-group">
           <label class="form-label">Stock Quantity</label>
           <input class="form-input" id="prodStock" type="number" value="${isEdit ? product.stock_quantity : ''}" placeholder="0"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sub-Category</label>
+          <input class="form-input" id="prodSubCategory" value="${isEdit ? (product.sub_category || '') : ''}" placeholder="e.g. Phones, Chairs..."/>
         </div>
       </div>
       <div class="form-group">
@@ -849,8 +878,14 @@ const Modals = {
           <option value="fashion" ${isEdit&&product.category==='fashion'?'selected':''}>👗 Fashion & Traditional</option>
           <option value="groceries" ${isEdit&&product.category==='groceries'?'selected':''}>☕ Coffee & Food</option>
           <option value="footwear" ${isEdit&&product.category==='footwear'?'selected':''}>👟 Footwear</option>
+          <option value="furniture" ${isEdit&&product.category==='furniture'?'selected':''}>🪑 Furniture</option>
+          <option value="beauty" ${isEdit&&product.category==='beauty'?'selected':''}>💄 Beauty</option>
           <option value="other" ${isEdit&&product.category==='other'?'selected':''}>📦 Other</option>
         </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags (comma-separated)</label>
+        <input class="form-input" id="prodTags" value="${isEdit && Array.isArray(product.tags) ? product.tags.join(', ') : ''}" placeholder="e.g. wireless, bluetooth, premium"/>
       </div>
       <div class="form-group">
         <label class="form-label">SKU / Item Code (optional)</label>
@@ -864,6 +899,17 @@ const Modals = {
         ${isEdit ? 'Save Changes' : '🚀 Publish to Medebirr Hub'}
       </button>
     `);
+    // Live preview images on input
+    setTimeout(() => {
+      document.querySelectorAll('.prod-img-url').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const urls = [...document.querySelectorAll('.prod-img-url')].map(i => i.value.trim()).filter(Boolean);
+          const row = document.querySelector('.prod-img-preview-row');
+          if (row) row.innerHTML = urls.map(u => `<div style="width:48px;height:48px;border-radius:8px;border:1px solid var(--border);background:url(${u}) center/cover no-repeat var(--bg-surface);flex-shrink:0;"></div>`).join('');
+        });
+        inp.dispatchEvent(new Event('input'));
+      });
+    }, 50);
   },
 
   openEditProduct(productId) {

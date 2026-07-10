@@ -13,10 +13,12 @@ const SellerViews = {
       return;
     }
     const { orders, products, recentOrders } = stats;
+    const store = State.stores[0];
+    const reviews = State.storeReviews || [];
     container.innerHTML = `
       <div class="section-header">
         <span class="section-title">Sales Hub</span>
-        <span style="font-size:11px;color:var(--success);">● Verified Shop</span>
+        <span style="font-size:11px;color:${store?.status === 'verified' ? 'var(--success)' : 'var(--warning)'};">● ${store?.status === 'verified' ? 'Verified Shop' : 'Pending Verification'}</span>
       </div>
 
       <div class="stat-grid">
@@ -44,6 +46,24 @@ const SellerViews = {
       </div>
 
       ${recentOrders.length ? recentOrders.map(o => this._recentOrderRow(o)).join('') : '<p style="font-size:13px;color:var(--text-secondary);">No orders yet. List your items to start selling.</p>'}
+
+      <!-- Reviews Section -->
+      ${reviews.length ? `
+      <div class="section-header" style="margin-top:16px;">
+        <span class="section-title">⭐ Recent Reviews</span>
+        <span style="font-size:11px;color:var(--warning);">${store?.rating ? Number(store.rating).toFixed(1) : '—'} avg · ${store?.rating_count || 0} total</span>
+      </div>
+      ${reviews.slice(0, 3).map(r => `
+        <div class="card" style="margin-bottom:8px;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <span style="font-size:12px;font-weight:700;">${r.first_name} ${r.last_name || ''}</span>
+            <span style="font-size:12px;color:var(--warning);">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
+          </div>
+          <div style="font-size:11px;color:var(--accent);margin-bottom:2px;">${r.product_title || ''}</div>
+          ${r.comment ? `<div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">${r.comment}</div>` : ''}
+        </div>
+      `).join('')}
+      ` : ''}
 
       <button class="btn-primary" style="margin-top:14px;" onclick="Modals.openAddProduct()">
         + Publish New Item to Hub
@@ -80,12 +100,17 @@ const SellerViews = {
   },
 
   _inventoryCard(p) {
+    const thumb = (Array.isArray(p.image_urls) && p.image_urls[0])
+      ? `<div style="width:48px;height:48px;border-radius:8px;background:url(${p.image_urls[0]}) center/cover no-repeat var(--bg-surface);border:1px solid var(--border);flex-shrink:0;"></div>`
+      : `<div style="width:48px;height:48px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📦</div>`;
     return `
       <div class="card" style="margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-          <div style="flex:1;margin-right:10px;">
-            <div class="card-title">${p.title}</div>
-            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${p.category} · SKU: ${p.sku || 'N/A'}</div>
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;">
+          ${thumb}
+          <div style="flex:1;min-width:0;">
+            <div class="card-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${p.category}${p.sub_category ? ' · ' + p.sub_category : ''} · SKU: ${p.sku || 'N/A'}</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">👁 ${p.view_count || 0} views · ⭐ ${(Number(p.rating) || 0).toFixed(1)} (${p.rating_count || 0})</div>
           </div>
           <span style="font-size:11px;padding:3px 8px;border-radius:6px;${p.is_published ? 'background:rgba(16,185,129,0.15);color:var(--success)' : 'background:rgba(245,158,11,0.15);color:var(--warning)'}">
             ${p.is_published ? '● Live' : '○ Draft'}
@@ -94,12 +119,16 @@ const SellerViews = {
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
             <span style="font-size:16px;font-weight:900;color:var(--accent);">${State.formatETB(p.price_etb)}</span>
+            ${p.compare_price ? `<span style="font-size:11px;color:var(--text-muted);text-decoration:line-through;margin-left:6px;">${State.formatETB(p.compare_price)}</span>` : ''}
             <span style="font-size:11px;color:var(--text-secondary);margin-left:8px;">Stock: ${p.stock_quantity - (p.reserved_stock || 0)}</span>
           </div>
-          <div style="display:flex;gap:8px;">
-            <button class="btn-secondary" style="width:auto;padding:7px 12px;font-size:11px;" onclick="Modals.openEditProduct('${p.product_id}')">Edit</button>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-secondary" style="width:auto;padding:7px 12px;font-size:11px;" onclick="Modals.openEditProduct('${p.product_id}')">✏️ Edit</button>
             <button style="background:${p.is_published ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)'};border:1px solid ${p.is_published ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'};color:${p.is_published ? 'var(--warning)' : 'var(--success)'};padding:7px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.togglePublish('${p.product_id}',${p.is_published})">
               ${p.is_published ? 'Unpublish' : 'Publish'}
+            </button>
+            <button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:7px 10px;border-radius:8px;font-size:11px;cursor:pointer;" onclick="App.confirmDeleteProduct('${p.product_id}','${(p.title||'').replace(/'/g,"\\'")}')">
+              🗑
             </button>
           </div>
         </div>
@@ -174,6 +203,10 @@ const SellerViews = {
             <input type="checkbox" id="telebirrEnabled" ${store.telebirr_enabled!==false?'checked':''} style="accent-color:var(--accent);">
             📱 Telebirr SuperApp (Direct to your Shortcode)
           </label>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;">
+            <input type="checkbox" id="chapaEnabled" ${store.chapa_enabled?'checked':''} style="accent-color:var(--accent);">
+            💳 Chapa (Online Card / Mobile Money)
+          </label>
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
             <input type="checkbox" id="cashEnabled" ${store.cash_on_delivery!==false?'checked':''} style="accent-color:var(--accent);">
             💵 Cash on Delivery
@@ -199,7 +232,10 @@ const SellerViews = {
   },
 
   _dispatchCard(o) {
-    const addr = typeof o.delivery_address === 'string' ? JSON.parse(o.delivery_address) : o.delivery_address;
+    let addr = {};
+    try {
+      addr = typeof o.delivery_address === 'string' ? JSON.parse(o.delivery_address) : (o.delivery_address || {});
+    } catch (_) {}
     const addrStr = [addr.sub_city, addr.woreda, addr.house_number, addr.landmark].filter(Boolean).join(', ');
     return `
       <div class="dispatch-card">
@@ -211,6 +247,7 @@ const SellerViews = {
         <div class="dispatch-actions">
           ${o.order_status === 'confirmed' ? `<button class="btn-dispatch" onclick="Modals.openAssignRider('${o.order_id}')">🛵 Assign Rider</button>` : `<button class="btn-dispatch" style="background:rgba(167,139,250,0.2);color:#A78BFA;">In Transit</button>`}
           <button class="btn-call" onclick="window.open('tel:${addr.phone}')">📞 Call Buyer</button>
+          ${['pending','confirmed'].includes(o.order_status) ? `<button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.confirmCancelOrder('${o.order_id}','${o.order_ref}')">✕ Cancel</button>` : ''}
         </div>
       </div>
     `;

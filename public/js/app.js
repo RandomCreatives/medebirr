@@ -629,14 +629,16 @@ const App = {
   async loadSellerData() {
     if (!State.currentStoreId) return;
     try {
-      const [statsData, productsData, ordersData] = await Promise.all([
+      const [statsData, productsData, ordersData, reviewsData] = await Promise.all([
         Api.stores.stats(State.currentStoreId),
-        Api.products.list({ store_id: State.currentStoreId, limit: 50 }),
-        Api.orders.storeOrders(State.currentStoreId, { limit: 50 })
+        Api.products.list({ store_id: State.currentStoreId, limit: 200 }),
+        Api.orders.storeOrders(State.currentStoreId, { limit: 200 }),
+        Api.orders.reviews(State.currentStoreId).catch(() => ({ reviews: [] }))
       ]);
       State.sellerStats = statsData;
       State.sellerProducts = productsData.products || [];
       State.storeOrders = ordersData.orders || [];
+      State.storeReviews = reviewsData.reviews || [];
     } catch (err) {
       this.toast('Failed to load seller data', 'error');
     }
@@ -993,7 +995,7 @@ const App = {
       await Api.products.create(data);
       this.toast('Item published to hub!', 'success');
       Modals.close();
-      const result = await Api.products.list({ store_id: State.currentStoreId, limit: 50 });
+      const result = await Api.products.list({ store_id: State.currentStoreId, limit: 200 });
       State.sellerProducts = result.products || [];
       this.renderContent();
     } catch (err) {
@@ -1008,7 +1010,7 @@ const App = {
       await Api.products.update(productId, data);
       this.toast('Item updated!', 'success');
       Modals.close();
-      const result = await Api.products.list({ store_id: State.currentStoreId, limit: 50 });
+      const result = await Api.products.list({ store_id: State.currentStoreId, limit: 200 });
       State.sellerProducts = result.products || [];
       this.renderContent();
     } catch (err) {
@@ -1023,13 +1025,19 @@ const App = {
     if (!title) { this.toast('Title is required', 'error'); return null; }
     if (!price || price <= 0) { this.toast('Valid price required', 'error'); return null; }
     if (stock === undefined || stock < 0) { this.toast('Valid stock quantity required', 'error'); return null; }
+    const image_urls = [...document.querySelectorAll('.prod-img-url')].map(i => i.value.trim()).filter(Boolean);
+    const tagsRaw = document.getElementById('prodTags')?.value?.trim();
     return {
       title,
       description: document.getElementById('prodDesc')?.value || '',
       price_etb: price,
+      compare_price: parseFloat(document.getElementById('prodComparePrice')?.value) || null,
       stock_quantity: stock,
       category: document.getElementById('prodCategory')?.value,
+      sub_category: document.getElementById('prodSubCategory')?.value?.trim() || null,
+      tags: tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : null,
       sku: document.getElementById('prodSku')?.value || null,
+      image_urls: image_urls.length ? image_urls : null,
       is_published: document.getElementById('prodPublish')?.checked || false
     };
   },
@@ -1038,7 +1046,7 @@ const App = {
     try {
       await Api.products.update(productId, { is_published: !currentState });
       this.toast(currentState ? 'Item unpublished' : 'Item is now live!', 'success');
-      const result = await Api.products.list({ store_id: State.currentStoreId, limit: 50 });
+      const result = await Api.products.list({ store_id: State.currentStoreId, limit: 200 });
       State.sellerProducts = result.products || [];
       this.renderContent();
     } catch (err) {
@@ -1055,6 +1063,7 @@ const App = {
       addis_delivery_fee: parseFloat(document.getElementById('addisFee')?.value),
       regional_dispatch_fee: parseFloat(document.getElementById('regionalFee')?.value),
       telebirr_enabled: document.getElementById('telebirrEnabled')?.checked,
+      chapa_enabled: document.getElementById('chapaEnabled')?.checked,
       cash_on_delivery: document.getElementById('cashEnabled')?.checked
     };
     try {
@@ -1077,11 +1086,72 @@ const App = {
       await Api.orders.dispatch(orderId, { rider_name: riderName, rider_phone: riderPhone, dispatch_note: note });
       this.toast('Rider assigned! Buyer notified.', 'success');
       Modals.close();
-      const ordersData = await Api.orders.storeOrders(State.currentStoreId, { limit: 50 });
+      const ordersData = await Api.orders.storeOrders(State.currentStoreId, { limit: 200 });
       State.storeOrders = ordersData.orders || [];
       this.renderContent();
     } catch (err) {
       this.toast(err.message || 'Dispatch failed', 'error');
+    }
+  },
+
+  // ── Product Delete ────────────────────────────────
+  confirmDeleteProduct(productId, title) {
+    Modals.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title" style="color:var(--danger);">🗑 Delete Product</div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+        Are you sure you want to delete <strong style="color:white;">"${title}"</strong>? This action cannot be undone.
+      </p>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secondary" style="flex:1;" onclick="Modals.close()">Cancel</button>
+        <button class="btn-danger" style="flex:1;" onclick="App.deleteProduct('${productId}')">Delete</button>
+      </div>
+    `);
+  },
+
+  async deleteProduct(productId) {
+    try {
+      await Api.products.delete(productId);
+      this.toast('Product deleted', 'success');
+      Modals.close();
+      const result = await Api.products.list({ store_id: State.currentStoreId, limit: 200 });
+      State.sellerProducts = result.products || [];
+      this.renderContent();
+    } catch (err) {
+      this.toast(err.message || 'Delete failed', 'error');
+    }
+  },
+
+  // ── Seller Cancel Order ───────────────────────────
+  confirmCancelOrder(orderId, orderRef) {
+    Modals.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title" style="color:var(--danger);">Cancel Order</div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-bottom:12px;">
+        Cancel order <strong style="color:white;">${orderRef}</strong>? The buyer will be notified and any payment will be refunded.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Reason for cancellation</label>
+        <textarea class="form-textarea" id="cancelReason" placeholder="e.g. Out of stock, item discontinued..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secondary" style="flex:1;" onclick="Modals.close()">Keep Order</button>
+        <button class="btn-danger" style="flex:1;" onclick="App.cancelOrderAsSeller('${orderId}')">Cancel Order</button>
+      </div>
+    `);
+  },
+
+  async cancelOrderAsSeller(orderId) {
+    const reason = document.getElementById('cancelReason')?.value?.trim() || 'Cancelled by seller';
+    try {
+      await Api.orders.cancelAsSeller(orderId, { reason });
+      this.toast('Order cancelled. Buyer notified.', 'success');
+      Modals.close();
+      const ordersData = await Api.orders.storeOrders(State.currentStoreId, { limit: 200 });
+      State.storeOrders = ordersData.orders || [];
+      this.renderContent();
+    } catch (err) {
+      this.toast(err.message || 'Cancel failed', 'error');
     }
   },
 
@@ -1460,7 +1530,7 @@ const App = {
 
       <div id="groupVerifyResult" style="display:none;"></div>
 
-      <button id="verifyGroupBtn" style="display:none;" class="btn-secondary" style="margin-bottom:10px;" onclick="App._verifyGroupLink()">
+      <button id="verifyGroupBtn" style="display:none;margin-bottom:10px;" class="btn-secondary" onclick="App._verifyGroupLink()">
         ✅ Verify @${botUsername} is Admin
       </button>
 

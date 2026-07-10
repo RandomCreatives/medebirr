@@ -106,7 +106,7 @@ const State = {
   // Seller studio state
   sellerStats: null,
   sellerProducts: [],
-  pendingDispatch: [],
+  storeReviews: [],
 
   // ── Cart helpers ──────────────────────────────────
   cartCount() {

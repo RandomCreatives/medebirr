@@ -567,4 +567,59 @@ router.patch('/:orderId/cancel', requireAuth, async (req, res, next) => {
   }
 });
 
+/**
+ * PATCH /api/v1/orders/:orderId/cancel-seller
+ * Seller-initiated cancellation (only for orders owned by the seller's store)
+ */
+router.patch('/:orderId/cancel-seller', requireAuth, async (req, res, next) => {
+  try {
+    const { reason } = req.body || {};
+    const ordResult = await query(
+      `SELECT o.*, s.admin_tg_user_id FROM orders o
+       JOIN stores s ON o.store_id = s.store_id
+       WHERE o.order_id = $1`,
+      [req.params.orderId]
+    );
+    if (ordResult.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    const ord = ordResult.rows[0];
+    if (ord.admin_tg_user_id !== req.user.tg_user_id) return res.status(403).json({ error: 'Not authorized' });
+    if (!['pending', 'confirmed'].includes(ord.order_status)) {
+      return res.status(400).json({ error: 'Only pending or confirmed orders can be cancelled' });
+    }
+
+    const result = await query(
+      `UPDATE orders SET
+        order_status = 'cancelled', cancel_reason = $2, cancelled_at = NOW(), updated_at = NOW()
+       WHERE order_id = $1 RETURNING *`,
+      [req.params.orderId, reason || 'Cancelled by seller']
+    );
+
+    // Release reserved stock
+    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
+    for (const item of items.rows) {
+      await query(
+        `UPDATE products SET reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2`,
+        [item.quantity, item.product_id]
+      );
+    }
+
+    // Notify buyer via Telegram if available
+    try {
+      const tgService = require('../services/telegram');
+      const buyerResult = await query('SELECT tg_user_id FROM users WHERE tg_user_id = $1', [ord.buyer_tg_user_id]);
+      if (buyerResult.rows.length > 0) {
+        await tgService.tgCall('sendMessage', {
+          chat_id: ord.buyer_tg_user_id,
+          text: `❌ Order ${ord.order_ref} has been cancelled by the seller.\nReason: ${reason || 'No reason provided'}\n\nIf you paid, your refund will be processed automatically.`,
+          parse_mode: 'HTML'
+        });
+      }
+    } catch (_) {}
+
+    res.json({ order: result.rows[0], message: 'Order cancelled by seller.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

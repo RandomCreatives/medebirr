@@ -86,7 +86,9 @@ const Api = {
     storeOrders:     (storeId, params={}) => { const qs = new URLSearchParams(params).toString(); return Api.get(`/orders/store/${storeId}${qs ? '?' + qs : ''}`); },
     dispatch:        (id, data)           => Api.put(`/orders/${id}/dispatch`, data),
     confirmDelivery: (id)                 => Api.put(`/orders/${id}/confirm-delivery`, {}),
-    cancel:          (id)                 => Api.patch(`/orders/${id}/cancel`, {})
+    cancel:          (id)                 => Api.patch(`/orders/${id}/cancel`, {}),
+    cancelAsSeller:  (id, data)           => Api.patch(`/orders/${id}/cancel-seller`, data),
+    reviews:         (storeId)            => Api.get(`/reviews/store/${storeId}`),
   },
 
   // ── Payments ───────────────────────────────────────
