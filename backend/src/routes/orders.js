@@ -523,4 +523,48 @@ router.put('/:orderId/confirm-delivery', requireAuth, async (req, res, next) => 
   }
 });
 
+/**
+ * PATCH /api/v1/orders/:orderId/cancel
+ * Buyer cancels a pending or confirmed order
+ */
+router.patch('/:orderId/cancel', requireAuth, async (req, res, next) => {
+  try {
+    const orderCheck = await query(
+      'SELECT order_id, buyer_tg_user_id, order_status FROM orders WHERE order_id = $1',
+      [req.params.orderId]
+    );
+    if (orderCheck.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    const ord = orderCheck.rows[0];
+
+    if (ord.buyer_tg_user_id !== req.user.tg_user_id) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    if (!['pending', 'confirmed'].includes(ord.order_status)) {
+      return res.status(400).json({ error: 'Only pending or confirmed orders can be cancelled' });
+    }
+
+    const result = await query(
+      `UPDATE orders SET
+        order_status = 'cancelled', cancelled_at = NOW(), updated_at = NOW()
+       WHERE order_id = $1 RETURNING *`,
+      [req.params.orderId]
+    );
+
+    // Release reserved stock
+    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
+    for (const item of items.rows) {
+      await query(
+        `UPDATE products SET
+          reserved_stock = GREATEST(0, reserved_stock - $1)
+         WHERE product_id = $2`,
+        [item.quantity, item.product_id]
+      );
+    }
+
+    res.json({ order: result.rows[0], message: 'Order cancelled.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

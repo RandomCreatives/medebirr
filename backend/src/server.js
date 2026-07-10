@@ -21,6 +21,7 @@ const orderRoutes = require('./routes/orders');
 const paymentRoutes = require('./routes/payments');
 const userRoutes = require('./routes/users');
 const botRoutes = require('./routes/bot');
+const reviewRoutes = require('./routes/reviews');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -72,6 +73,7 @@ app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/bot', botRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

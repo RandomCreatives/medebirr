@@ -33,7 +33,19 @@ const BuyerViews = {
       <div class="item-grid" id="itemGrid">
         ${filtered.length ? filtered.map(p => this._itemCard(p)).join('') : this._emptyState('🔍','No items found','Try different keywords or clear filters.')}
       </div>
+      <div id="scrollSentinel" style="height:1px;"></div>
     `;
+    this._setupInfiniteScroll();
+  },
+
+  _setupInfiniteScroll() {
+    App._cancelInfiniteScroll();
+    const sentinel = document.getElementById('scrollSentinel');
+    if (!sentinel) return;
+    App._scrollObserver = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) App._loadMore();
+    }, { rootMargin: '200px' });
+    App._scrollObserver.observe(sentinel);
   },
 
   _filterPills() {

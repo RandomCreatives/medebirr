@@ -967,4 +967,48 @@ const Modals = {
       </div>
     `);
   }
+
+  showReviewForm(orderId, productId, storeName) {
+    this.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">⭐ Rate Your Purchase</div>
+      <div style="padding:16px 0;">
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">
+          How was your experience with <strong style="color:white;">${storeName}</strong>?
+        </div>
+        <div class="review-stars" style="display:flex;gap:6px;justify-content:center;margin-bottom:16px;">
+          ${[1,2,3,4,5].map(s => `<span class="star" data-value="${s}" style="font-size:36px;cursor:pointer;color:var(--border);transition:color .2s;" onclick="Modals._setReviewRating(${s})">★</span>`).join('')}
+        </div>
+        <textarea id="reviewComment" placeholder="Share your thoughts about this product (optional)" style="width:100%;min-height:80px;padding:12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);color:white;font-size:13px;resize:vertical;outline:none;box-sizing:border-box;"></textarea>
+        <button id="submitReviewBtn" class="btn-primary" style="margin-top:14px;width:100%;" disabled onclick="Modals._submitReview('${orderId}','${productId}')">Submit Review</button>
+      </div>
+    `);
+  }
+
+  _setReviewRating(val) {
+    document.querySelectorAll('.review-stars .star').forEach(el => {
+      const v = parseInt(el.dataset.value);
+      el.style.color = v <= val ? 'var(--accent)' : 'var(--border)';
+    });
+    document.getElementById('submitReviewBtn').disabled = false;
+    this._rating = val;
+  }
+
+  async _submitReview(orderId, productId) {
+    const rating = this._rating;
+    if (!rating) return;
+    const comment = document.getElementById('reviewComment')?.value?.trim() || '';
+    const btn = document.getElementById('submitReviewBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    try {
+      await Api.reviews.create({ order_id: orderId, product_id: productId, rating, comment });
+      App.toast('Review submitted! Thank you ⭐', 'success');
+      this.close();
+    } catch (err) {
+      App.toast(err.message || 'Failed to submit review', 'error');
+      btn.disabled = false;
+      btn.textContent = 'Submit Review';
+    }
+  }
 };

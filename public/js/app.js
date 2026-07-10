@@ -251,11 +251,12 @@ const App = {
     // Stores + full product list load silently in background
     Promise.all([
       Api.stores.list({ limit: 100 }).catch(() => ({ stores: [] })),
-      Api.products.list({ sort: 'featured', limit: 20 }).catch(() => ({ products: State.products }))
+      Api.products.list({ sort: 'featured', limit: 20, page: 1 }).catch(() => ({ products: State.products }))
     ]).then(([storesData, fullProducts]) => {
       State.allStores    = storesData.stores || [];
       State.products     = fullProducts.products || State.products;
       State.productTotal = fullProducts.total || State.products.length;
+      State.productPage  = 2;
       try {
         localStorage.setItem('em_stores_cache',   JSON.stringify(State.allStores));
         localStorage.setItem('em_products_cache', JSON.stringify(State.products));
@@ -607,30 +608,58 @@ const App = {
 
   handleSearch(val) {
     State.searchQuery = val;
+    this._cancelInfiniteScroll();
     this._fetchProducts();
   },
 
   handleFilter(filter) {
     State.activeFilter = filter;
     State.searchQuery = '';
+    this._cancelInfiniteScroll();
     this._fetchProducts();
   },
 
   handleSort(sort) {
     State.sortBy = sort;
+    this._cancelInfiniteScroll();
     this._fetchProducts();
   },
 
-  async _fetchProducts() {
-    const params = { sort: State.sortBy, limit: 20 };
+  async _fetchProducts(append = false) {
+    if (this._loadingProducts) return;
+    if (!append) State.productPage = 1;
+    const params = { sort: State.sortBy, limit: 20, page: State.productPage };
     if (State.activeFilter !== 'all') params.category = State.activeFilter;
     if (State.searchQuery) params.search = State.searchQuery;
+    this._loadingProducts = true;
     try {
       const data = await Api.products.list(params);
-      State.products = data.products || [];
+      const newProducts = data.products || [];
+      if (append) {
+        State.products = [...State.products, ...newProducts];
+      } else {
+        State.products = newProducts;
+      }
+      State.productTotal = data.total || State.products.length;
+      if (newProducts.length > 0) State.productPage++;
       this.renderContent();
     } catch (err) {
-      this.toast('Search failed', 'error');
+      if (!append) this.toast('Search failed', 'error');
+    } finally {
+      this._loadingProducts = false;
+    }
+  },
+
+  async _loadMore() {
+    if (this._loadingProducts) return;
+    if (State.products.length >= State.productTotal) return;
+    await this._fetchProducts(true);
+  },
+
+  _cancelInfiniteScroll() {
+    if (this._scrollObserver) {
+      this._scrollObserver.disconnect();
+      this._scrollObserver = null;
     }
   },
 
@@ -847,6 +876,19 @@ const App = {
     }
   },
 
+  async cancelOrder(orderId) {
+    if (!confirm('Are you sure you want to cancel this order?')) return;
+    try {
+      await Api.orders.cancel(orderId);
+      this.toast('Order cancelled.', 'success');
+      Modals.close();
+      await this.refreshOrders();
+      this.renderContent();
+    } catch (err) {
+      this.toast(err.message, 'error');
+    }
+  },
+
   async openOrderDetail(orderId) {
     try {
       const data = await Api.orders.get(orderId);
@@ -854,6 +896,7 @@ const App = {
       const addr = typeof o.delivery_address === 'string' ? JSON.parse(o.delivery_address) : o.delivery_address;
       const addrStr = [addr.sub_city, addr.woreda, addr.house_number, addr.landmark].filter(Boolean).join(', ');
       const policy = typeof o.policy_snapshot === 'string' ? JSON.parse(o.policy_snapshot) : o.policy_snapshot;
+      const firstProductId = o.items?.[0]?.product_id || '';
       Modals.open(`
         <div class="modal-handle"></div>
         <div class="modal-title">${o.order_ref}</div>
@@ -872,7 +915,9 @@ const App = {
         </div>` : ''}
         ${o.rider_name ? `<div class="card" style="margin-bottom:10px;"><div class="card-title">🛵 Rider Details</div><div class="card-sub" style="margin-top:4px;">${o.rider_name} · ${o.rider_phone}</div></div>` : ''}
         ${policy ? `<div class="policy-box">🛡️ ${State.policyLabel(policy.return_policy_type)}: ${policy.custom_policy_text || ''}</div>` : ''}
+        ${['pending','confirmed'].includes(o.order_status) ? `<button class="btn-danger" style="margin-top:14px;" onclick="App.cancelOrder('${orderId}')">✕ Cancel Order</button>` : ''}
         ${o.order_status === 'dispatched' ? `<button class="btn-primary" style="margin-top:14px;" onclick="App.confirmDelivery('${orderId}');Modals.close();">✅ QR Handshake — Confirm Delivery</button>` : ''}
+        ${o.order_status === 'delivered' ? `<button class="btn-primary" style="margin-top:14px;background:var(--success);" onclick="Modals.close();setTimeout(()=>Modals.showReviewForm('${orderId}','${firstProductId}','${o.store_name}'),100)">⭐ Write a Review</button>` : ''}
       `);
     } catch (err) {
       this.toast('Could not load order detail', 'error');

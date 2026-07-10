@@ -49,6 +49,7 @@ const Api = {
   get:    (path)        => Api._fetch('GET',    path),
   post:   (path, body)  => Api._fetch('POST',   path, body),
   put:    (path, body)  => Api._fetch('PUT',    path, body),
+  patch:  (path, body)  => Api._fetch('PATCH',  path, body),
   delete: (path)        => Api._fetch('DELETE', path),
 
   // ── Auth ───────────────────────────────────────────
@@ -84,7 +85,8 @@ const Api = {
     get:             (id)                 => Api.get(`/orders/${id}`),
     storeOrders:     (storeId, params={}) => { const qs = new URLSearchParams(params).toString(); return Api.get(`/orders/store/${storeId}${qs ? '?' + qs : ''}`); },
     dispatch:        (id, data)           => Api.put(`/orders/${id}/dispatch`, data),
-    confirmDelivery: (id)                 => Api.put(`/orders/${id}/confirm-delivery`, {})
+    confirmDelivery: (id)                 => Api.put(`/orders/${id}/confirm-delivery`, {}),
+    cancel:          (id)                 => Api.patch(`/orders/${id}/cancel`, {})
   },
 
   // ── Payments ───────────────────────────────────────
@@ -111,5 +113,11 @@ const Api = {
     addWishlist:    (productId) => Api.post(`/users/me/wishlist/${productId}`, {}),
     removeWishlist: (productId) => Api.delete(`/users/me/wishlist/${productId}`),
     notifications:  ()          => Api.get('/users/me/notifications')
+  },
+
+  // ── Reviews ────────────────────────────────────────
+  reviews: {
+    create: (data) => Api.post('/reviews', data),
+    list:   (productId) => Api.get(`/reviews/product/${productId}`)
   }
 };

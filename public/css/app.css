@@ -219,6 +219,8 @@ body { background: #050507; color: var(--text-primary); display: flex;
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-secondary { background: var(--bg-surface); color: white; padding: 12px 20px; border-radius: var(--radius-md); font-size: 14px; font-weight: 700; border: 1px solid var(--border); cursor: pointer; width: 100%; transition: all 0.2s; }
 .btn-secondary:hover { border-color: var(--accent); }
+.btn-danger { background: #dc2626; color: white; padding: 13px 20px; border-radius: var(--radius-md); font-size: 14px; font-weight: 800; border: none; cursor: pointer; width: 100%; transition: all 0.2s; }
+.btn-danger:hover { background: #b91c1c; }
 .btn-danger { background: rgba(239,68,68,0.15); color: var(--danger); padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; }
 
 /* Cards */
