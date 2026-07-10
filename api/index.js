@@ -35,6 +35,10 @@ const orderRoutes = require('../backend/src/routes/orders');
 const paymentRoutes = require('../backend/src/routes/payments');
 const userRoutes = require('../backend/src/routes/users');
 const botRoutes = require('../backend/src/routes/bot');
+const reviewRoutes = require('../backend/src/routes/reviews');
+const paymentMethodRoutes = require('../backend/src/routes/payment-methods');
+const couponRoutes = require('../backend/src/routes/coupons');
+const settingsRoutes = require('../backend/src/routes/settings');
 const errorHandler = require('../backend/src/middleware/errorHandler');
 
 const app = express();
@@ -86,14 +90,18 @@ app.use('/api/v1/products', productRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/users/me/payment-methods', paymentMethodRoutes);
+app.use('/api/v1/users/me/settings', settingsRoutes);
 app.use('/api/v1/bot', botRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/coupons', couponRoutes);
 
 // ─── Health ───────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'e-Merkato API',
-    version: '1.0.1',
+    version: '1.0.2',
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'production',
     region: process.env.VERCEL_REGION || 'local',
