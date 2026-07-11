@@ -840,11 +840,15 @@ const Modals = {
 
       <!-- Image URLs -->
       <div class="form-group">
-        <label class="form-label">Product Images (paste image URLs)</label>
+        <label class="form-label">Product Images</label>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple id="prodImageFileInput" hidden onchange="Modals._uploadImages(this.files, '.prod-img-url')"/>
+          <button onclick="document.getElementById('prodImageFileInput').click()" style="flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;">📷 Upload from Device</button>
+        </div>
         <div style="display:flex;flex-direction:column;gap:6px;">
           ${imgFields}
         </div>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Paste direct image links (jpg/png/webp). First image is the thumbnail.</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Upload from device or paste direct image URLs (jpg/png/webp). First image is the thumbnail. Max 5 images, 10MB each.</div>
       </div>
 
       <!-- Image preview -->
@@ -953,6 +957,10 @@ const Modals = {
       <!-- Image Selection -->
       <div class="form-group">
         <label class="form-label">Product Images (${imgs.length}/5)</label>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple id="pendingImageFileInput" hidden onchange="Modals._uploadImages(this.files, '.pending-img-url')"/>
+          <button onclick="document.getElementById('pendingImageFileInput').click()" style="flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;">📷 Upload from Device</button>
+        </div>
         ${imgPreviewHtml}
         <div style="display:flex;flex-direction:column;gap:6px;">
           ${imgUrlFields}
@@ -1140,6 +1148,22 @@ const Modals = {
       App.toast(err.message || 'Failed to submit review', 'error');
       btn.disabled = false;
       btn.textContent = 'Submit Review';
+    }
+  },
+
+  // ── Image Upload Handler ──────────────────────────
+  async _uploadImages(files, urlInputSelector) {
+    if (!files || files.length === 0) return;
+    const storeId = State.currentStoreId;
+    if (!storeId) { App.toast('No store selected', 'error'); return; }
+    try {
+      const data = await Api.images.upload(storeId, files);
+      const inputs = document.querySelectorAll(urlInputSelector);
+      data.urls.forEach((url, i) => { if (inputs[i]) inputs[i].value = url; });
+      App.toast(`${data.count} image${data.count > 1 ? 's' : ''} uploaded!`, 'success');
+      inputs[0]?.dispatchEvent(new Event('input'));
+    } catch (err) {
+      App.toast(err.message || 'Upload failed', 'error');
     }
   },
 
