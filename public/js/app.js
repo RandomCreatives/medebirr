@@ -5,6 +5,13 @@
 
 const App = {
 
+  // ── Theme Management ────────────────────────────────
+  applyTheme() {
+    const dark = State.userSettings?.dark_mode !== false;
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    try { localStorage.setItem('em_theme', dark ? 'dark' : 'light'); } catch (_) {}
+  },
+
   // ── Bootstrap ─────────────────────────────────────
   async init() {
     if (window.Telegram?.WebApp) {
@@ -13,6 +20,12 @@ const App = {
     }
 
     State.loadCart();
+
+    // Restore theme instantly from localStorage (before API response)
+    const savedTheme = localStorage.getItem('em_theme');
+    if (savedTheme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    }
 
     // Restore language preference
     const savedLang = localStorage.getItem('em_lang');
@@ -168,45 +181,45 @@ const App = {
         <div style="width:100%;max-width:400px;padding:24px 20px;text-align:center;">
           <div class="logo-mark" style="margin:0 auto 10px auto;">M</div>
           <div style="font-size:20px;font-weight:900;margin-bottom:4px;">መደብር | Medebirr</div>
-          <div style="font-size:12px;color:#9DA3AE;margin-bottom:24px;">Ethiopia's Telegram Marketplace</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:24px;">Ethiopia's Telegram Marketplace</div>
 
-          <div style="background:#15171C;border:1px solid #2D303A;border-radius:18px;padding:20px;text-align:left;margin-bottom:16px;">
-            <div style="background:rgba(252,205,4,0.1);border:1px solid rgba(252,205,4,0.3);border-radius:10px;padding:12px;margin-bottom:16px;">
-              <div style="font-size:13px;font-weight:800;color:#FCCD04;margin-bottom:4px;">📱 Open in Telegram for full experience</div>
-              <div style="font-size:11px;color:#9DA3AE;line-height:1.5;">Real users authenticate via Telegram automatically — no sign up needed. This browser preview is for testing only.</div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:20px;text-align:left;margin-bottom:16px;">
+            <div style="background:var(--accent-soft);border:1px solid var(--accent-border);border-radius:10px;padding:12px;margin-bottom:16px;">
+              <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:4px;">📱 Open in Telegram for full experience</div>
+              <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;">Real users authenticate via Telegram automatically — no sign up needed. This browser preview is for testing only.</div>
             </div>
 
-            <div style="font-size:11px;font-weight:800;color:#9DA3AE;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Test as a demo user</div>
+            <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Test as a demo user</div>
 
             <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
-              <button onclick="App._loginAs(12893412)" style="background:#1E2027;border:1px solid #2D303A;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
+              <button onclick="App._loginAs(12893412)" style="background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
                 <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3B82F6,#1D4ED8);display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:14px;flex-shrink:0;">M</div>
-                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:white;">Mike Fikadu</div><div style="font-size:10px;color:#9DA3AE;">Buyer · Bole, Addis Ababa</div></div>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--text-primary);">Mike Fikadu</div><div style="font-size:10px;color:var(--text-secondary);">Buyer · Bole, Addis Ababa</div></div>
                 <span style="font-size:10px;background:rgba(59,130,246,0.2);color:#60A5FA;padding:2px 8px;border-radius:20px;font-weight:700;">BUYER</span>
               </button>
-              <button onclick="App._loginAs(98760002)" style="background:#1E2027;border:1px solid #2D303A;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
+              <button onclick="App._loginAs(98760002)" style="background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
                 <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FCCD04,#F59E0B);display:flex;align-items:center;justify-content:center;font-weight:800;color:#111;font-size:14px;flex-shrink:0;">A</div>
-                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:white;">Abebe Girma</div><div style="font-size:10px;color:#9DA3AE;">Seller · Bole Apple & Tech Hub</div></div>
-                <span style="font-size:10px;background:rgba(252,205,4,0.2);color:#FCCD04;padding:2px 8px;border-radius:20px;font-weight:700;">SELLER</span>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--text-primary);">Abebe Girma</div><div style="font-size:10px;color:var(--text-secondary);">Seller · Bole Apple & Tech Hub</div></div>
+                <span style="font-size:10px;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:20px;font-weight:700;">SELLER</span>
               </button>
-              <button onclick="App._loginAs(98760004)" style="background:#1E2027;border:1px solid #2D303A;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='#FCCD04'" onmouseout="this.style.borderColor='#2D303A'">
+              <button onclick="App._loginAs(98760004)" style="background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
                 <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#10B981,#059669);display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:14px;flex-shrink:0;">D</div>
-                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:white;">Dawit Alemu</div><div style="font-size:10px;color:#9DA3AE;">Seller · Kaffa & Sidama Roastery</div></div>
-                <span style="font-size:10px;background:rgba(252,205,4,0.2);color:#FCCD04;padding:2px 8px;border-radius:20px;font-weight:700;">SELLER</span>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--text-primary);">Dawit Alemu</div><div style="font-size:10px;color:var(--text-secondary);">Seller · Kaffa & Sidama Roastery</div></div>
+                <span style="font-size:10px;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:20px;font-weight:700;">SELLER</span>
               </button>
             </div>
 
-            <div style="border-top:1px solid #2D303A;padding-top:14px;">
-              <div style="font-size:11px;color:#9DA3AE;margin-bottom:8px;">Or enter any Telegram User ID</div>
+            <div style="border-top:1px solid var(--border);padding-top:14px;">
+              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Or enter any Telegram User ID</div>
               <div style="display:flex;gap:8px;">
-                <input id="customTgId" type="number" placeholder="Telegram ID e.g. 12893412" style="flex:1;background:#0B0C0E;border:1px solid #2D303A;border-radius:8px;padding:9px 12px;color:white;font-size:12px;outline:none;"/>
-                <button onclick="App._loginWithCustomId()" style="background:#FCCD04;color:#111;border:none;border-radius:8px;padding:9px 14px;font-weight:800;font-size:12px;cursor:pointer;">Go →</button>
+                <input id="customTgId" type="number" placeholder="Telegram ID e.g. 12893412" style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-primary);font-size:12px;outline:none;"/>
+                <button onclick="App._loginWithCustomId()" style="background:var(--accent);color:var(--accent-text);border:none;border-radius:8px;padding:9px 14px;font-weight:800;font-size:12px;cursor:pointer;">Go →</button>
               </div>
             </div>
           </div>
 
-          <div style="font-size:10px;color:#646A78;">
-            <a href="https://t.me/medebirrbot" target="_blank" style="color:#FCCD04;text-decoration:none;font-weight:700;">Open @medebirrbot in Telegram →</a>
+          <div style="font-size:10px;color:var(--text-muted);">
+            <a href="https://t.me/medebirrbot" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700;">Open @medebirrbot in Telegram →</a>
           </div>
         </div>
       `;
@@ -643,6 +656,7 @@ const App = {
       const data = await Api.users.settings();
       State.userSettings = data.settings || { dark_mode: true, notif_orders: true, notif_promos: true, notif_chat: true, biometric_login: false };
     } catch (e) { State.userSettings = { dark_mode: true, notif_orders: true, notif_promos: true, notif_chat: true, biometric_login: false }; }
+    this.applyTheme();
   },
 
   async _loadAllStores() {

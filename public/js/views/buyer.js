@@ -925,8 +925,8 @@ const BuyerViews = {
         <div class="settings-group-title">Appearance</div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-info">
-            <div class="settings-toggle-label">Dark Mode</div>
-            <div class="settings-toggle-desc">Use dark theme throughout the app</div>
+            <div class="settings-toggle-label">${s.dark_mode ? '🌙 Dark Mode' : '☀️ Light Mode'}</div>
+            <div class="settings-toggle-desc">${s.dark_mode ? 'Switch to light theme' : 'Switch to dark theme'}</div>
           </div>
           <button class="toggle-switch ${s.dark_mode ? 'active' : ''}" onclick="BuyerViews._updateSetting('dark_mode', !${s.dark_mode})">
             <div class="toggle-thumb"></div>
@@ -1008,6 +1008,7 @@ const BuyerViews = {
 
   async _updateSetting(key, value) {
     State.userSettings = { ...State.userSettings, [key]: value };
+    if (key === 'dark_mode') App.applyTheme();
     try {
       await Api.users.updateSettings({ [key]: value });
     } catch (e) {}
