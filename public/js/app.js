@@ -1981,8 +1981,8 @@ const App = {
           <div style="font-size:52px;margin-bottom:14px;">🎉</div>
           <div style="font-size:20px;font-weight:900;margin-bottom:6px;color:var(--success);">Store Registered!</div>
           <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.7;">
-            <strong style="color:white;">${storeName}</strong> is now registered.<br/>
-            Status: <span style="color:var(--warning);">⏳ Pending Verification (24h)</span>
+            <strong style="color:white;">${storeName}</strong> is now live.<br/>
+            Status: <span style="color:var(--success);">✅ Verified & Active</span>
           </div>
           ${groupVerifyMsg}
           <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-md);padding:14px;margin-bottom:20px;font-size:12px;color:var(--success);text-align:left;line-height:2;">

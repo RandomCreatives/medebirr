@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS stores (
     store_code              VARCHAR(16) UNIQUE,
     seller_password_hash    TEXT,
     kyc_document_url        TEXT,
-    status                  VARCHAR(30) DEFAULT 'pending', -- pending, verified, suspended
+    status                  VARCHAR(30) DEFAULT 'verified', -- pending, verified, suspended
     verified_badge          BOOLEAN DEFAULT FALSE,
     total_orders            INTEGER DEFAULT 0,
     total_revenue           DECIMAL(14,2) DEFAULT 0,

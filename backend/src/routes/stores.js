@@ -126,7 +126,7 @@ router.post(
           physical_address, business_phone, telebirr_merchant_id, cbe_account_number,
           telebirr_account_name, cbe_account_name, seller_password_hash,
           status
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'pending')
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'verified')
         RETURNING store_id, store_name, store_slug, store_code, status`,
         [store_name, slug, storeCode, req.user.tg_user_id, tg_group_id || null,
          tg_channel_username || null, description || null,
@@ -145,7 +145,7 @@ router.post(
         [store.store_id]
       );
 
-      res.status(201).json({ store, message: 'Store registered. Pending verification review.' });
+      res.status(201).json({ store, message: 'Store registered and verified. Products will appear in the hub immediately.' });
     } catch (err) {
       next(err);
     }
