@@ -53,8 +53,12 @@ if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
 if (!process.env.TELEGRAM_BOT_TOKEN) {
   console.warn('⚠️ TELEGRAM_BOT_TOKEN is not set. Bot features will not work.');
 }
+if (!process.env.TELEGRAM_WEBHOOK_SECRET) {
+  console.warn('⚠️ TELEGRAM_WEBHOOK_SECRET is not set. Bot webhook is not authenticated — anyone can send fake updates.');
+}
 
 const app = express();
+const isProd = process.env.NODE_ENV === 'production';
 
 // ─── Security ────────────────────────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
@@ -123,7 +127,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'e-Merkato API',
-    version: '1.2.3',
+    version: '1.2.4',
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'production',
     region: process.env.VERCEL_REGION || 'local',
@@ -165,7 +169,9 @@ if (process.env.VERCEL && process.env.TELEGRAM_BOT_TOKEN && process.env.APP_URL)
     try {
       const tg = require('../backend/src/services/telegram');
       const webhookUrl = `${process.env.APP_URL}/api/v1/bot/webhook`;
-      const result = await tg.tgCall('setWebhook', { url: webhookUrl, allowed_updates: ['message', 'channel_post', 'my_chat_member', 'callback_query'] });
+      const payload = { url: webhookUrl, allowed_updates: ['message', 'channel_post', 'callback_query', 'my_chat_member'] };
+      if (process.env.TELEGRAM_WEBHOOK_SECRET) payload.secret_token = process.env.TELEGRAM_WEBHOOK_SECRET;
+      const result = await tg.tgCall('setWebhook', payload);
       if (result.ok) console.log(`✅ Telegram webhook set: ${webhookUrl}`);
       else console.warn('⚠️ Telegram webhook setup failed:', result.description);
     } catch (e) {

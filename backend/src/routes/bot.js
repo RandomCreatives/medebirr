@@ -362,7 +362,9 @@ async function handleCallbackQuery(callbackQuery) {
 router.post('/set-webhook', requireAuth, async (req, res, next) => {
   try {
     const webhookUrl = `${process.env.APP_URL}/api/v1/bot/webhook`;
-    const result = await tg.tgCall('setWebhook', { url: webhookUrl });
+    const payload = { url: webhookUrl, allowed_updates: ['message', 'channel_post', 'callback_query', 'my_chat_member'] };
+    if (process.env.TELEGRAM_WEBHOOK_SECRET) payload.secret_token = process.env.TELEGRAM_WEBHOOK_SECRET;
+    const result = await tg.tgCall('setWebhook', payload);
     res.json({ ok: result.ok, description: result.description, url: webhookUrl });
   } catch (err) {
     next(err);

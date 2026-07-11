@@ -320,7 +320,13 @@ CREATE TABLE IF NOT EXISTS pending_products (
     tg_group_id     BIGINT NOT NULL,
     tg_message_id   BIGINT,
     title           VARCHAR(255),
+    description     TEXT,
+    category        VARCHAR(100),
+    sub_category    VARCHAR(100),
     price_etb       DECIMAL(10,2),
+    compare_price   DECIMAL(10,2),
+    stock_quantity  INTEGER DEFAULT 0,
+    tags            TEXT[],
     image_urls      TEXT[] DEFAULT '{}',
     caption         TEXT,
     auto_detected   BOOLEAN DEFAULT TRUE,
@@ -365,6 +371,7 @@ CREATE TABLE IF NOT EXISTS product_rate_limits (
 ALTER TABLE stores ADD COLUMN IF NOT EXISTS verification_tier VARCHAR(20) DEFAULT 'basic';
 ALTER TABLE stores ADD COLUMN IF NOT EXISTS auto_detect_products BOOLEAN DEFAULT TRUE;
 ALTER TABLE stores ADD COLUMN IF NOT EXISTS group_member_count INTEGER DEFAULT 0;
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS verification_requested_at TIMESTAMPTZ;
 
 -- ============================================================
 -- DELIVERY VERIFICATIONS TABLE (QR scan audit log)
