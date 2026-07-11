@@ -335,6 +335,13 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
     const orderDate = new Date(order.created_at).toLocaleString('en-ET', { timeZone: 'Africa/Addis_Ababa' });
     const addrStr = [addr.sub_city, addr.woreda, addr.house_number, addr.landmark].filter(Boolean).join(', ');
     const statusColor = order.payment_status === 'paid' ? '#10B981' : '#F59E0B';
+    const statusText = (order.order_status || 'pending').toUpperCase();
+    const payMethod = (order.payment_method || 'cash').toUpperCase();
+    const payStatus = (order.payment_status || 'pending').toUpperCase();
+    const txCode = order.transaction_code || order.payment_tx_ref || '';
+    const deliveryMethod = order.delivery_method === 'pickup' ? 'Store Pickup' : 'Home Delivery';
+    const riderName = order.rider_name || '';
+    const riderPhone = order.rider_phone || '';
 
     const itemRows = items.rows.map(i => `
       <tr>
@@ -351,89 +358,137 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
   <title>Receipt ${order.order_ref}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, Arial, sans-serif; background: #f8f9fa; padding: 20px; color: #1a1a1a; }
-    .receipt { max-width: 680px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-    .header { background: #111216; color: white; padding: 28px 32px; }
-    .brand { font-size: 22px; font-weight: 900; color: #FCCD04; margin-bottom: 4px; }
-    .brand-sub { font-size: 12px; color: #9DA3AE; }
-    .receipt-title { text-align: right; }
-    .receipt-title h2 { font-size: 18px; color: #FCCD04; margin-bottom: 6px; }
-    .header-row { display: flex; justify-content: space-between; align-items: flex-end; }
-    .body { padding: 28px 32px; }
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
-    .info-box { background: #f8f9fa; padding: 16px; border-radius: 8px; }
-    .info-box h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #666; margin-bottom: 10px; font-weight: 700; }
-    .info-box p { font-size: 13px; line-height: 1.7; color: #333; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-    thead th { background: #111216; color: white; padding: 10px 8px; text-align: left; font-size: 12px; }
-    thead th:nth-child(2) { text-align: center; }
-    thead th:nth-child(3), thead th:nth-child(4) { text-align: right; }
-    .totals { margin-top: 0; }
-    .totals tr td { padding: 7px 8px; font-size: 13px; color: #555; }
+    body { font-family: -apple-system, Arial, sans-serif; background: #111; padding: 20px; color: #1a1a1a; }
+    .receipt { max-width: 680px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+    .header { background: #111216; padding: 24px 28px; display: flex; justify-content: space-between; align-items: center; }
+    .brand { font-size: 20px; font-weight: 900; color: #FCCD04; }
+    .brand-sub { font-size: 11px; color: #9DA3AE; margin-top: 2px; }
+    .order-ref { text-align: right; }
+    .order-ref .ref { font-size: 18px; font-weight: 900; color: #FCCD04; }
+    .order-ref .date { font-size: 11px; color: #9DA3AE; margin-top: 3px; }
+    .status-row { text-align: center; padding: 14px 28px; }
+    .status-badge { display: inline-block; padding: 5px 16px; border-radius: 20px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; }
+    .body { padding: 0 28px 28px; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .info-box { background: #F8F9FA; padding: 16px; border-radius: 8px; }
+    .info-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: #999; font-weight: 700; margin-bottom: 8px; }
+    .info-name { font-size: 14px; font-weight: 800; color: #111; margin-bottom: 6px; }
+    .info-detail { font-size: 12px; line-height: 1.8; color: #555; }
+    .payment-bar { background: #111216; border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .pay-left { display: flex; gap: 24px; }
+    .pay-item .pay-label { font-size: 9px; text-transform: uppercase; color: #9DA3AE; letter-spacing: 1px; }
+    .pay-item .pay-value { font-size: 13px; font-weight: 800; color: #FCCD04; margin-top: 2px; }
+    .pay-tx { font-size: 11px; color: #9DA3AE; }
+    table.items { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+    table.items thead th { background: #F3F4F6; padding: 10px 12px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #888; font-weight: 700; }
+    table.items thead th:nth-child(2) { text-align: center; }
+    table.items thead th:nth-child(3), table.items thead th:nth-child(4) { text-align: right; }
+    table.items tbody tr { border-bottom: 1px solid #F0F0F0; }
+    table.items tbody tr:nth-child(even) { background: #FAFAFA; }
+    table.items tbody td { padding: 11px 12px; font-size: 13px; color: #333; }
+    table.items tbody td:nth-child(2) { text-align: center; color: #888; }
+    table.items tbody td:nth-child(3) { text-align: right; color: #888; }
+    table.items tbody td:nth-child(4) { text-align: right; font-weight: 700; color: #111; }
+    .totals { width: 100%; }
+    .totals td { padding: 6px 12px; font-size: 13px; color: #666; text-align: right; }
     .totals tr:last-child td { font-size: 16px; font-weight: 900; color: #111; border-top: 2px solid #111; padding-top: 10px; }
     .totals tr:last-child td:last-child { color: #D97706; }
-    .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; background: ${statusColor}22; color: ${statusColor}; }
-    .policy-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 14px; margin-top: 24px; font-size: 12px; color: #166534; line-height: 1.6; }
-    .footer { background: #f8f9fa; padding: 20px 32px; text-align: center; font-size: 11px; color: #888; border-top: 1px solid #eee; }
-    @media print { body { background: white; padding: 0; } .receipt { box-shadow: none; } }
+    .rider-bar { background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; padding: 12px 16px; margin-top: 16px; }
+    .rider-label { font-size: 10px; text-transform: uppercase; color: #7C3AED; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+    .rider-detail { font-size: 13px; color: #333; }
+    .policy-box { background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 14px 16px; margin-top: 16px; font-size: 12px; color: #166534; line-height: 1.6; }
+    .footer { background: #F8F9FA; padding: 18px 28px; text-align: center; font-size: 11px; color: #AAA; border-top: 1px solid #eee; }
+    @media print { body { background: white; padding: 0; } .receipt { box-shadow: none; border-radius: 0; } }
   </style>
 </head>
 <body>
   <div class="receipt">
     <div class="header">
-      <div class="header-row">
-        <div><div class="brand">መደብር | Medebirr</div><div class="brand-sub">Ethiopia's Telegram Marketplace · medebirr.vercel.app</div></div>
-        <div class="receipt-title">
-          <h2>OFFICIAL RECEIPT</h2>
-          <div style="font-size:13px;color:#ccc;">#${order.order_ref}</div>
-          <div style="font-size:12px;color:#9DA3AE;margin-top:4px;">${orderDate} EAT</div>
-          <div style="margin-top:8px;"><span class="status-badge">${order.payment_status === 'paid' ? '✓ PAID & SETTLED' : order.payment_status.toUpperCase()}</span></div>
-        </div>
+      <div>
+        <div class="brand">MEDEBIRR</div>
+        <div class="brand-sub">Ethiopia's Telegram Marketplace</div>
       </div>
+      <div class="order-ref">
+        <div class="ref">${order.order_ref}</div>
+        <div class="date">${orderDate} EAT</div>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <span class="status-badge" style="background:${statusColor}18;color:${statusColor};">
+        ${order.order_status === 'delivered' ? '&#10003; ' : ''}${statusText}
+      </span>
     </div>
 
     <div class="body">
       <div class="info-grid">
         <div class="info-box">
-          <h3>Seller / Store</h3>
-          <p><strong>${esc(order.store_name)}</strong><br/>
-          ${order.location_sub_city ? esc(order.location_sub_city) + ', Addis Ababa<br/>' : ''}
-          ${order.tg_channel_username ? '@' + esc(order.tg_channel_username) + '<br/>' : ''}
-          ${order.telebirr_merchant_id ? 'Telebirr: ' + esc(order.telebirr_merchant_id) : ''}</p>
+          <div class="info-label">Buyer</div>
+          <div class="info-name">${esc(order.first_name)} ${esc(order.last_name || '')}</div>
+          <div class="info-detail">
+            ${order.buyer_username ? '@' + esc(order.buyer_username) + '<br/>' : ''}
+            ${addr.phone ? esc(addr.phone) + '<br/>' : ''}
+            ${addrStr ? esc(addrStr) : ''}
+          </div>
         </div>
         <div class="info-box">
-          <h3>Buyer</h3>
-          <p><strong>${esc(order.first_name)} ${esc(order.last_name || '')}</strong><br/>
-          ${order.buyer_username ? '@' + esc(order.buyer_username) + '<br/>' : ''}
-          📍 ${esc(addrStr || 'Address not specified')}<br/>
-          📞 ${esc(addr.phone || 'N/A')}</p>
+          <div class="info-label">Seller</div>
+          <div class="info-name">${esc(order.store_name)}</div>
+          <div class="info-detail">
+            ${order.location_sub_city ? esc(order.location_sub_city) + ', Addis Ababa<br/>' : ''}
+            ${order.tg_channel_username ? '@' + esc(order.tg_channel_username) + '<br/>' : ''}
+            ${order.telebirr_merchant_id ? 'Telebirr: ' + esc(order.telebirr_merchant_id) : ''}
+          </div>
         </div>
       </div>
 
-      <table>
-        <thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+      <div class="payment-bar">
+        <div class="pay-left">
+          <div class="pay-item">
+            <div class="pay-label">Payment</div>
+            <div class="pay-value">${esc(payMethod)}</div>
+          </div>
+          <div class="pay-item">
+            <div class="pay-label">Status</div>
+            <div class="pay-value" style="color:${statusColor};">${esc(payStatus)}</div>
+          </div>
+          <div class="pay-item">
+            <div class="pay-label">Delivery</div>
+            <div class="pay-value">${esc(deliveryMethod)}</div>
+          </div>
+        </div>
+        <div class="pay-tx">${txCode ? 'TX: ' + esc(txCode) : ''}</div>
+      </div>
+
+      <table class="items">
+        <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
         <tbody>${itemRows}</tbody>
       </table>
+
       <table class="totals">
-        <tr><td colspan="3" style="text-align:right;color:#555;">Subtotal</td><td style="text-align:right;">Br ${parseFloat(order.subtotal_etb).toLocaleString()}</td></tr>
-        <tr><td colspan="3" style="text-align:right;color:#555;">Delivery Fee</td><td style="text-align:right;">Br ${parseFloat(order.delivery_fee_etb).toLocaleString()}</td></tr>
-        <tr><td colspan="3" style="text-align:right;">Total Paid</td><td style="text-align:right;">Br ${parseFloat(order.total_etb).toLocaleString()}</td></tr>
+        <tr><td style="text-align:right;">Subtotal</td><td style="width:120px;text-align:right;">Br ${parseFloat(order.subtotal_etb).toLocaleString()}</td></tr>
+        <tr><td style="text-align:right;">Delivery Fee</td><td style="text-align:right;">Br ${parseFloat(order.delivery_fee_etb).toLocaleString()}</td></tr>
+        <tr><td style="text-align:right;">Total</td><td style="text-align:right;">Br ${parseFloat(order.total_etb).toLocaleString()}</td></tr>
       </table>
 
+      ${riderName ? `
+      <div class="rider-bar">
+        <div class="rider-label">Delivery Rider</div>
+        <div class="rider-detail">${esc(riderName)} ${riderPhone ? '&middot; ' + esc(riderPhone) : ''}</div>
+      </div>` : ''}
+
+      ${policy?.return_policy_type && policy.return_policy_type !== 'no_return' ? `
       <div class="policy-box">
-        🛡️ <strong>${esc(returnPolicy)}:</strong> ${esc(order.custom_policy_text || 'See store for full policy details.')}
-      </div>
+        <strong>${esc(returnPolicy)}:</strong> ${esc(policy.custom_policy_text || 'See store for full policy details.')}
+      </div>` : ''}
     </div>
 
     <div class="footer">
-      Generated by መደብር | Medebirr · ${new Date().getFullYear()} ·
-      Verify at medebirr.vercel.app/api/v1/orders/${order.order_id}/receipt<br/>
-      Payment via ${order.payment_method.charAt(0).toUpperCase() + order.payment_method.slice(1)} ·
-      Order Status: ${order.order_status}
+      Generated by Medebirr &middot; ${new Date().getFullYear()} &middot; For support: @medebirrbot
     </div>
   </div>
   <div style="text-align:center;margin-top:20px;">
-    <button onclick="window.print()" style="background:#111;color:#FCCD04;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;">🖨️ Print / Save as PDF</button>
+    <button onclick="window.print()" style="background:#111;color:#FCCD04;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:800;cursor:pointer;">Print / Save as PDF</button>
   </div>
 </body>
 </html>`;
