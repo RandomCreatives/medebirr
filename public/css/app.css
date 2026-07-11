@@ -35,8 +35,9 @@
   --radius-md: 14px;
   --radius-sm: 8px;
   --overlay: rgba(0,0,0,0.82);
-  --nav-bg: rgba(16,18,23,0.95);
-  --toast-bg: #1E2027;
+  --nav-bg: rgba(16,18,23,0.82);
+  --toast-bg: rgba(30,32,39,0.88);
+  --header-bg: rgba(21,23,28,0.82);
   /* Type Scale */
   --text-xs: 10px;
   --text-sm: 12px;
@@ -79,8 +80,9 @@
   --shadow-md: 0 4px 16px rgba(0,0,0,0.1);
   --shadow-lg: 0 20px 60px rgba(0,0,0,0.12);
   --overlay: rgba(0,0,0,0.45);
-  --nav-bg: rgba(255,255,255,0.95);
-  --toast-bg: #FFFFFF;
+  --nav-bg: rgba(255,255,255,0.82);
+  --toast-bg: rgba(255,255,255,0.88);
+  --header-bg: rgba(255,255,255,0.82);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0;
@@ -147,8 +149,9 @@ body { background: var(--bg-body); color: var(--text-primary); display: flex;
 
 /* Header */
 .app-header {
-  background: var(--bg-surface); padding: 10px 16px; border-bottom: 1px solid var(--border);
+  background: var(--header-bg); padding: 10px 16px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between; z-index: 20; flex-shrink: 0;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
 }
 .header-left { display: flex; align-items: center; gap: 10px; }
 .header-logo {
@@ -338,7 +341,7 @@ body { background: var(--bg-body); color: var(--text-primary); display: flex;
   border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 16px;
   font-size: 13px; font-weight: 600; z-index: 60; transform: translateY(20px);
   opacity: 0; transition: all 0.3s; pointer-events: none; text-align: center;
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
 }
 .toast.show { transform: translateY(0); opacity: 1; }
 .toast.success { border-color: var(--success); color: var(--success); }
