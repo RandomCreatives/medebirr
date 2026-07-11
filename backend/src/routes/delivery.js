@@ -176,11 +176,11 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
         [order.total_etb, order.store_id]
       );
 
-      // Update product order counts
+      // Update product order counts and release reserved stock
       const orderItems = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
       for (const item of orderItems.rows) {
         await query(
-          'UPDATE products SET order_count = order_count + $1, stock_quantity = GREATEST(0, stock_quantity - $1) WHERE product_id = $2',
+          'UPDATE products SET order_count = order_count + $1, reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2',
           [item.quantity, item.product_id]
         );
       }
@@ -253,6 +253,15 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
        WHERE store_id = $2`,
       [order.total_etb, order.store_id]
     );
+
+    // Release reserved stock and update order counts
+    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
+    for (const item of items.rows) {
+      await query(
+        'UPDATE products SET reserved_stock = GREATEST(0, reserved_stock - $1), order_count = order_count + $1 WHERE product_id = $2',
+        [item.quantity, item.product_id]
+      );
+    }
 
     // Notify buyer
     try {

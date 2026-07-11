@@ -1,0 +1,1 @@
+https://api.telegram.org/bot<8965837602:AAF85eZrVwPg0WhG8PjCS7euqAYlV0u05vA>/setWebhook?url=https://medebirr.vercel.app/api/v1/bot/webhook&secret_token=<MedeBirr-Webhook-Secret-2026-Random-Creatives-Studio-2018>
