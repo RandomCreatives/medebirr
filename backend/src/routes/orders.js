@@ -63,6 +63,12 @@ router.post(
       }
       const store = storeResult.rows[0];
 
+      // Self-buy restriction
+      if (store.admin_tg_user_id === req.user.tg_user_id) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'You cannot purchase from your own store' });
+      }
+
       // Validate payment method availability — defaults to enabled via COALESCE
       if (payment_method === 'telebirr' && store.telebirr_enabled === false) {
         await client.query('ROLLBACK');
@@ -170,6 +176,12 @@ router.post(
       }
 
       await client.query('COMMIT');
+
+      // Notify buyer
+      try {
+        const notif = require('../services/notifications');
+        await notif.notifyOrderStatus(order, 'pending', { store_name: store.store_name });
+      } catch (_) {}
 
       res.status(201).json({
         order: {
@@ -536,12 +548,10 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
 
     // Notify buyer via Telegram bot
     try {
-      const tgService = require('../services/telegram');
-      await tgService.notifyBuyerRiderAssigned(
-        ord.buyer_tg_user_id, result.rows[0], rider_name, rider_phone
-      );
+      const notif = require('../services/notifications');
+      await notif.notifyOrderStatus(result.rows[0], 'dispatched', { rider_name, rider_phone });
     } catch (e) {
-      console.warn('Buyer rider notification failed:', e.message);
+      console.warn('Buyer dispatch notification failed:', e.message);
     }
 
     res.json({ order: result.rows[0], message: 'Rider assigned. Buyer will be notified.' });
@@ -599,6 +609,12 @@ router.put('/:orderId/confirm-delivery', requireAuth, async (req, res, next) => 
       [req.params.orderId]
     );
 
+    // Notify buyer
+    try {
+      const notif = require('../services/notifications');
+      await notif.notifyOrderStatus(result.rows[0], 'delivered');
+    } catch (_) {}
+
     res.json({ order: result.rows[0], message: 'Delivery confirmed. Warranty period started.' });
   } catch (err) {
     next(err);
@@ -643,6 +659,12 @@ router.patch('/:orderId/cancel', requireAuth, async (req, res, next) => {
       );
     }
 
+    // Notify buyer
+    try {
+      const notif = require('../services/notifications');
+      await notif.notifyOrderStatus(result.rows[0], 'cancelled', { reason: 'Cancelled by buyer' });
+    } catch (_) {}
+
     res.json({ order: result.rows[0], message: 'Order cancelled.' });
   } catch (err) {
     next(err);
@@ -685,17 +707,11 @@ router.patch('/:orderId/cancel-seller', requireAuth, async (req, res, next) => {
       );
     }
 
-    // Notify buyer via Telegram if available
+    // Notify buyer via Telegram
     try {
-      const tgService = require('../services/telegram');
-      const buyerResult = await query('SELECT tg_user_id FROM users WHERE tg_user_id = $1', [ord.buyer_tg_user_id]);
-      if (buyerResult.rows.length > 0) {
-        await tgService.tgCall('sendMessage', {
-          chat_id: ord.buyer_tg_user_id,
-          text: `❌ Order ${ord.order_ref} has been cancelled by the seller.\nReason: ${reason || 'No reason provided'}\n\nIf you paid, your refund will be processed automatically.`,
-          parse_mode: 'HTML'
-        });
-      }
+      const notif = require('../services/notifications');
+      const fullOrder = await query('SELECT * FROM orders WHERE order_id = $1', [req.params.orderId]);
+      await notif.notifyOrderStatus(fullOrder.rows[0], 'cancelled', { reason: reason || 'Cancelled by seller' });
     } catch (_) {}
 
     res.json({ order: result.rows[0], message: 'Order cancelled by seller.' });

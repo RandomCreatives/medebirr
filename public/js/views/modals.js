@@ -1351,5 +1351,333 @@ const Modals = {
         <button class="btn-secondary" style="width:100%;margin-top:12px;" onclick="Modals.close()">Close</button>
       `);
     }
+  },
+
+  // ── Seller Password Prompt ────────────────────────
+  openSellerPassword(store) {
+    this.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">🔑 Seller Studio Access</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6;">
+        Enter your seller password to access <strong style="color:white;">${store.store_name}</strong>.
+      </p>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="sellerPasswordInput" type="password" placeholder="Enter your seller password" style="font-family:monospace;" autofocus/>
+      </div>
+      <div id="sellerPasswordError" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;"></div>
+      <button class="btn-primary" id="sellerPasswordBtn" onclick="Modals._verifySellerPassword('${store.store_id}')">
+        🔓 Unlock Seller Studio
+      </button>
+      <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="Modals.close()">Cancel</button>
+    `, '');
+    setTimeout(() => document.getElementById('sellerPasswordInput')?.focus(), 100);
+    document.getElementById('sellerPasswordInput')?.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('sellerPasswordBtn')?.click();
+    });
+  },
+
+  async _verifySellerPassword(storeId) {
+    const password = document.getElementById('sellerPasswordInput')?.value?.trim();
+    const errEl = document.getElementById('sellerPasswordError');
+    const btn = document.getElementById('sellerPasswordBtn');
+    if (!password) { errEl.style.display = 'block'; errEl.textContent = 'Please enter your password'; return; }
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Verifying...';
+    try {
+      const result = await Api.stores.verifyPassword(storeId, password);
+      if (result.needs_setup) {
+        // No password set — prompt to set one
+        Modals._openSetPassword(storeId);
+        return;
+      }
+      // Check if store_code is returned (means password verified)
+      if (result.store) {
+        App._sellerPasswordVerified();
+      }
+    } catch (err) {
+      errEl.style.display = 'block';
+      errEl.textContent = err.message || 'Incorrect password';
+      btn.disabled = false;
+      btn.textContent = '🔓 Unlock Seller Studio';
+    }
+  },
+
+  _openSetPassword(storeId) {
+    this.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">🔑 Set Your Password</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6;">
+        Your store doesn't have a password yet. Set one now to access the Seller Studio.
+      </p>
+      <div class="form-group">
+        <label class="form-label">New Password (min 4 characters)</label>
+        <input class="form-input" id="newSellerPassword" type="password" placeholder="Choose a password" style="font-family:monospace;" autofocus/>
+      </div>
+      <div id="setPasswordError" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;"></div>
+      <button class="btn-primary" id="setPasswordBtn" onclick="Modals._submitSetPassword('${storeId}')">
+        ✅ Set Password & Enter
+      </button>
+      <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="Modals.close()">Cancel</button>
+    `, '');
+    setTimeout(() => document.getElementById('newSellerPassword')?.focus(), 100);
+    document.getElementById('newSellerPassword')?.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('setPasswordBtn')?.click();
+    });
+  },
+
+  async _submitSetPassword(storeId) {
+    const password = document.getElementById('newSellerPassword')?.value?.trim();
+    const errEl = document.getElementById('setPasswordError');
+    const btn = document.getElementById('setPasswordBtn');
+    if (!password || password.length < 4) { errEl.style.display = 'block'; errEl.textContent = 'Password must be at least 4 characters'; return; }
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Setting...';
+    try {
+      await Api.stores.setPassword(storeId, password);
+      App._sellerPasswordSetup();
+    } catch (err) {
+      errEl.style.display = 'block';
+      errEl.textContent = err.message || 'Failed to set password';
+      btn.disabled = false;
+      btn.textContent = '✅ Set Password & Enter';
+    }
+  },
+
+  // ── Share Product ─────────────────────────────────
+  openShareProduct(productId, storeId) {
+    const url = `https://medebirr.vercel.app/?product=${productId}`;
+    const encodedUrl = encodeURIComponent(url);
+    this.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">📤 Share this Product</div>
+      <div style="margin-bottom:16px;">
+        <label class="form-label">Product Link</label>
+        <div style="display:flex;gap:8px;align-items:center;background:var(--bg-surface);border-radius:8px;padding:10px 12px;">
+          <span style="flex:1;font-size:12px;color:var(--text-secondary);word-break:break-all;">${url}</span>
+          <button onclick="Modals._copyShareLink('${productId}')" style="background:var(--accent);border:none;color:#1a1a2e;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Copy</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button onclick="Modals._shareTelegram('${productId}')" style="display:flex;align-items:center;gap:12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;color:white;font-size:14px;font-weight:700;cursor:pointer;width:100%;text-align:left;">
+          <span style="font-size:24px;">✈️</span>
+          <span>Share to Telegram</span>
+        </button>
+        <button onclick="Modals._shareWhatsApp('${productId}')" style="display:flex;align-items:center;gap:12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;color:white;font-size:14px;font-weight:700;cursor:pointer;width:100%;text-align:left;">
+          <span style="font-size:24px;">💬</span>
+          <span>Share via WhatsApp</span>
+        </button>
+        <button onclick="Modals._copyShareLink('${productId}')" style="display:flex;align-items:center;gap:12px;background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;color:white;font-size:14px;font-weight:700;cursor:pointer;width:100%;text-align:left;">
+          <span style="font-size:24px;">📋</span>
+          <span>Copy Link</span>
+        </button>
+      </div>
+    `);
+  },
+
+  _shareTelegram(productId) {
+    const url = `https://medebirr.vercel.app/?product=${productId}`;
+    const encodedUrl = encodeURIComponent(url);
+    window.open(`tg://msg_url?url=${encodedUrl}&text=Check this out!`, '_blank');
+    Api.social.share({ product_id: productId, platform: 'telegram' }).then(r => {
+      if (r.coupon_issued) App.toast('🎉 Coupon issued for sharing!', 'success');
+    }).catch(() => {});
+  },
+
+  _shareWhatsApp(productId) {
+    const url = `https://medebirr.vercel.app/?product=${productId}`;
+    const encodedUrl = encodeURIComponent(url);
+    window.open(`https://wa.me/?text=${encodedUrl}`, '_blank');
+    Api.social.share({ product_id: productId, platform: 'whatsapp' }).then(r => {
+      if (r.coupon_issued) App.toast('🎉 Coupon issued for sharing!', 'success');
+    }).catch(() => {});
+  },
+
+  _copyShareLink(productId) {
+    const url = `https://medebirr.vercel.app/?product=${productId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      App.toast('Link copied!', 'success');
+      Api.social.share({ product_id: productId, platform: 'copy' }).then(r => {
+        if (r.coupon_issued) App.toast('🎉 Coupon issued for sharing!', 'success');
+      }).catch(() => {});
+    }).catch(() => {
+      App.toast('Failed to copy link', 'error');
+    });
+  },
+
+  // ── Chat ──────────────────────────────────────────
+  openChat(convId, storeId, productId, productTitle) {
+    this._currentConvId = convId;
+    this._currentStoreId = storeId;
+    this._currentProductId = productId;
+    const title = productTitle ? `💬 Chat — ${productTitle}` : '💬 Chat';
+    this.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">${title}</div>
+      <div id="chatMessages" style="display:flex;flex-direction:column;gap:8px;padding:12px 0;max-height:400px;overflow-y:auto;margin-bottom:12px;"></div>
+      <div style="display:flex;gap:8px;position:sticky;bottom:0;background:var(--bg-primary);padding:8px 0;">
+        <input class="form-input" id="chatInput" placeholder="Type a message..." style="flex:1;" />
+        <button class="btn-primary" id="chatSendBtn" onclick="Modals._sendChatMessage()" style="white-space:nowrap;">Send</button>
+      </div>
+    `);
+    if (this._currentConvId) {
+      this._loadChatMessages(this._currentConvId);
+    }
+    document.getElementById('chatInput')?.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('chatSendBtn')?.click();
+    });
+  },
+
+  async _loadChatMessages(convId) {
+    try {
+      const data = await Api.social.getConversationMsgs(convId);
+      const container = document.getElementById('chatMessages');
+      if (!container) return;
+      container.innerHTML = (data.messages || []).map(m => `
+        <div style="max-width:80%;padding:8px 12px;font-size:13px;line-height:1.5;${m.is_mine ? 'background:var(--accent);color:#1a1a2e;align-self:flex-end;border-radius:12px 12px 2px 12px;' : 'background:var(--bg-surface);color:white;align-self:flex-start;border-radius:12px 12px 12px 2px;'}">
+          ${m.message}
+        </div>
+      `).join('');
+      container.scrollTop = container.scrollHeight;
+    } catch (err) {
+      App.toast('Failed to load messages', 'error');
+    }
+  },
+
+  async _sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const msg = input?.value?.trim();
+    if (!msg) return;
+    input.value = '';
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    if (!this._currentConvId) {
+      try {
+        const data = await Api.social.startConversation({ store_id: this._currentStoreId, product_id: this._currentProductId, message: msg });
+        this._currentConvId = data.conversation_id;
+        container.innerHTML += `
+          <div style="max-width:80%;padding:8px 12px;font-size:13px;line-height:1.5;background:var(--accent);color:#1a1a2e;align-self:flex-end;border-radius:12px 12px 2px 12px;">${msg}</div>
+        `;
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        App.toast('Failed to start conversation', 'error');
+      }
+    } else {
+      try {
+        await Api.social.sendMessage(this._currentConvId, msg);
+        container.innerHTML += `
+          <div style="max-width:80%;padding:8px 12px;font-size:13px;line-height:1.5;background:var(--accent);color:#1a1a2e;align-self:flex-end;border-radius:12px 12px 2px 12px;">${msg}</div>
+        `;
+        container.scrollTop = container.scrollHeight;
+      } catch (err) {
+        App.toast('Failed to send message', 'error');
+      }
+    }
+  },
+
+  // ── Coupons ───────────────────────────────────────
+  async openCoupons() {
+    this.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">🎫 My Coupons</div>
+      <div id="couponsList" style="padding:8px 0;">
+        <div style="text-align:center;padding:20px;"><div class="loading-spinner"></div></div>
+      </div>
+    `);
+    try {
+      const data = await Api.social.coupons();
+      const container = document.getElementById('couponsList');
+      if (!container) return;
+      const coupons = data.coupons || data || [];
+      if (!coupons.length) {
+        container.innerHTML = `
+          <div style="text-align:center;padding:30px 0;">
+            <div style="font-size:40px;margin-bottom:12px;">🎫</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text-secondary);">No coupons yet</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Share products to earn coupons!</div>
+          </div>
+        `;
+        return;
+      }
+      container.innerHTML = coupons.map(c => `
+        <div style="background:var(--bg-surface);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:14px;font-weight:800;color:white;">${c.store_name || 'Store'}</span>
+            <span style="font-size:16px;font-weight:900;color:var(--accent);">${c.discount_percentage || c.discount}% OFF</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-family:monospace;font-size:13px;font-weight:700;color:var(--accent);background:rgba(252,205,4,0.1);padding:4px 8px;border-radius:4px;cursor:pointer;" onclick="navigator.clipboard.writeText('${c.code}');App.toast('Coupon code copied!','success')">${c.code}</span>
+            <span style="font-size:11px;color:var(--text-muted);">Valid until ${new Date(c.valid_until || c.expires_at).toLocaleDateString()}</span>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      const container = document.getElementById('couponsList');
+      if (container) container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px;">Failed to load coupons</div>`;
+    }
+  },
+
+  // ── Group Buying ──────────────────────────────────
+  async openGroupBuys(productId) {
+    this.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">👥 Group Buying</div>
+      <div id="groupBuysList" style="padding:8px 0;">
+        <div style="text-align:center;padding:20px;"><div class="loading-spinner"></div></div>
+      </div>
+    `);
+    try {
+      const data = await Api.social.activeGroupBuys({ product_id: productId });
+      const container = document.getElementById('groupBuysList');
+      if (!container) return;
+      const groups = data.group_buys || data || [];
+      if (!groups.length) {
+        container.innerHTML = `
+          <div style="text-align:center;padding:20px 0;">
+            <div style="font-size:40px;margin-bottom:12px;">👥</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text-secondary);">No active group buys</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;margin-bottom:16px;">Be the first to start one!</div>
+            <button class="btn-primary" onclick="Modals._createGroupBuy('${productId}')">Start a Group</button>
+          </div>
+        `;
+        return;
+      }
+      container.innerHTML = groups.map(g => `
+        <div style="background:var(--bg-surface);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:14px;font-weight:800;color:white;">${g.member_count || 0}/${g.max_members || 5} members needed</span>
+            <span style="font-size:12px;color:var(--text-secondary);">Expires in ${g.expires_in_hours || '?'}h</span>
+          </div>
+          <button class="btn-primary" onclick="Modals._joinGroupBuy('${g.id}')" style="width:100%;">Join Group</button>
+        </div>
+      `).join('');
+      container.innerHTML += `
+        <button class="btn-secondary" onclick="Modals._createGroupBuy('${productId}')" style="width:100%;margin-top:4px;">Start a Group</button>
+      `;
+    } catch (err) {
+      const container = document.getElementById('groupBuysList');
+      if (container) container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px;">Failed to load group buys</div>`;
+    }
+  },
+
+  async _createGroupBuy(productId) {
+    try {
+      const data = await Api.social.createGroupBuy(productId);
+      App.toast('Group buy created!', 'success');
+      this.openGroupBuys(productId);
+    } catch (err) {
+      App.toast(err.message || 'Failed to create group buy', 'error');
+    }
+  },
+
+  async _joinGroupBuy(id) {
+    try {
+      await Api.social.joinGroupBuy(id);
+      App.toast('Joined group buy!', 'success');
+    } catch (err) {
+      App.toast(err.message || 'Failed to join group buy', 'error');
+    }
   }
 };

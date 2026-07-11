@@ -75,7 +75,11 @@ const Api = {
     update:       (id, data)    => Api.put(`/stores/${id}`, data),
     updatePolicy: (id, data)    => Api.put(`/stores/${id}/policy`, data),
     stats:        (id)          => Api.get(`/stores/${id}/stats`),
-    delete:       (id)          => Api.delete(`/stores/${id}`)
+    delete:       (id)          => Api.delete(`/stores/${id}`),
+    verifyPassword: (id, password) => Api.post(`/stores/${id}/verify-password`, { password }),
+    setPassword:    (id, password) => Api.post(`/stores/${id}/set-password`, { password }),
+    couponPolicy:   (id)          => Api.get(`/stores/${id}/coupon-policy`),
+    updateCouponPolicy: (id, data) => Api.put(`/stores/${id}/coupon-policy`, data)
   },
 
   // ── Orders ─────────────────────────────────────────
@@ -169,5 +173,20 @@ const Api = {
     scan:          (orderId, data)     => Api.post(`/delivery/${orderId}/scan`, data),
     settle:        (orderId)           => Api.post(`/delivery/${orderId}/settle`),
     receipt:       (orderId)           => Api.get(`/delivery/${orderId}/receipt`)
+  },
+
+  // ── Social (Share, Coupons, Group Buy, Chat) ──────
+  social: {
+    share:             (data)           => Api.post('/social/share', data),
+    coupons:           ()               => Api.get('/social/coupons'),
+    couponHistory:     ()               => Api.get('/social/coupons/history'),
+    createGroupBuy:    (productId)      => Api.post('/social/group-buy', { product_id: productId }),
+    getGroupBuy:       (id)             => Api.get(`/social/group-buy/${id}`),
+    joinGroupBuy:      (id)             => Api.post(`/social/group-buy/${id}/join`, {}),
+    activeGroupBuys:   (params = {})    => { const qs = new URLSearchParams(params).toString(); return Api.get(`/social/group-buys/active${qs ? '?' + qs : ''}`); },
+    conversations:     ()               => Api.get('/social/conversations'),
+    startConversation: (data)           => Api.post('/social/conversations', data),
+    getConversationMsgs: (id)           => Api.get(`/social/conversations/${id}/messages`),
+    sendMessage:       (convId, msg)    => Api.post(`/social/conversations/${convId}/messages`, { message: msg })
   }
 };

@@ -268,6 +268,13 @@ router.post('/telebirr/webhook', async (req, res, next) => {
       } catch (e) {
         console.warn('Seller notification failed:', e.message);
       }
+
+      // Notify buyer
+      try {
+        const notif = require('../services/notifications');
+        const buyerOrder = await query('SELECT * FROM orders WHERE order_id = $1', [tx.order_id]);
+        await notif.notifyOrderStatus(buyerOrder.rows[0], 'confirmed');
+      } catch (_) {}
     } else {
       await query(
         `UPDATE payment_transactions SET status = 'failed', gateway_response = $1 WHERE gateway_tx_ref = $2`,
@@ -329,6 +336,12 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
 
     // Generate QR + receipt for confirmed order
     try { await generateQRAndReceipt(order_id); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
+
+    // Notify buyer
+    try {
+      const notif = require('../services/notifications');
+      await notif.notifyOrderStatus(orderResult.rows[0], 'confirmed');
+    } catch (_) {}
 
     res.json({ message: 'Cash payment confirmed. Order confirmed.' });
   } catch (err) {
@@ -402,6 +415,12 @@ router.post('/confirm-tx', requireAuth, async (req, res, next) => {
         text: `💰 *Payment Received!*\n\nOrder *${order.order_ref}* — Br ${Number(order.total_etb).toLocaleString()}\nMethod: ${gateway.toUpperCase()}\nTransaction Code: \`${transaction_code}\`\n\nPlease prepare for dispatch.`,
         parse_mode: 'MarkdownV2'
       });
+    } catch (_) {}
+
+    // Notify buyer
+    try {
+      const notif = require('../services/notifications');
+      await notif.notifyOrderStatus(order, 'confirmed');
     } catch (_) {}
 
     res.json({ message: 'Payment confirmed with transaction code. Order confirmed.', order_id });

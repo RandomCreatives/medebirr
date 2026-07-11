@@ -239,6 +239,7 @@ const SellerViews = {
   // ── Store Policy ──────────────────────────────────
   renderPolicy(container) {
     const store = State.stores[0];
+    const cp = State.couponPolicy || { share_required:3, share_discount:5, share_coupon_active:false, group_min_members:3, group_discount:10, group_buy_active:false, coupon_validity_days:7 };
     if (!store) {
       container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚙️</div><div class="empty-title">No store registered</div></div>`;
       return;
@@ -285,6 +286,26 @@ const SellerViews = {
                      onchange="App.toggleAutoDetect(this.checked)" style="opacity:0;width:0;height:0;">
               <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${store.auto_detect_products !== false ? 'var(--accent)' : 'var(--border)'};border-radius:12px;transition:0.3s;">
                 <span style="position:absolute;content:'';height:18px;width:18px;left:${store.auto_detect_products !== false ? '22px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:0.3s;"></span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Telegram Notifications Toggle -->
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📨 Telegram Notifications</div>
+              <div style="font-size:11px;color:var(--text-secondary);">
+                When ON, buyers receive DM updates via @medebirrbot when their order status changes.<br>
+                When OFF, buyers will not get Telegram notifications.
+              </div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;margin-left:12px;">
+              <input type="checkbox" id="telegramNotifsToggle" ${store.telegram_notifs !== false ? 'checked' : ''}
+                     onchange="App.toggleTelegramNotifs(this.checked)" style="opacity:0;width:0;height:0;">
+              <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${store.telegram_notifs !== false ? 'var(--accent)' : 'var(--border)'};border-radius:12px;transition:0.3s;">
+                <span style="position:absolute;content:'';height:18px;width:18px;left:${store.telegram_notifs !== false ? '22px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:0.3s;"></span>
               </span>
             </label>
           </div>
@@ -361,6 +382,69 @@ const SellerViews = {
           <button class="btn-secondary" style="margin-top:12px;width:100%;" onclick="App.savePaymentAccounts()">Save Payment Accounts</button>
         </div>
 
+        <!-- Coupon & Group Buying Section -->
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:12px;">🎁 Coupon & Group Buying</div>
+
+          <!-- Share-to-Save Coupon Program -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div>
+              <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📤 Share-to-Save Coupons</div>
+              <div style="font-size:11px;color:var(--text-secondary);">Customers earn a coupon when they share a product N times.</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;margin-left:12px;">
+              <input type="checkbox" id="shareCouponToggle" ${cp.share_coupon_active ? 'checked' : ''} style="opacity:0;width:0;height:0;">
+              <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${cp.share_coupon_active ? 'var(--accent)' : 'var(--border)'};border-radius:12px;transition:0.3s;">
+                <span style="position:absolute;content:'';height:18px;width:18px;left:${cp.share_coupon_active ? '22px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:0.3s;"></span>
+              </span>
+            </label>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+            <div class="form-group">
+              <label class="form-label">Shares Required</label>
+              <input type="number" class="form-input" id="shareRequired" value="${cp.share_required}" placeholder="3" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Discount %</label>
+              <input type="number" class="form-input" id="shareDiscount" value="${cp.share_discount}" placeholder="5" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Coupon Valid (days)</label>
+            <input type="number" class="form-input" id="couponValidityDays" value="${cp.coupon_validity_days}" placeholder="7" />
+          </div>
+
+          <hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">
+
+          <!-- Group Buying (Pinduoduo) -->
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div>
+              <div style="font-size:13px;font-weight:800;margin-bottom:2px;">👥 Group Buying</div>
+              <div style="font-size:11px;color:var(--text-secondary);">Customers can form a group to buy together and get a discount.</div>
+            </div>
+            <label style="position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;margin-left:12px;">
+              <input type="checkbox" id="groupBuyToggle" ${cp.group_buy_active ? 'checked' : ''} style="opacity:0;width:0;height:0;">
+              <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${cp.group_buy_active ? 'var(--accent)' : 'var(--border)'};border-radius:12px;transition:0.3s;">
+                <span style="position:absolute;content:'';height:18px;width:18px;left:${cp.group_buy_active ? '22px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:0.3s;"></span>
+              </span>
+            </label>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="form-group">
+              <label class="form-label">Min Members</label>
+              <input type="number" class="form-input" id="groupMinMembers" value="${cp.group_min_members}" placeholder="3" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Group Discount %</label>
+              <input type="number" class="form-input" id="groupDiscount" value="${cp.group_discount}" placeholder="10" />
+            </div>
+          </div>
+
+          <button class="btn-secondary" style="margin-top:12px;width:100%;" onclick="App.saveCouponPolicy()">Save Coupon Settings</button>
+        </div>
+
         <button class="btn-primary" onclick="App.savePolicy()">Save Store Settings</button>
       </div>
     `;
@@ -402,6 +486,96 @@ const SellerViews = {
           <button class="btn-call" onclick="window.open('tel:${addr.phone}')">📞 Call Buyer</button>
           ${['pending','confirmed'].includes(o.order_status) ? `<button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.confirmCancelOrder('${o.order_id}','${o.order_ref}')">✕ Cancel</button>` : ''}
         </div>
+      </div>
+    `;
+  },
+
+  // ── Store Profile ─────────────────────────────────
+  renderProfile(container) {
+    const store = State.storeDetail || State.stores[0];
+    if (!store) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">🏪</div><div class="empty-title">Loading profile...</div></div>`;
+      return;
+    }
+    const tierBadge = { none: '', basic: '🟢 Basic', verified: '✅ Verified', trusted: '⭐ Trusted' };
+    const statusColors = { verified: 'var(--success)', pending: 'var(--warning)', suspended: 'var(--danger)' };
+    const storeUrl = `${window.location.origin}${window.location.pathname}?store=${store.store_code}`;
+
+    container.innerHTML = `
+      <div class="section-header">
+        <span class="section-title">🏪 ${store.store_name}</span>
+        <span style="font-size:11px;color:${statusColors[store.status] || 'var(--text-secondary)'};">● ${store.status}</span>
+      </div>
+
+      <!-- Store Code -->
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:10px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;">Store Code</div>
+          <div style="font-size:18px;font-weight:900;color:var(--accent);font-family:monospace;letter-spacing:2px;margin-top:2px;">${store.store_code || '—'}</div>
+        </div>
+        <button onclick="navigator.clipboard.writeText('${store.store_code}');App.toast('Store code copied!','success');" style="background:rgba(252,205,4,0.1);border:1px solid rgba(252,205,4,0.3);border-radius:8px;padding:8px 14px;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;">📋 Copy</button>
+      </div>
+
+      <!-- QR Code (shareable store link) -->
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;text-align:center;">
+        <div style="font-size:10px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">📲 Share Your Store</div>
+        <div id="profileQR" style="display:flex;justify-content:center;margin-bottom:8px;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(storeUrl)}" alt="Store QR" style="border-radius:8px;width:150px;height:150px;background:white;padding:4px;"/>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);word-break:break-all;">${storeUrl}</div>
+        <button onclick="navigator.clipboard.writeText('${storeUrl}');App.toast('Store link copied!','success');" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:8px 14px;color:#60A5FA;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;">🔗 Copy Store Link</button>
+      </div>
+
+      <!-- Badges & Verification -->
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
+        <div style="font-size:10px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">🏅 Badges & Status</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          ${store.verified_badge ? '<span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--success);font-weight:700;">✅ Verified Merchant</span>' : '<span style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--warning);font-weight:700;">⏳ Pending Verification</span>'}
+          ${store.verification_tier && store.verification_tier !== 'none' ? `<span style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:#A78BFA;font-weight:700;">${tierBadge[store.verification_tier]}</span>` : ''}
+          ${store.rating > 0 ? `<span style="background:rgba(252,205,4,0.1);border:1px solid rgba(252,205,4,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--accent);font-weight:700;">⭐ ${Number(store.rating).toFixed(1)} (${store.rating_count})</span>` : '<span style="background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--text-secondary);font-weight:700;">No ratings yet</span>'}
+        </div>
+      </div>
+
+      <!-- Payment Accounts -->
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
+        <div style="font-size:10px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">💳 Payment Accounts</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:12px;">
+            <span style="color:var(--text-secondary);">Telebirr</span>
+            <span style="color:white;font-weight:700;">${store.telebirr_merchant_id ? '✅ Connected' : '— Not set'}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;">
+            <span style="color:var(--text-secondary);">CBE Account</span>
+            <span style="color:white;font-weight:700;">${store.cbe_account_number ? '✅ Connected' : '— Not set'}</span>
+          </div>
+        </div>
+        <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="App.switchTab('dispatch')">⚙️ Manage Payments in Dispatch</button>
+      </div>
+
+      <!-- Return Policy -->
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
+        <div style="font-size:10px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">📋 Return Policy</div>
+        <div style="font-size:13px;color:white;font-weight:700;">${State.policyLabel(store.return_policy_type)}</div>
+        <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="App.switchTab('dispatch')">⚙️ Edit Policy in Dispatch</button>
+      </div>
+
+      <!-- Stats -->
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
+        <div style="font-size:10px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">📊 Store Stats</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="text-align:center;padding:8px;background:rgba(59,130,246,0.08);border-radius:8px;">
+            <div style="font-size:18px;font-weight:900;color:white;">${store.total_orders || 0}</div>
+            <div style="font-size:10px;color:var(--text-secondary);font-weight:700;">Total Orders</div>
+          </div>
+          <div style="text-align:center;padding:8px;background:rgba(16,185,129,0.08);border-radius:8px;">
+            <div style="font-size:18px;font-weight:900;color:var(--success);">${State.formatETB(store.total_revenue || 0)}</div>
+            <div style="font-size:10px;color:var(--text-secondary);font-weight:700;">Total Revenue</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:4px;margin-bottom:16px;">
+        <button class="btn-primary" onclick="App.switchTab('dashboard')" style="width:100%;">📊 Back to Dashboard</button>
       </div>
     `;
   }

@@ -498,6 +498,7 @@ const App = {
           <span class="nav-label">${State.t('tabCart')}</span>
         </button>
         <button class="nav-item ${isActive('profile')?'active':''}" onclick="App.switchTab('profile')">
+          ${State.unreadCount > 0 ? `<span class="nav-badge" style="top:2px;right:2px;">${State.unreadCount}</span>` : ''}
           <div class="nav-icon-wrap nav-avatar-wrap">
             ${u.photo_url
               ? `<img src="${u.photo_url}" class="nav-avatar-img ${isActive('profile')?'active':''}" />`
@@ -523,6 +524,10 @@ const App = {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
           Items
         </button>
+        <button class="nav-item ${State.currentTab==='profile'?'active':''}" onclick="App.switchTab('profile')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </button>
         <button class="nav-item ${State.currentTab==='dispatch'?'active':''}" onclick="App.switchTab('dispatch')">
           ${pendingCount > 0 ? `<span class="nav-badge">${pendingCount}</span>` : ''}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -544,6 +549,7 @@ const App = {
       if (State.currentTab === 'dashboard')  SellerViews.renderDashboard(body);
       else if (State.currentTab === 'pending')    SellerViews.renderPending(body);
       else if (State.currentTab === 'inventory')  SellerViews.renderInventory(body);
+      else if (State.currentTab === 'profile')    SellerViews.renderProfile(body);
       else if (State.currentTab === 'dispatch')   SellerViews.renderDispatch(body);
     }
     document.getElementById('appBody').scrollTop = 0;
@@ -556,7 +562,15 @@ const App = {
     if (tab === 'orders' && !State.myOrders.length) {
       await this.refreshOrders();
     }
-    if (tab === 'profile' && !State.addresses.length) {
+    if (tab === 'profile' && State.role === 'seller') {
+      // Load store detail for profile page
+      if (!State.storeDetail && State.currentStoreId) {
+        try {
+          const d = await Api.stores.get(State.currentStoreId);
+          State.storeDetail = d.store;
+        } catch (e) {}
+      }
+    } else if (tab === 'profile' && !State.addresses.length) {
       try {
         const data = await Api.users.addresses();
         State.addresses = data.addresses || [];
@@ -573,9 +587,11 @@ const App = {
       if (!State.paymentMethods) this._loadPaymentMethods();
       if (!State.userCoupons) this._loadUserCoupons();
       if (!State.userSettings) this._loadUserSettings();
+      if (State.role === 'buyer') this.loadConversations();
     }
-    if (tab === 'dispatch' && State.role === 'seller' && !State.storeOrders.length) {
-      await this.loadSellerData();
+    if (tab === 'dispatch' && State.role === 'seller') {
+      if (!State.storeOrders.length) await this.loadSellerData();
+      this.loadCouponPolicy();
     }
     this.render();
   },
@@ -733,12 +749,32 @@ const App = {
   },
 
   async toggleRole() {
-    State.role = State.role === 'buyer' ? 'seller' : 'buyer';
-    State.currentTab = State.role === 'buyer' ? 'explore' : 'dashboard';
+    const switchingToSeller = State.role === 'buyer';
+    if (switchingToSeller && !State.sellerUnlocked) {
+      const store = State.stores[0];
+      if (store) {
+        Modals.openSellerPassword(store);
+        return;
+      }
+    }
+    State.role = switchingToSeller ? 'seller' : 'buyer';
+    State.currentTab = switchingToSeller ? 'dashboard' : 'explore';
     if (State.role === 'seller') {
       await this.loadSellerData();
     }
     this.render();
+  },
+
+  async _sellerPasswordVerified() {
+    State.sellerUnlocked = true;
+    Modals.close();
+    await this.toggleRole();
+  },
+
+  async _sellerPasswordSetup() {
+    State.sellerUnlocked = true;
+    Modals.close();
+    await this.toggleRole();
   },
 
   async loadSellerData() {
@@ -1183,6 +1219,19 @@ const App = {
     }
   },
 
+  async toggleTelegramNotifs(enabled) {
+    if (!State.currentStoreId) return;
+    try {
+      await Api.stores.update(State.currentStoreId, { telegram_notifs: enabled });
+      if (State.stores[0]) State.stores[0].telegram_notifs = enabled;
+      this.toast(`Telegram notifications ${enabled ? 'enabled' : 'disabled'}`, 'success');
+    } catch (err) {
+      this.toast(err.message || 'Failed to update setting', 'error');
+      const toggle = document.getElementById('telegramNotifsToggle');
+      if (toggle) toggle.checked = !enabled;
+    }
+  },
+
   async savePolicy() {
     const storeId = State.currentStoreId;
     if (!storeId) return;
@@ -1193,7 +1242,8 @@ const App = {
       regional_dispatch_fee: parseFloat(document.getElementById('regionalFee')?.value),
       telebirr_enabled: document.getElementById('telebirrEnabled')?.checked,
       cbe_enabled: document.getElementById('cbeEnabled')?.checked,
-      cash_on_delivery: document.getElementById('cashEnabled')?.checked
+      cash_on_delivery: document.getElementById('cashEnabled')?.checked,
+      telegram_notifs: document.getElementById('telegramNotifsToggle')?.checked
     };
     try {
       await Api.stores.updatePolicy(storeId, data);
@@ -1223,6 +1273,64 @@ const App = {
     } catch (err) {
       this.toast(err.message || 'Save failed', 'error');
     }
+  },
+
+  async saveCouponPolicy() {
+    const storeId = State.currentStoreId;
+    if (!storeId) return;
+    const data = {
+      share_coupon_active: document.getElementById('shareCouponToggle')?.checked || false,
+      share_required: parseInt(document.getElementById('shareRequired')?.value) || 3,
+      share_discount: parseFloat(document.getElementById('shareDiscount')?.value) || 5,
+      coupon_validity_days: parseInt(document.getElementById('couponValidityDays')?.value) || 7,
+      group_buy_active: document.getElementById('groupBuyToggle')?.checked || false,
+      group_min_members: parseInt(document.getElementById('groupMinMembers')?.value) || 3,
+      group_discount: parseFloat(document.getElementById('groupDiscount')?.value) || 10
+    };
+    try {
+      const result = await Api.stores.updateCouponPolicy(storeId, data);
+      State.couponPolicy = result.policy;
+      this.toast('Coupon settings saved!', 'success');
+    } catch (err) {
+      this.toast(err.message || 'Save failed', 'error');
+    }
+  },
+
+  async loadConversations() {
+    try {
+      const data = await Api.social.conversations();
+      State.conversations = data.conversations || [];
+      State.unreadCount = State.conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+      const inbox = document.getElementById('chatInbox');
+      const badge = document.getElementById('unreadBadge');
+      if (badge) badge.textContent = State.unreadCount > 0 ? `🔴 ${State.unreadCount} new` : '';
+      if (!inbox) return;
+      if (!State.conversations.length) {
+        inbox.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:12px;">No conversations yet. Tap Chat on any product to start one.</div>';
+        return;
+      }
+      inbox.innerHTML = State.conversations.map(c => `
+        <div onclick="Modals.openChat('${c.conv_id}','${c.store_id}',null,'${(c.product_title||'').replace(/'/g,"\\'")}')" style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;cursor:pointer;">
+          <div style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.15);display:flex;align-items:center;justify-content:center;font-size:16px;">💬</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.other_party_name || 'Chat'}</div>
+            <div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.last_message || ''}</div>
+          </div>
+          ${c.unread_count > 0 ? `<span style="background:var(--danger);color:white;font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;">${c.unread_count}</span>` : ''}
+          <span style="font-size:10px;color:var(--text-muted);">${new Date(c.last_message_at).toLocaleDateString()}</span>
+        </div>
+      `).join('');
+    } catch (e) {
+      console.warn('Failed to load conversations', e);
+    }
+  },
+
+  async loadCouponPolicy() {
+    if (!State.currentStoreId) return;
+    try {
+      const data = await Api.stores.couponPolicy(State.currentStoreId);
+      State.couponPolicy = data.policy;
+    } catch (e) {}
   },
 
   async assignRider(orderId) {
@@ -1707,6 +1815,12 @@ const App = {
         <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Buyers pay directly to this account — zero marketplace holding.</div>
       </div>
 
+      <div class="form-group">
+        <label class="form-label">🔑 Seller Password</label>
+        <input class="form-input" id="regPassword" type="password" placeholder="Minimum 4 characters" style="font-family:monospace;"/>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">You'll need this to access the Seller Studio — don't forget it!</div>
+      </div>
+
       <!-- Step 2: Telegram Group -->
       <div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin:20px 0 12px 0;">Step 2 — Connect Your Telegram Group</div>
 
@@ -1817,6 +1931,7 @@ const App = {
     const telebirrId   = document.getElementById('regTelebirr')?.value?.trim();
     const desc         = document.getElementById('regDesc')?.value?.trim();
     const groupUsername = document.getElementById('regGroupUsername')?.value?.trim();
+    const sellerPassword = document.getElementById('regPassword')?.value?.trim();
 
     if (!storeName) { this.toast('Store name is required', 'error'); return; }
     if (!phone)     { this.toast('Business phone is required', 'error'); return; }
@@ -1829,7 +1944,8 @@ const App = {
         business_phone: phone,
         telebirr_merchant_id: telebirrId || null,
         tg_channel_username: groupUsername || null,
-        description: desc || null
+        description: desc || null,
+        seller_password: sellerPassword || null
       });
 
       // Reload user stores

@@ -1,4 +1,5 @@
 const express = require('express');
+const crypto = require('crypto');
 const { body, param, query: queryValidator, validationResult } = require('express-validator');
 const { requireAuth, requireSellerOf } = require('../middleware/auth');
 const { query } = require('../db');
@@ -29,7 +30,7 @@ router.get('/', async (req, res, next) => {
     params.push(limit, offset);
 
     const result = await query(
-      `SELECT s.store_id, s.store_name, s.store_slug, s.location_sub_city, s.location_woreda,
+      `SELECT s.store_id, s.store_name, s.store_slug, s.store_code, s.location_sub_city, s.location_woreda,
               s.description, s.tg_channel_username, s.rating, s.rating_count,
               s.total_orders, s.verified_badge,
               sp.return_policy_type, sp.addis_delivery_fee
@@ -56,7 +57,7 @@ router.get('/:storeId', async (req, res, next) => {
     const result = await query(
       `SELECT s.*, sp.return_policy_type, sp.custom_policy_text, sp.addis_delivery_fee,
               sp.regional_dispatch_fee, sp.free_delivery_threshold, sp.zone_fee_matrix,
-              sp.cash_on_delivery, sp.telebirr_enabled
+              sp.cash_on_delivery, sp.telebirr_enabled, sp.telegram_notifs
        FROM stores s
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
        WHERE s.store_id = $1 OR s.store_slug = $1::text`,
@@ -65,9 +66,10 @@ router.get('/:storeId', async (req, res, next) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Store not found' });
 
     const store = result.rows[0];
-    // Don't expose sensitive payment keys publicly
+    // Don't expose sensitive payment keys or password hash
     delete store.cbe_account_number;
-    delete store.telebirr_merchant_id; // Expose only to buyer during checkout
+    delete store.telebirr_merchant_id;
+    delete store.seller_password_hash;
 
     res.json({ store });
   } catch (err) {
@@ -100,27 +102,39 @@ router.post(
         store_name, tg_group_id, tg_channel_username, description,
         location_sub_city, location_woreda, location_detail,
         physical_address, business_phone, telebirr_merchant_id, cbe_account_number,
-        telebirr_account_name, cbe_account_name
+        telebirr_account_name, cbe_account_name, seller_password
       } = req.body;
+
+      // Generate unique 16-char store code
+      const storeCode = crypto.randomBytes(8).toString('hex').toUpperCase();
+
+      // Hash seller password if provided
+      let passwordHash = null;
+      if (seller_password) {
+        if (seller_password.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters' });
+        const salt = crypto.randomBytes(16).toString('hex');
+        passwordHash = salt + ':' + crypto.scryptSync(seller_password, salt, 64).toString('hex');
+      }
 
       // Generate slug from store name
       const slug = store_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
       const result = await query(
         `INSERT INTO stores (
-          store_name, store_slug, admin_tg_user_id, tg_group_id, tg_channel_username,
+          store_name, store_slug, store_code, admin_tg_user_id, tg_group_id, tg_channel_username,
           description, location_sub_city, location_woreda, location_detail,
           physical_address, business_phone, telebirr_merchant_id, cbe_account_number,
-          telebirr_account_name, cbe_account_name,
+          telebirr_account_name, cbe_account_name, seller_password_hash,
           status
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,'pending')
-        RETURNING store_id, store_name, store_slug, status`,
-        [store_name, slug, req.user.tg_user_id, tg_group_id || null,
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'pending')
+        RETURNING store_id, store_name, store_slug, store_code, status`,
+        [store_name, slug, storeCode, req.user.tg_user_id, tg_group_id || null,
          tg_channel_username || null, description || null,
          location_sub_city, location_woreda || null, location_detail || null,
          physical_address || null, business_phone,
          telebirr_merchant_id || null, cbe_account_number || null,
-         telebirr_account_name || null, cbe_account_name || null]
+         telebirr_account_name || null, cbe_account_name || null,
+         passwordHash]
       );
 
       const store = result.rows[0];
@@ -186,7 +200,7 @@ router.put('/:storeId/policy', requireAuth, requireSellerOf('storeId'), async (r
     const {
       return_policy_type, custom_policy_text, addis_delivery_fee,
       regional_dispatch_fee, free_delivery_threshold, zone_fee_matrix,
-      cash_on_delivery, telebirr_enabled, cbe_enabled
+      cash_on_delivery, telebirr_enabled, cbe_enabled, telegram_notifs
     } = req.body;
 
     const result = await query(
@@ -200,13 +214,14 @@ router.put('/:storeId/policy', requireAuth, requireSellerOf('storeId'), async (r
         cash_on_delivery = COALESCE($7, cash_on_delivery),
         telebirr_enabled = COALESCE($8, telebirr_enabled),
         cbe_enabled = COALESCE($9, cbe_enabled),
+        telegram_notifs = COALESCE($10, telegram_notifs),
         updated_at = NOW()
-       WHERE store_id = $10
+       WHERE store_id = $11
        RETURNING *`,
       [return_policy_type, custom_policy_text, addis_delivery_fee,
        regional_dispatch_fee, free_delivery_threshold,
        zone_fee_matrix ? JSON.stringify(zone_fee_matrix) : null,
-       cash_on_delivery, telebirr_enabled, cbe_enabled, req.params.storeId]
+       cash_on_delivery, telebirr_enabled, cbe_enabled, telegram_notifs, req.params.storeId]
     );
     res.json({ policy: result.rows[0] });
   } catch (err) {
@@ -406,6 +421,64 @@ router.post('/:storeId/verify-request', requireAuth, async (req, res, next) => {
     );
 
     res.status(201).json({ verification: result.rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/v1/stores/:storeId/verify-password
+ * Verify seller password (returns store_code + access token on success)
+ */
+router.post('/:storeId/verify-password', requireAuth, async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Password required' });
+
+    const result = await query(
+      'SELECT store_id, store_name, store_slug, store_code, seller_password_hash FROM stores WHERE store_id = $1 AND admin_tg_user_id = $2',
+      [req.params.storeId, req.user.tg_user_id]
+    );
+    if (result.rows.length === 0) return res.status(403).json({ error: 'Not authorized' });
+
+    const store = result.rows[0];
+    if (!store.seller_password_hash) {
+      // No password set yet — allow set flow instead
+      return res.status(400).json({ error: 'No password set', needs_setup: true });
+    }
+
+    const [salt, storedHash] = store.seller_password_hash.split(':');
+    const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+    if (hash !== storedHash) return res.status(401).json({ error: 'Incorrect password' });
+
+    delete store.seller_password_hash;
+    res.json({ store, message: 'Password verified' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/v1/stores/:storeId/set-password
+ * Set initial seller password (for stores without one)
+ */
+router.post('/:storeId/set-password', requireAuth, async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 4) return res.status(400).json({ error: 'Password must be at least 4 characters' });
+
+    const storeCheck = await query(
+      'SELECT store_id, seller_password_hash FROM stores WHERE store_id = $1 AND admin_tg_user_id = $2',
+      [req.params.storeId, req.user.tg_user_id]
+    );
+    if (storeCheck.rows.length === 0) return res.status(403).json({ error: 'Not authorized' });
+    if (storeCheck.rows[0].seller_password_hash) return res.status(400).json({ error: 'Password already set' });
+
+    const salt = crypto.randomBytes(16).toString('hex');
+    const passwordHash = salt + ':' + crypto.scryptSync(password, salt, 64).toString('hex');
+
+    await query('UPDATE stores SET seller_password_hash = $1 WHERE store_id = $2', [passwordHash, req.params.storeId]);
+    res.json({ message: 'Password set successfully' });
   } catch (err) {
     next(err);
   }

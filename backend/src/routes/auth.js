@@ -107,7 +107,7 @@ router.post(
 
       // Check if user is a seller (has a store)
       const storeResult = await query(
-        'SELECT store_id, store_name, store_slug, status, verified_badge FROM stores WHERE admin_tg_user_id = $1',
+        'SELECT store_id, store_name, store_slug, store_code, status, verified_badge FROM stores WHERE admin_tg_user_id = $1',
         [user.tg_user_id]
       );
 

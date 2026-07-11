@@ -108,6 +108,12 @@ const State = {
   sellerProducts: [],
   storeReviews: [],
   pendingProducts: [],
+  sellerUnlocked: false,
+  storeDetail: null,
+  couponPolicy: null,
+  conversations: null,
+  unreadCount: 0,
+  coupons: null,
 
   // ── Cart helpers ──────────────────────────────────
   cartCount() {

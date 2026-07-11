@@ -80,6 +80,9 @@ const BuyerViews = {
               <span class="item-price">${State.formatETB(p.price_etb)}</span>${compare}
             </div>
             <button class="btn-add-cart" onclick="event.stopPropagation();App.addToCart('${p.product_id}')">${State.t('addToCart')}</button>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <button class="btn-share" onclick="Modals.openShareProduct('${p.product_id}','${p.store_id}')" style="flex:1;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:8px;font-size:11px;font-weight:700;color:#60A5FA;cursor:pointer;">📤 Share</button>
+            <button class="btn-chat" onclick="Modals.openChat(null,'${p.store_id}','${p.product_id}')" style="flex:1;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:8px;font-size:11px;font-weight:700;color:var(--success);cursor:pointer;">💬 Chat</button>
           </div>
         </div>
       </div>
@@ -205,6 +208,15 @@ const BuyerViews = {
             ${u.tier && u.tier !== 'standard' ? `<span class="profile-badge badge-tier">${u.tier}</span>` : ''}
           </div>
         </div>
+      </div>
+
+      <!-- Chat Inbox -->
+      <div class="section-header" style="margin-top:16px;">
+        <span class="section-title">💬 Conversations</span>
+        <span id="unreadBadge" style="font-size:10px;color:var(--accent);font-weight:800;"></span>
+      </div>
+      <div id="chatInbox" style="margin-bottom:12px;">
+        <div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:12px;">Loading...</div>
       </div>
 
       <!-- Menu Grid -->
