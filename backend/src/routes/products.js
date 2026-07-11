@@ -14,7 +14,7 @@ router.get('/featured', async (req, res, next) => {
     const { limit = 12 } = req.query;
     const result = await query(
       `SELECT p.product_id, p.title, p.price_etb, p.compare_price,
-              p.stock_quantity, p.category, p.is_featured, p.rating,
+              p.stock_quantity, p.category, p.is_featured, p.rating, p.image_urls,
               s.store_id, s.store_name, s.location_sub_city, s.verified_badge,
               s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address,
               sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold

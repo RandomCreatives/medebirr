@@ -63,10 +63,11 @@ const BuyerViews = {
 
   _itemCard(p) {
     const gradient = this._categoryGradient(p.category);
+    const thumbStyle = (p.image_urls && p.image_urls[0]) ? `background:url('${p.image_urls[0]}') center/cover no-repeat,${gradient};` : `background:${gradient};`;
     const compare = p.compare_price ? `<span class="item-compare">${State.formatETB(p.compare_price)}</span>` : '';
     return `
       <div class="item-card" onclick="App.openProduct('${p.product_id}')">
-        <div class="item-thumb" style="background:${gradient};">
+        <div class="item-thumb" style="${thumbStyle}">
           ${p.return_policy_type ? `<span class="item-policy-tag">${State.policyLabel(p.return_policy_type).split('-')[0]}</span>` : ''}
           <div class="item-store-badge" onclick="event.stopPropagation();App.openStorePage('${p.store_id}')">🏪 ${p.store_name}</div>
         </div>
@@ -88,10 +89,11 @@ const BuyerViews = {
 
   _wishlistCard(p) {
     const gradient = this._categoryGradient(p.category);
+    const thumbStyle = (p.image_urls && p.image_urls[0]) ? `background:url('${p.image_urls[0]}') center/cover no-repeat,${gradient};` : `background:${gradient};`;
     const compare = p.compare_price ? `<span class="item-compare">${State.formatETB(p.compare_price)}</span>` : '';
     return `
       <div class="item-card" onclick="App.openProduct('${p.product_id}')">
-        <div class="item-thumb" style="background:${gradient};">
+        <div class="item-thumb" style="${thumbStyle}">
           ${p.return_policy_type ? `<span class="item-policy-tag">${State.policyLabel(p.return_policy_type).split('-')[0]}</span>` : ''}
           <div class="item-store-badge" onclick="event.stopPropagation();App.openStorePage('${p.store_id}')">🏪 ${p.store_name}</div>
         </div>
