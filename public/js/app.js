@@ -782,7 +782,7 @@ const App = {
     try {
       const [statsData, productsData, ordersData, reviewsData, pendingData] = await Promise.all([
         Api.stores.stats(State.currentStoreId),
-        Api.products.list({ store_id: State.currentStoreId, limit: 200 }),
+        Api.products.sellerList(State.currentStoreId, { limit: 200 }),
         Api.orders.storeOrders(State.currentStoreId, { limit: 200 }),
         Api.orders.reviews(State.currentStoreId).catch(() => ({ reviews: [] })),
         Api.pending.list(State.currentStoreId).catch(() => ({ pending_products: [] }))
@@ -1142,10 +1142,11 @@ const App = {
     if (!data) return;
     data.store_id = State.currentStoreId;
     try {
-      await Api.products.create(data);
+      const resp = await Api.products.create(data);
       this.toast('Item published to hub!', 'success');
+      if (resp.telegram_warning) this.toast(resp.telegram_warning, 'warning');
       Modals.close();
-      const result = await Api.products.list({ store_id: State.currentStoreId, limit: 200 });
+      const result = await Api.products.sellerList(State.currentStoreId, { limit: 200 });
       State.sellerProducts = result.products || [];
       this.renderContent();
     } catch (err) {
@@ -1157,10 +1158,11 @@ const App = {
     const data = this._getProductFormData();
     if (!data) return;
     try {
-      await Api.products.update(productId, data);
+      const resp = await Api.products.update(productId, data);
       this.toast('Item updated!', 'success');
+      if (resp.telegram_warning) this.toast(resp.telegram_warning, 'warning');
       Modals.close();
-      const result = await Api.products.list({ store_id: State.currentStoreId, limit: 200 });
+      const result = await Api.products.sellerList(State.currentStoreId, { limit: 200 });
       State.sellerProducts = result.products || [];
       this.renderContent();
     } catch (err) {
@@ -1194,9 +1196,10 @@ const App = {
 
   async togglePublish(productId, currentState) {
     try {
-      await Api.products.update(productId, { is_published: !currentState });
+      const resp = await Api.products.update(productId, { is_published: !currentState });
       this.toast(currentState ? 'Item unpublished' : 'Item is now live!', 'success');
-      const result = await Api.products.list({ store_id: State.currentStoreId, limit: 200 });
+      if (resp.telegram_warning) this.toast(resp.telegram_warning, 'warning');
+      const result = await Api.products.sellerList(State.currentStoreId, { limit: 200 });
       State.sellerProducts = result.products || [];
       this.renderContent();
     } catch (err) {

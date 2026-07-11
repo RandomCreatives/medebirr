@@ -64,7 +64,8 @@ const Api = {
     get:    (id)          => Api.get(`/products/${id}`),
     create: (data)        => Api.post('/products', data),
     update: (id, data)    => Api.put(`/products/${id}`, data),
-    delete: (id)          => Api.delete(`/products/${id}`)
+    delete: (id)          => Api.delete(`/products/${id}`),
+    sellerList: (storeId, params = {}) => { const qs = new URLSearchParams(params).toString(); return Api.get(`/products/seller/${storeId}${qs ? '?' + qs : ''}`); }
   },
 
   // ── Stores ─────────────────────────────────────────

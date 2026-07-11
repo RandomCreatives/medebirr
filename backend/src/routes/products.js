@@ -128,6 +128,31 @@ router.get('/', async (req, res, next) => {
 });
 
 /**
+ * GET /api/v1/products/seller/:storeId
+ * Seller's own inventory — includes unpublished, no store status filter
+ */
+router.get('/seller/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res, next) => {
+  try {
+    const { page = 1, limit = 200 } = req.query;
+    const offset = (page - 1) * limit;
+    const result = await query(
+      `SELECT p.*, s.store_name, s.store_slug, s.location_sub_city, s.verified_badge,
+              sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
+       FROM products p
+       JOIN stores s ON p.store_id = s.store_id
+       LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+       WHERE p.store_id = $1
+       ORDER BY p.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [req.params.storeId, limit, offset]
+    );
+    res.json({ products: result.rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * GET /api/v1/products/:productId
  * Single product detail
  */
@@ -206,6 +231,7 @@ router.post(
       );
 
       // If published and store has a linked group, broadcast to Telegram
+      let telegramWarning = null;
       if (is_published && storeCheck.rows[0]) {
         const tgService = require('../services/telegram');
         const storeData = await query(
@@ -216,16 +242,19 @@ router.post(
         );
         const store = storeData.rows[0];
         if (store?.tg_group_id) {
-          tgService.broadcastProduct(store.tg_group_id, result.rows[0], store)
-            .then(msgId => {
-              if (msgId) query('UPDATE products SET tg_message_id = $1 WHERE product_id = $2',
+          try {
+            const msgId = await tgService.broadcastProduct(store.tg_group_id, result.rows[0], store);
+            if (msgId) {
+              query('UPDATE products SET tg_message_id = $1 WHERE product_id = $2',
                 [msgId, result.rows[0].product_id]).catch(() => {});
-            })
-            .catch(e => console.warn('Telegram broadcast failed:', e.message));
+            }
+          } catch (e) {
+            telegramWarning = 'Product created but Telegram broadcast failed. Make sure the bot is admin in your group.';
+          }
         }
       }
 
-      res.status(201).json({ product: result.rows[0] });
+      res.status(201).json({ product: result.rows[0], telegram_warning: telegramWarning });
     } catch (err) {
       next(err);
     }
@@ -277,25 +306,31 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
        is_published, is_featured, req.params.productId]
     );
 
-    // If just published (is_published toggled to true), broadcast to Telegram group
-    if (is_published === true) {
-      const tgService = require('../services/telegram');
-      const storeData = await query(
-        `SELECT s.*, sp.return_policy_type FROM stores s
-         LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
-         WHERE s.store_id = (SELECT store_id FROM products WHERE product_id = $1)`,
-        [req.params.productId]
-      );
-      const store = storeData.rows[0];
-      if (store?.tg_group_id && result.rows[0]) {
-        tgService.broadcastProduct(store.tg_group_id, result.rows[0], store)
-          .then(msgId => {
-            if (msgId) query('UPDATE products SET tg_message_id = $1 WHERE product_id = $2',
-              [msgId, req.params.productId]).catch(() => {});
-          })
-          .catch(e => console.warn('Telegram broadcast failed:', e.message));
+      // If just published (is_published toggled to true), broadcast to Telegram group
+      let telegramWarning = null;
+      if (is_published === true) {
+        const tgService = require('../services/telegram');
+        const storeData = await query(
+          `SELECT s.*, sp.return_policy_type FROM stores s
+           LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+           WHERE s.store_id = (SELECT store_id FROM products WHERE product_id = $1)`,
+          [req.params.productId]
+        );
+        const store = storeData.rows[0];
+        if (store?.tg_group_id && result.rows[0]) {
+          try {
+            const msgId = await tgService.broadcastProduct(store.tg_group_id, result.rows[0], store);
+            if (msgId) {
+              query('UPDATE products SET tg_message_id = $1 WHERE product_id = $2',
+                [msgId, req.params.productId]).catch(() => {});
+            }
+          } catch (e) {
+            telegramWarning = 'Product saved but Telegram broadcast failed. Make sure the bot is admin in your group.';
+          }
+        }
       }
-    }
+
+      res.json({ product: result.rows[0], telegram_warning: telegramWarning });
 
     res.json({ product: result.rows[0] });
   } catch (err) {
