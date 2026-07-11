@@ -63,14 +63,14 @@ router.post('/share', requireAuth, [
         // Check if user already has an active coupon for this store
         const existing = await query(
           `SELECT coupon_id FROM coupons
-           WHERE store_id = $1 AND tg_user_id = $2 AND status = 'active' AND valid_until > NOW()`,
+           WHERE store_id = $1 AND tg_user_id = $2 AND is_active = TRUE AND expires_at > NOW()`,
           [storeId, tgUserId]
         );
 
         if (existing.rows.length === 0) {
           await query(
-            `INSERT INTO coupons (store_id, tg_user_id, code, discount_percent, valid_until)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO coupons (store_id, tg_user_id, code, discount_type, discount_value, expires_at)
+             VALUES ($1, $2, $3, 'percent', $4, $5)`,
             [storeId, tgUserId, code, policy.share_discount, validUntil]
           );
           couponIssued = true;
@@ -94,8 +94,8 @@ router.get('/coupons', requireAuth, async (req, res, next) => {
       `SELECT c.*, s.store_name
        FROM coupons c
        JOIN stores s ON c.store_id = s.store_id
-       WHERE c.tg_user_id = $1 AND c.status = 'active' AND c.valid_until > NOW()
-       ORDER BY c.valid_until ASC`,
+       WHERE c.tg_user_id = $1 AND c.is_active = TRUE AND c.expires_at > NOW()
+       ORDER BY c.expires_at ASC`,
       [req.user.tg_user_id]
     );
     res.json({ coupons: result.rows });
@@ -258,13 +258,13 @@ router.post('/group-buy/:id/join', requireAuth, async (req, res, next) => {
         const validUntil = new Date(Date.now() + 7 * 86400000).toISOString();
         const existing = await query(
           `SELECT coupon_id FROM coupons
-           WHERE store_id = $1 AND tg_user_id = $2 AND status = 'active' AND valid_until > NOW()`,
+           WHERE store_id = $1 AND tg_user_id = $2 AND is_active = TRUE AND expires_at > NOW()`,
           [gb.store_id, row.tg_user_id]
         );
         if (existing.rows.length === 0) {
           await query(
-            `INSERT INTO coupons (store_id, tg_user_id, code, discount_percent, valid_until)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO coupons (store_id, tg_user_id, code, discount_type, discount_value, expires_at)
+             VALUES ($1, $2, $3, 'percent', $4, $5)`,
             [gb.store_id, row.tg_user_id, code, gb.discount_percent, validUntil]
           );
         }

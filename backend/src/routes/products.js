@@ -330,9 +330,10 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
         }
       }
 
-      res.json({ product: result.rows[0], telegram_warning: telegramWarning });
+      return res.json({ product: result.rows[0], telegram_warning: telegramWarning });
+    }
 
-    res.json({ product: result.rows[0] });
+    return res.json({ product: result.rows[0] });
   } catch (err) {
     next(err);
   }

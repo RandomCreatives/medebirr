@@ -115,6 +115,14 @@ const Modals = {
       <!-- Payment details area (shown for Telebirr/CBE) -->
       <div id="paymentDetailsArea"></div>
 
+      <!-- Coupon Code -->
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;display:block;">Have a coupon code?</label>
+        <div style="display:flex;gap:6px;">
+          <input class="form-input" id="couponCodeInput" placeholder="e.g. SHR1234ABCD" style="flex:1;font-family:monospace;font-size:13px;text-transform:uppercase;"/>
+        </div>
+      </div>
+
       <!-- ── Policy + Summary ── -->
       <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">

@@ -31,7 +31,8 @@ router.post(
     body('delivery_address').isObject(),
     body('delivery_address.sub_city').notEmpty(),
     body('delivery_address.phone').notEmpty(),
-    body('payment_method').isIn(['telebirr', 'cbe', 'cash'])
+    body('payment_method').isIn(['telebirr', 'cbe', 'cash']),
+    body('coupon_code').optional().isString()
   ],
   async (req, res, next) => {
     const client = await getClient();
@@ -39,7 +40,7 @@ router.post(
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
 
-      const { store_id, items, delivery_address, payment_method, address_id, delivery_method } = req.body;
+      const { store_id, items, delivery_address, payment_method, address_id, delivery_method, coupon_code } = req.body;
       const isPickup = delivery_method === 'pickup';
       await client.query('BEGIN');
 
@@ -137,7 +138,39 @@ router.post(
           deliveryFee = 0;
         }
       }
-      const total = subtotal + deliveryFee;
+      const totalBeforeDiscount = subtotal + deliveryFee;
+
+      // Apply coupon if provided
+      let discountAmount = 0;
+      let appliedCoupon = null;
+
+      if (coupon_code && coupon_code.trim()) {
+        const couponResult = await client.query(
+          `SELECT * FROM coupons
+           WHERE UPPER(code) = UPPER($1)
+             AND is_active = TRUE
+             AND (expires_at IS NULL OR expires_at > NOW())
+             AND (store_id IS NULL OR store_id = $2)
+             AND (tg_user_id IS NULL OR tg_user_id = $3)`,
+          [coupon_code.trim(), store_id, req.user.tg_user_id]
+        );
+
+        if (couponResult.rows.length > 0) {
+          const coupon = couponResult.rows[0];
+          appliedCoupon = coupon;
+
+          if (subtotal >= Number(coupon.min_order_etb || 0)) {
+            if (coupon.discount_type === 'percent') {
+              discountAmount = subtotal * (Number(coupon.discount_value) / 100);
+            } else if (coupon.discount_type === 'fixed') {
+              discountAmount = Number(coupon.discount_value);
+            }
+            discountAmount = Math.min(discountAmount, subtotal);
+          }
+        }
+      }
+
+      const total = Math.max(0, totalBeforeDiscount - discountAmount);
 
       // Policy snapshot for immutable order record
       const policySnapshot = {
@@ -156,12 +189,14 @@ router.post(
         `INSERT INTO orders (
           order_ref, buyer_tg_user_id, store_id, address_id, delivery_address,
           subtotal_etb, delivery_fee_etb, total_etb, payment_method,
-          payment_status, order_status, policy_snapshot, delivery_method
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11)
+          payment_status, order_status, policy_snapshot, delivery_method,
+          coupon_code, discount_etb
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11,$12,$13)
         RETURNING *`,
         [orderRef, req.user.tg_user_id, store_id, address_id || null,
          JSON.stringify(delivery_address), subtotal, deliveryFee, total,
-         payment_method, JSON.stringify(policySnapshot), delivery_method || 'delivery']
+         payment_method, JSON.stringify(policySnapshot), delivery_method || 'delivery',
+         appliedCoupon ? appliedCoupon.code : null, discountAmount]
       );
       const order = orderResult.rows[0];
 
@@ -176,6 +211,13 @@ router.post(
       }
 
       await client.query('COMMIT');
+
+      // Increment coupon usage count
+      if (appliedCoupon) {
+        try {
+          await query('UPDATE coupons SET used_count = used_count + 1 WHERE coupon_id = $1', [appliedCoupon.coupon_id]);
+        } catch (_) {}
+      }
 
       // Notify buyer
       try {
@@ -546,12 +588,23 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
       [rider_name, rider_phone, dispatch_note || null, req.params.orderId]
     );
 
-    // Notify buyer via Telegram bot
+    // Notify buyer via Telegram bot with rich interactive message
     try {
-      const notif = require('../services/notifications');
-      await notif.notifyOrderStatus(result.rows[0], 'dispatched', { rider_name, rider_phone });
+      const tgService = require('../services/telegram');
+      await tgService.notifyBuyerRiderAssigned(
+        ord.buyer_tg_user_id,
+        result.rows[0],
+        rider_name,
+        rider_phone
+      );
     } catch (e) {
-      console.warn('Buyer dispatch notification failed:', e.message);
+      console.warn('Buyer interactive dispatch notification failed, falling back to simple text:', e.message);
+      try {
+        const notif = require('../services/notifications');
+        await notif.notifyOrderStatus(result.rows[0], 'dispatched', { rider_name, rider_phone });
+      } catch (err) {
+        console.error('Fallback notification also failed:', err.message);
+      }
     }
 
     res.json({ order: result.rows[0], message: 'Rider assigned. Buyer will be notified.' });

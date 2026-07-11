@@ -251,13 +251,15 @@ CREATE TABLE IF NOT EXISTS payment_methods (
 CREATE INDEX IF NOT EXISTS idx_payment_methods_user ON payment_methods(tg_user_id);
 
 -- ============================================================
--- COUPONS TABLE
+-- COUPONS TABLE (Unified: platform + social share + group buy)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS coupons (
     coupon_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     code            VARCHAR(50) UNIQUE NOT NULL,
-    discount_type   VARCHAR(20) NOT NULL,    -- percent, fixed
+    discount_type   VARCHAR(20) NOT NULL DEFAULT 'percent', -- percent, fixed
     discount_value  DECIMAL(10,2) NOT NULL,
+    store_id        UUID REFERENCES stores(store_id) ON DELETE CASCADE,
+    tg_user_id      BIGINT REFERENCES users(tg_user_id) ON DELETE CASCADE,
     min_order_etb   DECIMAL(10,2) DEFAULT 0,
     max_uses        INTEGER,
     used_count      INTEGER DEFAULT 0,
@@ -265,6 +267,9 @@ CREATE TABLE IF NOT EXISTS coupons (
     is_active       BOOLEAN DEFAULT TRUE,
     created_at      TIMESTAMP DEFAULT NOW()
 );
+CREATE INDEX IF NOT EXISTS idx_coupons_store ON coupons(store_id);
+CREATE INDEX IF NOT EXISTS idx_coupons_user ON coupons(tg_user_id);
+CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(UPPER(code));
 
 -- ============================================================
 -- USER COUPONS TABLE (Coupons assigned to users)
@@ -272,7 +277,7 @@ CREATE TABLE IF NOT EXISTS coupons (
 CREATE TABLE IF NOT EXISTS user_coupons (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tg_user_id      BIGINT NOT NULL REFERENCES users(tg_user_id) ON DELETE CASCADE,
-    coupon_id       UUID NOT NULL REFERENCES coupons(coupon_id),
+    coupon_id       UUID NOT NULL REFERENCES coupons(coupon_id) ON DELETE CASCADE,
     is_redeemed     BOOLEAN DEFAULT FALSE,
     redeemed_at     TIMESTAMP,
     created_at      TIMESTAMP DEFAULT NOW(),
@@ -437,22 +442,6 @@ CREATE TABLE IF NOT EXISTS coupon_policies (
     coupon_validity_days INT DEFAULT 7,
     created_at          TIMESTAMP DEFAULT NOW(),
     updated_at          TIMESTAMP DEFAULT NOW()
-);
-
--- ============================================================
--- COUPONS: issued to users
--- ============================================================
-CREATE TABLE IF NOT EXISTS coupons (
-    coupon_id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    store_id            UUID NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE,
-    tg_user_id          BIGINT NOT NULL REFERENCES users(tg_user_id),
-    code                VARCHAR(20) UNIQUE NOT NULL,
-    discount_percent    DECIMAL(5,2) NOT NULL,
-    status              VARCHAR(20) DEFAULT 'active',
-    valid_until         TIMESTAMP NOT NULL,
-    used_at             TIMESTAMP,
-    order_id            UUID REFERENCES orders(order_id) ON DELETE SET NULL,
-    created_at          TIMESTAMP DEFAULT NOW()
 );
 
 -- ============================================================

@@ -34,33 +34,6 @@ router.get('/store/:storeId', requireAuth, async (req, res, next) => {
 });
 
 /**
- * POST /api/v1/pending-products
- * Create a pending product (internal — called by bot webhook)
- */
-router.post('/', requireAuth, async (req, res, next) => {
-  try {
-    const { store_id, tg_group_id, tg_message_id, title, price_etb, image_urls, caption, auto_detected } = req.body;
-
-    if (!store_id || !tg_group_id) {
-      return res.status(400).json({ error: 'store_id and tg_group_id are required' });
-    }
-
-    const result = await query(
-      `INSERT INTO pending_products
-       (store_id, tg_group_id, tg_message_id, title, price_etb, image_urls, caption, auto_detected)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [store_id, tg_group_id, tg_message_id || null, title || 'Untitled Product',
-       price_etb || null, image_urls || [], caption || null, auto_detected !== false]
-    );
-
-    res.status(201).json({ pending_product: result.rows[0] });
-  } catch (err) {
-    next(err);
-  }
-});
-
-/**
  * PUT /api/v1/pending-products/:id/complete
  * Seller completes a pending product (adds description, category, etc.)
  */

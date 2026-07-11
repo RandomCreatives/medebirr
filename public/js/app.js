@@ -953,6 +953,7 @@ const App = {
     const txCode = document.getElementById('txCodeInput')?.value?.trim() || `TXN-${Date.now()}`;
 
     const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
+    const couponCode = document.getElementById('couponCodeInput')?.value?.trim() || null;
 
     try {
       this.toast('Placing order...', 'info');
@@ -961,7 +962,8 @@ const App = {
         items,
         delivery_address: { ...deliveryAddress, delivery_note: deliveryNote },
         delivery_method: isPickup ? 'pickup' : 'delivery',
-        payment_method: payMethod
+        payment_method: payMethod,
+        coupon_code: couponCode
       });
       const order = orderData.order;
 

@@ -249,11 +249,11 @@ router.post('/telebirr/webhook', async (req, res, next) => {
         console.warn('QR/Receipt generation failed:', e.message);
       }
 
-      // Notify seller via Telegram bot
+      // Notify seller via Telegram bot (private DM, not group)
       try {
         const tgService = require('../services/telegram');
         const orderFull = await query(
-          `SELECT o.*, s.tg_group_id, u.first_name, u.last_name, u.username
+          `SELECT o.*, s.tg_group_id, s.admin_tg_user_id, u.first_name, u.last_name, u.username
            FROM orders o
            JOIN stores s ON o.store_id = s.store_id
            JOIN users u ON o.buyer_tg_user_id = u.tg_user_id
@@ -262,8 +262,11 @@ router.post('/telebirr/webhook', async (req, res, next) => {
         );
         const items = await query('SELECT * FROM order_items WHERE order_id = $1', [tx.order_id]);
         const ord = orderFull.rows[0];
-        if (ord?.tg_group_id) {
-          await tgService.notifySellerNewOrder(ord.tg_group_id, ord, ord, items.rows);
+        if (ord) {
+          const chatId = ord.admin_tg_user_id || ord.tg_group_id;
+          if (chatId) {
+            await tgService.notifySellerNewOrder(chatId, ord, ord, items.rows);
+          }
         }
       } catch (e) {
         console.warn('Seller notification failed:', e.message);
@@ -337,6 +340,21 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
     // Generate QR + receipt for confirmed order
     try { await generateQRAndReceipt(order_id); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
 
+    // Notify seller via Telegram (private DM)
+    try {
+      const tgService = require('../services/telegram');
+      const storeResult = await query('SELECT s.admin_tg_user_id FROM orders o JOIN stores s ON o.store_id = s.store_id WHERE o.order_id = $1', [order_id]);
+      const sellerId = storeResult.rows[0]?.admin_tg_user_id;
+      if (sellerId) {
+        const ord = orderResult.rows[0];
+        await tgService.tgCall('sendMessage', {
+          chat_id: sellerId,
+          text: `💵 *Cash Order Confirmed!*\n\nOrder *${ord.order_ref}* — Br ${Number(ord.total_etb).toLocaleString()}\nBuyer confirmed cash payment.\n\nPlease prepare for dispatch.`,
+          parse_mode: 'MarkdownV2'
+        });
+      }
+    } catch (_) {}
+
     // Notify buyer
     try {
       const notif = require('../services/notifications');
@@ -361,7 +379,7 @@ router.post('/confirm-tx', requireAuth, async (req, res, next) => {
     }
 
     const orderResult = await query(
-      `SELECT o.*, s.telebirr_merchant_id, s.cbe_account_number, s.store_name
+      `SELECT o.*, s.telebirr_merchant_id, s.cbe_account_number, s.store_name, s.admin_tg_user_id
        FROM orders o JOIN stores s ON o.store_id = s.store_id
        WHERE o.order_id = $1 AND o.buyer_tg_user_id = $2`,
       [order_id, req.user.tg_user_id]
@@ -407,14 +425,17 @@ router.post('/confirm-tx', requireAuth, async (req, res, next) => {
     // Generate QR + receipt
     try { await generateQRAndReceipt(order_id); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
 
-    // Notify seller via Telegram
+    // Notify seller via Telegram (private DM)
     try {
       const tgService = require('../services/telegram');
-      await tgService.tgCall('sendMessage', {
-        chat_id: order.admin_tg_user_id,
-        text: `💰 *Payment Received!*\n\nOrder *${order.order_ref}* — Br ${Number(order.total_etb).toLocaleString()}\nMethod: ${gateway.toUpperCase()}\nTransaction Code: \`${transaction_code}\`\n\nPlease prepare for dispatch.`,
-        parse_mode: 'MarkdownV2'
-      });
+      const sellerId = order.admin_tg_user_id;
+      if (sellerId) {
+        await tgService.tgCall('sendMessage', {
+          chat_id: sellerId,
+          text: `💰 *Payment Received!*\n\nOrder *${order.order_ref}* — Br ${Number(order.total_etb).toLocaleString()}\nMethod: ${gateway.toUpperCase()}\nTransaction Code: \`${transaction_code}\`\n\nPlease prepare for dispatch.`,
+          parse_mode: 'MarkdownV2'
+        });
+      }
     } catch (_) {}
 
     // Notify buyer
