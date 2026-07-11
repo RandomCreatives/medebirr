@@ -290,7 +290,7 @@ CREATE INDEX IF NOT EXISTS idx_user_coupons_user ON user_coupons(tg_user_id);
 -- ============================================================
 CREATE TABLE IF NOT EXISTS user_settings (
     tg_user_id      BIGINT PRIMARY KEY REFERENCES users(tg_user_id) ON DELETE CASCADE,
-    dark_mode       BOOLEAN DEFAULT TRUE,
+    dark_mode       BOOLEAN DEFAULT FALSE,
     notif_orders    BOOLEAN DEFAULT TRUE,
     notif_promos    BOOLEAN DEFAULT TRUE,
     notif_chat      BOOLEAN DEFAULT TRUE,

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -12,7 +12,7 @@
 <script>
   // Apply theme instantly before render (prevent flash)
   const t = localStorage.getItem('em_theme');
-  if (t) document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.setAttribute('data-theme', t || 'light');
 </script>
 </head>
 <body>

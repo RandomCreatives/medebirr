@@ -7,7 +7,7 @@ const App = {
 
   // ── Theme Management ────────────────────────────────
   applyTheme() {
-    const dark = State.userSettings?.dark_mode !== false;
+    const dark = State.userSettings?.dark_mode === true;
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
     try { localStorage.setItem('em_theme', dark ? 'dark' : 'light'); } catch (_) {}
   },
@@ -654,8 +654,8 @@ const App = {
   async _loadUserSettings() {
     try {
       const data = await Api.users.settings();
-      State.userSettings = data.settings || { dark_mode: true, notif_orders: true, notif_promos: true, notif_chat: true, biometric_login: false };
-    } catch (e) { State.userSettings = { dark_mode: true, notif_orders: true, notif_promos: true, notif_chat: true, biometric_login: false }; }
+      State.userSettings = data.settings || { dark_mode: false, notif_orders: true, notif_promos: true, notif_chat: true, biometric_login: false };
+    } catch (e) { State.userSettings = { dark_mode: false, notif_orders: true, notif_promos: true, notif_chat: true, biometric_login: false }; }
     this.applyTheme();
   },
 
