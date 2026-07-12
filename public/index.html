@@ -72,10 +72,14 @@
 
   <!-- Role Switcher Bar -->
   <div class="role-bar" id="roleBar">
-    <div class="role-info">
-      <span class="role-badge buyer-badge" id="roleBadge">🛒 Buyer Hub</span>
-      <div class="role-sub" id="roleSub">Verified Ethiopian Shops</div>
+    <div class="role-search-wrap" id="roleSearchWrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="role-search-input" id="searchInput"
+             placeholder="Search products, shops..."
+             oninput="App.handleSearch(this.value)" />
     </div>
+    <span class="role-badge buyer-badge" id="roleBadge" style="display:none;">🛒 Buyer Hub</span>
+    <div class="role-sub" id="roleSub" style="display:none;"></div>
     <button class="role-switch-btn" id="roleSwitchBtn" onclick="App.toggleRole()">
       Seller Studio
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>

@@ -448,12 +448,14 @@ const App = {
     const badge = document.getElementById('roleBadge');
     const sub   = document.getElementById('roleSub');
     const btn   = document.getElementById('roleSwitchBtn');
+    const searchWrap = document.getElementById('roleSearchWrap');
     const isSeller = State.stores.length > 0;
 
     if (State.role === 'buyer') {
-      badge.className = 'role-badge buyer-badge';
-      badge.innerHTML = `🛒 ${State.t('tabExplore')} Hub`;
-      sub.textContent = State.stores.length ? `${State.stores.length} ${State.t('badgeShops')}` : 'Verified Ethiopian Shops';
+      // Show search bar, hide badge
+      if (searchWrap) searchWrap.style.display = 'flex';
+      if (badge) badge.style.display = 'none';
+      if (sub) sub.style.display = 'none';
 
       if (isSeller) {
         btn.innerHTML = `🏬 ${State.t('badgeSeller')} →`;
@@ -464,12 +466,22 @@ const App = {
       }
 
     } else {
+      // Seller mode: hide search, show badge
+      if (searchWrap) searchWrap.style.display = 'none';
       badge.className = 'role-badge seller-badge';
       badge.innerHTML = `🏬 ${State.t('badgeSeller')}`;
+      badge.style.display = '';
       sub.textContent = State.stores[0]?.store_name || 'Your Shop Dashboard';
+      sub.style.display = '';
       btn.innerHTML = `🛒 ${State.t('tabExplore')} Hub →`;
       btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#60A5FA;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;';
       btn.onclick = () => App.toggleRole();
+    }
+
+    // Sync search input value
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput && searchInput.value !== State.searchQuery) {
+      searchInput.value = State.searchQuery;
     }
   },
 
@@ -844,6 +856,8 @@ const App = {
   handleFilter(filter) {
     State.activeFilter = filter;
     State.searchQuery = '';
+    const si = document.getElementById('searchInput');
+    if (si) si.value = '';
     this._cancelInfiniteScroll();
     this._fetchProducts();
   },

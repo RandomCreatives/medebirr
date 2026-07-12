@@ -8,13 +8,6 @@ const BuyerViews = {
   renderExplore(container) {
     const filtered = State.products;
     container.innerHTML = `
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="searchInput"
-               placeholder="${State.t('searchPlaceholder')}"
-               value="${State.searchQuery}"
-               oninput="App.handleSearch(this.value)" />
-      </div>
       <div class="filter-bar" id="filterBar">
         ${this._filterPills()}
       </div>
