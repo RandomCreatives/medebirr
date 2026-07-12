@@ -24,14 +24,14 @@ const CheckoutPage = {
     this._deliveryFee = Number(pkg.deliveryFee) || 150;
 
     const overlay = document.getElementById('checkoutOverlay');
-    overlay.style.display = 'flex';
+    overlay.classList.add('co-open');
 
     this._requestGeo();
     this._renderStep1();
   },
 
   close() {
-    document.getElementById('checkoutOverlay').style.display = 'none';
+    document.getElementById('checkoutOverlay').classList.remove('co-open');
   },
 
   _requestGeo() {
@@ -72,7 +72,6 @@ const CheckoutPage = {
     const subcities = ['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio'];
 
     document.getElementById('checkoutPage').innerHTML = `
-      <!-- Top Bar -->
       <div class="co-topbar">
         <button class="co-back" onclick="CheckoutPage.close()">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -81,7 +80,6 @@ const CheckoutPage = {
         <div style="width:36px;"></div>
       </div>
 
-      <!-- Step Progress -->
       <div class="co-progress">
         <div class="co-step active">
           <div class="co-step-circle">1</div>
@@ -99,44 +97,39 @@ const CheckoutPage = {
         </div>
       </div>
 
-      <!-- Scrollable Content -->
       <div class="co-scroll">
+        <div class="co-card">
+          <div class="co-title">Where should we deliver?</div>
 
-        <h2 class="co-title">Where should we deliver?</h2>
+          <div class="co-radio-group">
+            <label class="co-radio selected" onclick="CheckoutPage._pickDelivery(this,'delivery')">
+              <input type="radio" name="co-del" value="delivery" checked />
+              <div class="co-radio-body">
+                <div class="co-radio-title">🛵 Deliver to My Address</div>
+                <div class="co-radio-desc">Rider brings it to your door</div>
+              </div>
+              <div class="co-radio-price">${State.formatETB(pkg.deliveryFee)}</div>
+            </label>
+            <label class="co-radio" onclick="CheckoutPage._pickDelivery(this,'pickup')">
+              <input type="radio" name="co-del" value="pickup" />
+              <div class="co-radio-body">
+                <div class="co-radio-title">🏪 Collect from Store</div>
+                <div class="co-radio-desc">Visit the seller's shop</div>
+              </div>
+              <div class="co-radio-price free">Free</div>
+            </label>
+          </div>
 
-        <!-- Delivery Method -->
-        <div class="co-radio-group">
-          <label class="co-radio selected" onclick="CheckoutPage._pickDelivery(this,'delivery')">
-            <input type="radio" name="co-del" value="delivery" checked />
-            <div class="co-radio-body">
-              <div class="co-radio-title">🛵 Deliver to My Address</div>
-              <div class="co-radio-desc">Rider brings it to your door</div>
-            </div>
-            <div class="co-radio-price">${State.formatETB(pkg.deliveryFee)}</div>
-          </label>
-          <label class="co-radio" onclick="CheckoutPage._pickDelivery(this,'pickup')">
-            <input type="radio" name="co-del" value="pickup" />
-            <div class="co-radio-body">
-              <div class="co-radio-title">🏪 Collect from Store</div>
-              <div class="co-radio-desc">Visit the seller's shop</div>
-            </div>
-            <div class="co-radio-price free">Free</div>
-          </label>
+          <div id="coDeliveryForm"></div>
+
+          <div class="co-summary">
+            <div class="co-summary-row"><span>Items (${pkg.items.length})</span><span>${State.formatETB(sub)}</span></div>
+            <div class="co-summary-row"><span>Delivery</span><span id="coDelFee">${del > 0 ? State.formatETB(del) : 'Free'}</span></div>
+            <div class="co-summary-row total"><span>Total</span><span id="coTotal" style="color:var(--accent);">${State.formatETB(total)}</span></div>
+          </div>
         </div>
-
-        <!-- Address Form (delivery) / Pickup Info -->
-        <div id="coDeliveryForm"></div>
-
-        <!-- Order Summary -->
-        <div class="co-summary">
-          <div class="co-summary-row"><span>Items (${pkg.items.length})</span><span>${State.formatETB(sub)}</span></div>
-          <div class="co-summary-row"><span>Delivery</span><span id="coDelFee">${del > 0 ? State.formatETB(del) : 'Free'}</span></div>
-          <div class="co-summary-row total"><span>Total</span><span id="coTotal" style="color:var(--accent);">${State.formatETB(total)}</span></div>
-        </div>
-
       </div>
 
-      <!-- Bottom Buttons -->
       <div class="co-bottom">
         <button class="co-btn secondary" onclick="CheckoutPage.close()">Cancel</button>
         <button class="co-btn primary" onclick="CheckoutPage._goStep2()">Continue →</button>
@@ -153,13 +146,11 @@ const CheckoutPage = {
     this._deliveryMethod = method;
     this._deliveryFee = method === 'pickup' ? 0 : (Number(this._pkg.deliveryFee) || 150);
 
-    // Update totals
     const sub = this._subtotal();
-    const del = this._deliveryFee;
-    const total = sub + (method === 'pickup' ? 0 : del);
+    const total = sub + (method === 'pickup' ? 0 : this._deliveryFee);
     const delEl = document.getElementById('coDelFee');
     const totalEl = document.getElementById('coTotal');
-    if (delEl) delEl.textContent = method === 'pickup' ? 'Free' : State.formatETB(del);
+    if (delEl) delEl.textContent = method === 'pickup' ? 'Free' : State.formatETB(this._deliveryFee);
     if (totalEl) totalEl.textContent = State.formatETB(total);
 
     this._renderDeliveryForm();
@@ -171,7 +162,7 @@ const CheckoutPage = {
 
     if (this._deliveryMethod === 'pickup') {
       area.innerHTML = `
-        <div class="co-card accent-green" style="margin-top:20px;">
+        <div class="co-card accent-green" style="margin-top:16px;">
           <div class="co-card-title" style="color:var(--success);">🏪 Store Pickup</div>
           <div class="co-card-body">
             <strong>${this._pkg.shopName}</strong><br/>
@@ -185,16 +176,15 @@ const CheckoutPage = {
     const detected = this._getDetectedSubCity();
 
     area.innerHTML = `
-      <div class="co-card ${this._geoLocation ? 'accent-green' : 'accent-gold'}" style="margin-top:20px;">
-        <div class="co-card-title" style="color:${this._geoLocation ? 'var(--success)' : 'var(--accent)'};">
-          📍 ${this._geoLocation ? 'Location detected' : 'Allow location for faster checkout'}
-        </div>
-        <div class="co-card-body">
-          ${this._geoLocation
-            ? `Sub-city auto-filled: <strong>${detected}</strong>`
-            : `We'll auto-fill your sub-city. You can change it below.`}
-        </div>
-      </div>
+      ${this._geoLocation ? `
+        <div class="co-card accent-green" style="margin-top:16px;">
+          <div class="co-card-title" style="color:var(--success);">📍 Location detected</div>
+          <div class="co-card-body">Sub-city: <strong>${detected}</strong></div>
+        </div>` : `
+        <div class="co-card accent-gold" style="margin-top:16px;">
+          <div class="co-card-title" style="color:var(--accent);">📍 Allow location for faster checkout</div>
+          <div class="co-card-body">We'll auto-fill your sub-city.</div>
+        </div>`}
 
       <div class="co-field">
         <label class="co-label">Sub-City</label>
@@ -221,6 +211,5 @@ const CheckoutPage = {
       if (!subCity) { App.toast('Please select your sub-city', 'error'); return; }
     }
     App.toast('Step 2 coming next!', 'info');
-    // TODO: this._step = 2; this._renderStep2();
   }
 };
