@@ -174,12 +174,13 @@ const CheckoutPage = {
     }
 
     const detected = this._getDetectedSubCity();
+    const user = State.user || {};
 
     area.innerHTML = `
       ${this._geoLocation ? `
         <div class="co-card accent-green" style="margin-top:16px;">
           <div class="co-card-title" style="color:var(--success);">📍 Location detected</div>
-          <div class="co-card-body">Sub-city: <strong>${detected}</strong></div>
+          <div class="co-card-body">Sub-city auto-filled: <strong>${detected}</strong></div>
         </div>` : `
         <div class="co-card accent-gold" style="margin-top:16px;">
           <div class="co-card-title" style="color:var(--accent);">📍 Allow location for faster checkout</div>
@@ -188,21 +189,39 @@ const CheckoutPage = {
 
       <div class="co-field">
         <label class="co-label">Sub-City</label>
-        <select class="form-select" id="coSubCity">
+        <select class="form-select" id="coSubCity" onchange="CheckoutPage._updateAddressPreview()">
           ${subcities.map(s => `<option ${s === detected ? 'selected' : ''}>${s}</option>`).join('')}
         </select>
       </div>
 
       <div class="co-field">
         <label class="co-label">Landmark / House No</label>
-        <input class="form-input" id="coLandmark" placeholder="e.g. Near Edna Mall, House 412" />
+        <input class="form-input" id="coLandmark" placeholder="e.g. Near Edna Mall, House 412" oninput="CheckoutPage._updateAddressPreview()" />
       </div>
 
       <label class="co-check">
         <input type="checkbox" id="coSaveAddress" style="accent-color:var(--accent);" />
         <span>Save this address for future orders</span>
       </label>
+
+      <!-- Live address preview -->
+      <div class="co-address-preview" id="coAddressPreview">
+        <div class="co-address-preview-title">📍 Delivery Address</div>
+        <div class="co-address-preview-detail" id="coAddressDetail">${detected || 'Select sub-city'}</div>
+        <div class="co-address-preview-sub">📞 ${user.phone || 'Add phone number'}</div>
+      </div>
     `;
+  },
+
+  _updateAddressPreview() {
+    const subCity = document.getElementById('coSubCity')?.value || '';
+    const landmark = document.getElementById('coLandmark')?.value || '';
+    const detail = document.getElementById('coAddressDetail');
+    if (!detail) return;
+
+    let addr = subCity;
+    if (landmark) addr += `, ${landmark}`;
+    detail.textContent = addr || 'Select sub-city';
   },
 
   _goStep2() {
