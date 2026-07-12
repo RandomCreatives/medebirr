@@ -95,7 +95,7 @@ body, .app-shell, .app-header, .bottom-nav, .modal-sheet, .modal-backdrop,
 .item-card, .stat-card, .coupon-card, .order-detail-card, .help-accordion-item,
 .address-card, .payment-card, .privacy-viewport, .privacy-toc,
 .toast, .dispatch-card, .pkg-header, .pkg-item, .pkg-footer,
-.search-input, .form-input, .form-select, .form-textarea,
+.form-input, .form-select, .form-textarea,
 .btn-secondary, .btn-add-cart, .qty-btn, .role-switch-btn,
 .pdp-btn-primary, .pdp-save-btn, .subsection-back-btn,
 .nav-avatar-placeholder, .coupon-copy-btn, .order-action-btn {
@@ -232,15 +232,7 @@ body { background: var(--bg-body); color: var(--text-primary); display: flex;
   padding: 1px 5px; border-radius: 10px; min-width: 16px; text-align: center;
 }
 
-/* Search + Filters */
-.search-wrap { position: relative; margin-bottom: 12px; }
-.search-input {
-  width: 100%; background: var(--bg-input); border: 1px solid var(--border);
-  border-radius: var(--radius-md); padding: 11px 14px 11px 40px; color: var(--text-primary);
-  font-size: 14px; outline: none; transition: border-color 0.2s;
-}
-.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
-.search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 15px; }
+/* Filters */
 .filter-bar { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 12px; scrollbar-width: none; }
 .filter-bar::-webkit-scrollbar { display: none; }
 .filter-pill {
