@@ -1343,6 +1343,8 @@ const App = {
       `).join('');
     } catch (e) {
       console.warn('Failed to load conversations', e);
+      const inbox = document.getElementById('chatInbox');
+      if (inbox) inbox.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:12px;">No conversations yet. Tap Chat on any product to start one.</div>';
     }
   },
 
