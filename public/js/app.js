@@ -48,6 +48,13 @@ const App = {
         return this.loadInitialData();
       })
       .then(() => this.renderContent())
+      .then(() => {
+        // Preload wishlist so PDP heart works from any screen
+        Api.users.wishlist().then(data => {
+          State.wishlistItems = data.wishlist || [];
+          State.wishlist = new Set(State.wishlistItems.map(p => p.product_id));
+        }).catch(() => {});
+      })
       .catch((err) => {
         console.warn('Auth/API error:', err.message);
         State.bootError = err?.message || String(err);
@@ -967,7 +974,7 @@ const App = {
     const txCode = document.getElementById('txCodeInput')?.value?.trim() || `TXN-${Date.now()}`;
 
     const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
-    const couponCode = document.getElementById('couponCodeInput')?.value?.trim() || null;
+    const couponCode = document.getElementById('couponCodeInput')?.value?.trim() || '';
 
     try {
       this.toast('Placing order...', 'info');
@@ -977,7 +984,7 @@ const App = {
         delivery_address: { ...deliveryAddress, delivery_note: deliveryNote },
         delivery_method: isPickup ? 'pickup' : 'delivery',
         payment_method: payMethod,
-        coupon_code: couponCode
+        ...(couponCode ? { coupon_code: couponCode } : {})
       });
       const order = orderData.order;
 

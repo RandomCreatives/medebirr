@@ -32,7 +32,7 @@ router.post(
     body('delivery_address.sub_city').notEmpty(),
     body('delivery_address.phone').notEmpty(),
     body('payment_method').isIn(['telebirr', 'cbe', 'cash']),
-    body('coupon_code').optional().isString()
+    body('coupon_code').optional({ values: 'falsy' }).isString()
   ],
   async (req, res, next) => {
     const client = await getClient();
