@@ -190,6 +190,7 @@ const BuyerViews = {
       if (section === 'payment')  return this._renderPaymentMethods(container);
       if (section === 'orders')   return this._renderOrdersDetail(container);
       if (section === 'coupons')  return this._renderCoupons(container);
+      if (section === 'notifications') return this._renderNotifications(container);
       if (section === 'settings') return this._renderSettings(container);
       if (section === 'help')     return this._renderHelpCenter(container);
       if (section === 'privacy')  return this._renderPrivacy(container);
@@ -209,6 +210,7 @@ const BuyerViews = {
       { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>`, label: State.t('payment'), desc: 'Cards & digital wallet', section: 'payment' },
       { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`, label: State.t('orders'), desc: orderCount ? `${orderCount} orders` : 'Track purchases & deliveries', section: 'orders', badge: orderCount || null },
       { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`, label: State.t('coupons'), desc: couponCount ? `${couponCount} available` : 'Discounts & promo codes', section: 'coupons', badge: couponCount || null },
+      { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>`, label: 'Notifications', desc: 'Messages, orders & delivery updates', section: 'notifications', badge: State.unreadCount || null },
       { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`, label: State.t('settings'), desc: 'Dark mode, notifications, biometrics', section: 'settings' },
       { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`, label: State.t('help'), desc: 'FAQs, chat support & contact', section: 'help' },
       { icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`, label: State.t('privacy'), desc: 'Data usage & legal terms', section: 'privacy' },
@@ -217,15 +219,16 @@ const BuyerViews = {
     container.innerHTML = `
       <!-- Profile Header Card -->
       <div class="profile-hub-header">
-        <div class="profile-avatar-lg" style="background:${grad};">
+        <div class="profile-avatar-lg" style="background:linear-gradient(135deg,#C8980A,#FCCD04);width:72px;height:72px;font-size:28px;border:3px solid var(--accent);">
           ${(u.firstName||'U')[0].toUpperCase()}
         </div>
         <div class="profile-identity">
           <div class="profile-name">${u.firstName} ${u.lastName||''}</div>
           <div class="profile-email">${u.email || u.username ? '@'+(u.username||u.email) : 'Telegram User'}</div>
           <div class="profile-badges">
-            <span class="profile-badge ${isSeller?'badge-seller':'badge-buyer'}">${isSeller ? 'Seller' : 'Buyer'}</span>
+            <span class="profile-badge ${isSeller?'badge-seller':'badge-buyer'}">${isSeller ? '🏪 Seller' : '🛒 Buyer'}</span>
             ${u.tier && u.tier !== 'standard' ? `<span class="profile-badge badge-tier">${u.tier}</span>` : ''}
+            ${orderCount ? `<span class="profile-badge badge-orders">📦 ${orderCount} orders</span>` : ''}
           </div>
         </div>
       </div>
@@ -895,6 +898,59 @@ const BuyerViews = {
     }
   },
 
+  // ── Sub-Section: Notifications ──────────────────────
+  _renderNotifications(container) {
+    const notifications = State.notifications || [];
+    const typeIcons = {
+      order_paid: { icon: '💰', color: 'var(--success)', label: 'Payment Confirmed' },
+      order_placed: { icon: '🛒', color: '#60A5FA', label: 'Order Placed' },
+      order_dispatched: { icon: '🛵', color: '#F59E0B', label: 'Order Dispatched' },
+      order_delivered: { icon: '🎉', color: 'var(--success)', label: 'Order Delivered' },
+      order_cancelled: { icon: '❌', color: 'var(--danger)', label: 'Order Cancelled' },
+      rider_assigned: { icon: '🏍️', color: '#A78BFA', label: 'Rider Assigned' },
+      new_order: { icon: '📦', color: '#60A5FA', label: 'New Order' },
+      message: { icon: '💬', color: '#60A5FA', label: 'Message' },
+    };
+    const fallback = { icon: '🔔', color: 'var(--text-secondary)', label: 'Notification' };
+
+    container.innerHTML = `
+      <div class="subsection-header">
+        <button class="subsection-back-btn" onclick="App.backToProfileHub()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="subsection-title">🔔 Notifications</span>
+      </div>
+
+      ${notifications.length ? `
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${notifications.map(n => {
+            const meta = typeIcons[n.type] || fallback;
+            const time = n.created_at ? this._timeAgo(new Date(n.created_at)) : '';
+            return `
+              <div class="card" style="padding:12px;${n.is_read ? 'opacity:0.6;' : ''}border-left:3px solid ${meta.color};">
+                <div style="display:flex;align-items:flex-start;gap:10px;">
+                  <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${meta.icon}</div>
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">${n.title || meta.label}</div>
+                    <div style="font-size:12px;color:var(--text-secondary);line-height:1.4;">${n.body || ''}</div>
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${time}</div>
+                  </div>
+                  ${!n.is_read ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px;"></div>' : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : `
+        <div style="text-align:center;padding:40px 20px;">
+          <div style="font-size:40px;margin-bottom:12px;">🔔</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">No notifications yet</div>
+          <div style="font-size:12px;color:var(--text-secondary);">You'll see order updates, delivery confirmations, and messages here.</div>
+        </div>
+      `}
+    `;
+  },
+
   // ── Sub-Section: Settings ──────────────────────────
   _renderSettings(container) {
     const s = State.userSettings || {};
@@ -1318,5 +1374,17 @@ const BuyerViews = {
         ${o.order_status === 'dispatched' ? `<button class="btn-primary" style="margin-top:10px;padding:9px;" onclick="event.stopPropagation();App.confirmDelivery('${o.order_id}')">✅ Confirm Delivery (QR Handshake)</button>` : ''}
       </div>
     `;
+  },
+
+  _timeAgo(date) {
+    if (!date) return '';
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
   }
 };

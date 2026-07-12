@@ -641,6 +641,9 @@ const App = {
     if (section === 'settings' && !State.userSettings) {
       await this._loadUserSettings();
     }
+    if (section === 'notifications') {
+      await this._refreshNotificationDot();
+    }
     this.renderContent();
   },
 
@@ -2068,9 +2071,10 @@ const App = {
   },
 
   // ── Notifications ─────────────────────────────────
-  toggleNotifications() {
+  async toggleNotifications() {
     this.switchTab('profile');
     State.profileSubSection = 'notifications';
+    await this._refreshNotificationDot();
     this.renderContent();
   },
 
