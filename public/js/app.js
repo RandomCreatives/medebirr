@@ -319,11 +319,6 @@ const App = {
       u.isSeller  = (u.isSeller !== undefined) ? u.isSeller : State.stores.length > 0;
     }
 
-    // Set language label
-    const langMap = { en: 'EN', am: 'አማ', or: 'OR' };
-    const langLabel = document.getElementById('langLabel');
-    if (langLabel) langLabel.textContent = langMap[State.language] || 'EN';
-
     // Check notifications
     this._refreshNotificationDot();
 
@@ -2047,10 +2042,15 @@ const App = {
     const idx = langs.indexOf(State.language);
     State.language = langs[(idx + 1) % langs.length];
     localStorage.setItem('em_lang', State.language);
-    const langMap = { en: 'EN', am: 'አማ', or: 'OR' };
-    document.getElementById('langLabel').textContent = langMap[State.language] || 'EN';
+    const langLabel = document.getElementById('langLabel');
+    if (langLabel) langLabel.textContent = { en: 'EN', am: 'አማ', or: 'OR' }[State.language] || 'EN';
     this.render();
     this.toast(`Language: ${State.language.toUpperCase()}`, 'info');
+    // Re-render settings if open so the picker updates
+    if (State.profileSubSection === 'settings') {
+      const body = document.getElementById('appBody');
+      if (body) BuyerViews._renderSettings(body);
+    }
   },
 
   // ── Notifications ─────────────────────────────────

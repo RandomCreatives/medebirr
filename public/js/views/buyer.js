@@ -932,6 +932,15 @@ const BuyerViews = {
             <div class="toggle-thumb"></div>
           </button>
         </div>
+        <div class="settings-toggle-row">
+          <div class="settings-toggle-info">
+            <div class="settings-toggle-label">Language</div>
+            <div class="settings-toggle-desc">${State.language === 'en' ? 'English' : State.language === 'am' ? 'አማርኛ' : 'Afaan Oromoo'}</div>
+          </div>
+          <button class="settings-action-pill" onclick="App.cycleLanguage()">
+            ${State.language === 'en' ? 'EN' : State.language === 'am' ? 'አማ' : 'OR'} →
+          </button>
+        </div>
       </div>
 
       <!-- Notifications -->
