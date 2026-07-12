@@ -458,11 +458,10 @@ const App = {
       if (isSeller) {
         btn.innerHTML = `🏬 ${State.t('badgeSeller')} →`;
         btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.5);color:#FCCD04;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer;';
+        btn.onclick = () => App.toggleRole();
       } else {
-        btn.innerHTML = '🏪 Open a Shop';
-        btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);color:#10B981;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;';
+        btn.style.display = 'none';
       }
-      btn.onclick = isSeller ? () => App.toggleRole() : () => App.openRegisterStoreModal();
 
     } else {
       badge.className = 'role-badge seller-badge';
@@ -602,7 +601,6 @@ const App = {
       if (!State.paymentMethods) this._loadPaymentMethods();
       if (!State.userCoupons) this._loadUserCoupons();
       if (!State.userSettings) this._loadUserSettings();
-      if (State.role === 'buyer') this.loadConversations();
     }
     if (tab === 'dispatch' && State.role === 'seller') {
       if (!State.storeOrders.length) await this.loadSellerData();

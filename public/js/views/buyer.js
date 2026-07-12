@@ -237,14 +237,12 @@ const BuyerViews = {
         </div>
       </div>
 
-      <!-- Chat Inbox -->
-      <div class="section-header" style="margin-top:16px;">
-        <span class="section-title">💬 Conversations</span>
-        <span id="unreadBadge" style="font-size:10px;color:var(--accent);font-weight:800;"></span>
-      </div>
-      <div id="chatInbox" style="margin-bottom:12px;">
-        <div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:12px;">Loading...</div>
-      </div>
+      <!-- Open a Shop CTA (non-sellers only) -->
+      ${!isSeller ? `
+      <button class="profile-open-shop-btn" onclick="App.openRegisterStoreModal()" style="margin:12px 0 4px;width:100%;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Open a Shop on Medebirr — Free
+      </button>` : ''}
 
       <!-- Menu Grid -->
       <div class="profile-menu-grid">
@@ -273,11 +271,7 @@ const BuyerViews = {
             </div>
             <button onclick="App.toggleRole();App.switchTab('dashboard');" class="profile-store-btn">Studio →</button>
           </div>`).join('')}
-      </div>` : `
-      <button class="profile-open-shop-btn" onclick="App.openRegisterStoreModal()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Open a Shop on Medebirr — Free
-      </button>`}
+      </div>` : ''}
 
       <!-- Switch Account -->
       ${!window.Telegram?.WebApp?.initData ? `
