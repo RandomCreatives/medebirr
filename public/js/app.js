@@ -54,6 +54,15 @@ const App = {
           State.wishlistItems = data.wishlist || [];
           State.wishlist = new Set(State.wishlistItems.map(p => p.product_id));
         }).catch(() => {});
+
+        // Request geolocation for faster checkout
+        if (navigator.geolocation && !localStorage.getItem('em_geo_requested')) {
+          navigator.geolocation.getCurrentPosition(
+            () => { localStorage.setItem('em_geo_requested', '1'); },
+            () => { localStorage.setItem('em_geo_requested', '1'); },
+            { timeout: 8000 }
+          );
+        }
       })
       .catch((err) => {
         console.warn('Auth/API error:', err.message);

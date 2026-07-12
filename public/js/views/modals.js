@@ -23,6 +23,11 @@ const Modals = {
 
   // ── Checkout Sheet ────────────────────────────────
   async openCheckout(shopId) {
+    // Redirect to the new full-screen checkout page
+    if (typeof CheckoutPage !== 'undefined') {
+      return CheckoutPage.open(shopId);
+    }
+    // Fallback to modal if CheckoutPage not loaded
     const pkg = State.cart[shopId];
     if (!pkg) return;
 
