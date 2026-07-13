@@ -779,6 +779,8 @@ const BuyerViews = {
             <span class="order-status-badge status-${o.order_status}">${o.order_status}</span>
           </div>
         </div>
+        <div style="font-size:11px;color:var(--text-secondary);margin:4px 0 2px 0;">💳 ${o.payment_method.toUpperCase()}: <span style="font-family:monospace;color:white;">${o.transaction_code || o.payment_tx_ref || 'Cash on Delivery'}</span></div>
+        ${Number(o.discount_etb) > 0 ? `<div style="font-size:11px;color:var(--success);font-weight:700;margin-bottom:4px;">🎟️ Promo Coupon Saved: -${State.formatETB(o.discount_etb)}</div>` : ''}
         ${o.rider_name ? `<div class="order-detail-rider">🛵 ${o.rider_name} · ${o.rider_phone}</div>` : ''}
         <div class="order-detail-actions">
           ${isActive && o.order_status === 'dispatched' ? `

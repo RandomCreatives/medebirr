@@ -145,10 +145,25 @@ const State = {
     }
     const pkg = this.cart[shopId];
     const existing = pkg.items.find(i => i.product.product_id === product.product_id);
+    const maxStock = Number(product.stock_quantity || 999);
     if (existing) {
-      existing.qty += qty;
+      if ((existing.qty + qty) > maxStock) {
+        existing.qty = maxStock;
+        if (typeof App !== 'undefined' && typeof App.toast === 'function') {
+          App.toast(`Only ${maxStock} units available in stock for ${product.title}!`, 'warning');
+        }
+      } else {
+        existing.qty += qty;
+      }
     } else {
-      pkg.items.push({ product, qty });
+      if (qty > maxStock) {
+        pkg.items.push({ product, qty: maxStock });
+        if (typeof App !== 'undefined' && typeof App.toast === 'function') {
+          App.toast(`Only ${maxStock} units available in stock for ${product.title}!`, 'warning');
+        }
+      } else {
+        pkg.items.push({ product, qty });
+      }
     }
     this.saveCart();
   },
@@ -167,7 +182,15 @@ const State = {
     if (qty <= 0) {
       this.removeFromCart(shopId, productId);
     } else {
-      item.qty = qty;
+      const maxStock = Number(item.product.stock_quantity || 999);
+      if (qty > maxStock) {
+        item.qty = maxStock;
+        if (typeof App !== 'undefined' && typeof App.toast === 'function') {
+          App.toast(`Maximum stock reached (${maxStock} units)`, 'warning');
+        }
+      } else {
+        item.qty = qty;
+      }
       this.saveCart();
     }
   },
