@@ -573,6 +573,15 @@ const CheckoutPage = {
       return;
     }
 
+    // Show processing state
+    document.getElementById('checkoutPage').innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px 20px;text-align:center;">
+        <div class="loading-spinner" style="width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:20px;"></div>
+        <div style="font-size:16px;font-weight:800;color:white;margin-bottom:6px;">Processing Your Order...</div>
+        <div style="font-size:12px;color:var(--text-secondary);">Confirming payment &amp; generating receipt</div>
+      </div>
+    `;
+
     const pkg = this._pkg;
     const isPickup = this._deliveryMethod === 'pickup';
     const deliveryAddress = isPickup
@@ -582,7 +591,9 @@ const CheckoutPage = {
     const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
 
     try {
-      if (App && typeof App.toast === 'function') App.toast('Submitting your order...', 'info');
+      let order = null;
+      let orderId = null;
+      let orderRef = null;
 
       if (typeof Api !== 'undefined' && Api.orders && typeof Api.orders.create === 'function') {
         const orderData = await Api.orders.create({
@@ -593,33 +604,127 @@ const CheckoutPage = {
           payment_method: this._paymentMethod,
           ...(this._couponCode ? { coupon_code: this._couponCode } : {})
         });
-        const order = orderData.order;
+        order = orderData.order;
+        orderId = order.order_id;
+        orderRef = order.order_ref;
 
         if (this._paymentMethod === 'telebirr' || this._paymentMethod === 'cbe') {
           await Api.payments.confirmTx(order.order_id, this._txCode || `TXN-${Date.now()}`);
         } else {
           await Api.payments.confirmCash(order.order_id);
         }
-
-        State.clearStoreCart(this._shopId);
-        if (App && typeof App.renderNavigation === 'function') App.renderNavigation();
-        this.close();
-        if (typeof Modals !== 'undefined' && typeof Modals.showOrderConfirmed === 'function') {
-          Modals.showOrderConfirmed(order.order_ref, order.store?.store_name || pkg.shopName, order.order_id);
-        }
-        if (App && typeof App.refreshOrders === 'function') App.refreshOrders();
-        return;
+      } else {
+        // Offline fallback
+        orderId = `local-${Date.now()}`;
+        orderRef = `INV-${Date.now().toString().slice(-5)}`;
       }
 
-      // Local state fallback if running offline prototype
       State.clearStoreCart(this._shopId);
       if (App && typeof App.renderNavigation === 'function') App.renderNavigation();
-      this.close();
-      if (typeof Modals !== 'undefined' && typeof Modals.showOrderConfirmed === 'function') {
-        Modals.showOrderConfirmed(`INV-${Date.now().toString().slice(-5)}`, pkg.shopName, 999);
-      }
+      if (App && typeof App.refreshOrders === 'function') App.refreshOrders();
+
+      // Render success screen inside the checkout overlay
+      this._renderSuccess(orderRef, orderId, pkg.shopName);
+
+      // Auto-fetch receipt in background
+      this._loadReceipt(orderId);
+
     } catch (err) {
       if (App && typeof App.toast === 'function') App.toast(err.message || 'Order placement failed — please try again', 'error');
+      // Restore Step 3
+      this._renderStep3();
+    }
+  },
+
+  _renderSuccess(orderRef, orderId, storeName) {
+    document.getElementById('checkoutPage').innerHTML = `
+      <div class="co-topbar">
+        <div style="width:36px;"></div>
+        <div class="co-topbar-title" style="color:var(--success);">Order Confirmed!</div>
+        <div style="width:36px;"></div>
+      </div>
+
+      <div class="co-scroll">
+        <div class="co-card" style="text-align:center;">
+          <div style="font-size:64px;margin-bottom:12px;">🎉</div>
+          <div style="font-size:22px;font-weight:900;color:var(--success);margin-bottom:4px;">Purchase Successful!</div>
+          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;">
+            Your order <strong style="color:var(--accent);">${orderRef}</strong><br/>
+            has been placed with <strong style="color:white;">${storeName}</strong>
+          </div>
+
+          <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:14px;margin-bottom:16px;font-size:12px;color:var(--success);text-align:left;line-height:1.8;">
+            💳 Payment confirmed — funds sent directly to seller<br/>
+            📄 Your PDF receipt is being generated below<br/>
+            🛵 You'll get a Telegram message when rider is assigned<br/>
+            🛡️ Purchase protected by the store's return policy
+          </div>
+
+          <div id="coReceiptArea" style="margin-bottom:16px;">
+            <div style="padding:20px;color:var(--text-secondary);font-size:12px;">
+              <div class="loading-spinner" style="width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 10px;"></div>
+              Generating your receipt PDF...
+            </div>
+          </div>
+
+          <div id="coReceiptActions" style="display:none;">
+            <a id="coReceiptDownload" href="#" target="_blank" download
+               style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--accent);border-radius:10px;padding:13px;margin-bottom:10px;color:var(--accent-text);text-decoration:none;font-size:13px;font-weight:800;">
+              📥 Download PDF Receipt
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="co-bottom">
+        <button class="co-btn secondary" onclick="CheckoutPage.close()" style="flex:1;">Close</button>
+        <button class="co-btn primary" onclick="CheckoutPage.close();App.switchTab('orders')" style="flex:2;">
+          📦 Track My Order
+        </button>
+      </div>
+    `;
+  },
+
+  async _loadReceipt(orderId) {
+    const area = document.getElementById('coReceiptArea');
+    const actions = document.getElementById('coReceiptActions');
+    if (!area || !orderId || orderId.startsWith('local-')) {
+      if (area) area.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">Receipt will be available in your order history.</div>`;
+      return;
+    }
+
+    // Wait 2s for backend to generate receipt
+    await new Promise(r => setTimeout(r, 2000));
+
+    try {
+      const data = await Api.delivery.receipt(orderId);
+      if (data && data.receipt_url) {
+        area.innerHTML = `
+          <iframe src="${data.receipt_url}" style="width:100%;height:320px;border:1px solid var(--border);border-radius:8px;background:white;"></iframe>
+        `;
+        const dlBtn = document.getElementById('coReceiptDownload');
+        if (dlBtn) {
+          dlBtn.href = data.receipt_url;
+          actions.style.display = 'block';
+        }
+      } else {
+        area.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">Receipt available in order history.</div>`;
+      }
+    } catch (err) {
+      // Retry once after 3s
+      await new Promise(r => setTimeout(r, 3000));
+      try {
+        const data2 = await Api.delivery.receipt(orderId);
+        if (data2 && data2.receipt_url) {
+          area.innerHTML = `<iframe src="${data2.receipt_url}" style="width:100%;height:320px;border:1px solid var(--border);border-radius:8px;background:white;"></iframe>`;
+          const dlBtn = document.getElementById('coReceiptDownload');
+          if (dlBtn) { dlBtn.href = data2.receipt_url; actions.style.display = 'block'; }
+        } else {
+          area.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">Receipt will be available in your order history.</div>`;
+        }
+      } catch (_) {
+        area.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">📄 Receipt will be sent to you via Telegram.</div>`;
+      }
     }
   }
 };
