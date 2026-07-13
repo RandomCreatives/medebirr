@@ -1818,118 +1818,173 @@ const App = {
     Modals.open(`
       <div class="modal-handle"></div>
       <div class="modal-title">🏪 Open Your Shop on Medebirr</div>
-      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:20px;line-height:1.6;">
-        List your products, reach buyers across Ethiopia. Zero commission. Payments go directly to your Telebirr.
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;line-height:1.5;">
+        List your products, reach buyers across Ethiopia. Zero commission. Payments land directly in your account.
       </p>
 
-      <!-- Step 1: Store Info -->
-      <div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Step 1 — Store Details</div>
-
-      <div class="form-group">
-        <label class="form-label">Store / Shop Name</label>
-        <input class="form-input" id="regStoreName" placeholder="e.g. Bole Fashion House"/>
+      <!-- Wizard Progress Bar -->
+      <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg-surface);padding:10px 14px;border-radius:8px;margin-bottom:18px;border:1px solid var(--border);">
+        <div id="regStepBadge1" style="font-size:11px;font-weight:800;color:var(--accent);">1. Profile</div>
+        <div style="width:20px;height:1px;background:var(--border);"></div>
+        <div id="regStepBadge2" style="font-size:11px;font-weight:700;color:var(--text-muted);">2. Security</div>
+        <div style="width:20px;height:1px;background:var(--border);"></div>
+        <div id="regStepBadge3" style="font-size:11px;font-weight:700;color:var(--text-muted);">3. Telegram Group</div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">What do you sell?</label>
-        <select class="form-select" id="regCategory">
-          <option value="fashion">👗 Fashion & Traditional Clothing</option>
-          <option value="electronics">📱 Electronics & Phones</option>
-          <option value="groceries">☕ Coffee, Food & Groceries</option>
-          <option value="footwear">👟 Footwear</option>
-          <option value="furniture">🪑 Furniture & Home</option>
-          <option value="beauty">💄 Beauty & Personal Care</option>
-          <option value="other">📦 Other</option>
-        </select>
-      </div>
+      <!-- ── CARD STEP 1: STORE PROFILE ── -->
+      <div id="regStepCard1" style="display:block;">
+        <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Step 1 — Store Profile Details</div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
         <div class="form-group">
-          <label class="form-label">Sub-City</label>
-          <select class="form-select" id="regSubCity">
-            ${['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio','Outside Addis'].map(s=>`<option>${s}</option>`).join('')}
+          <label class="form-label">Store / Shop Name</label>
+          <input class="form-input" id="regStoreName" placeholder="e.g. Bole Fashion House"/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">What do you sell?</label>
+          <select class="form-select" id="regCategory">
+            <option value="fashion">👗 Fashion & Traditional Clothing</option>
+            <option value="electronics">📱 Electronics & Phones</option>
+            <option value="groceries">☕ Coffee, Food & Groceries</option>
+            <option value="footwear">👟 Footwear</option>
+            <option value="furniture">🪑 Furniture & Home</option>
+            <option value="beauty">💄 Beauty & Personal Care</option>
+            <option value="other">📦 Other</option>
           </select>
         </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+          <div class="form-group">
+            <label class="form-label">Sub-City</label>
+            <select class="form-select" id="regSubCity">
+              ${['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio','Outside Addis'].map(s=>`<option>${s}</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Business Phone</label>
+            <input class="form-input" id="regPhone" type="tel" placeholder="+251 9XX XXX XXX"/>
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="App._nextRegStep(1, 2)" style="margin-top:8px;">
+          Next: Financials &amp; Password →
+        </button>
+      </div>
+
+      <!-- ── CARD STEP 2: TELEBIRR & PASSWORD ── -->
+      <div id="regStepCard2" style="display:none;">
+        <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Step 2 — Payments &amp; Security</div>
+
+        <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:white;line-height:1.5;">
+          💡 <strong>Direct Seller Checkout:</strong> Buyers transfer money directly to your Telebirr shortcode or account during checkout. Zero platform commission or escrow delay!
+        </div>
+
         <div class="form-group">
-          <label class="form-label">Business Phone</label>
-          <input class="form-input" id="regPhone" type="tel" placeholder="+251 9XX XXX XXX"/>
+          <label class="form-label">Your Telebirr Shortcode / Phone</label>
+          <input class="form-input" id="regTelebirr" type="tel" placeholder="e.g. 891204 or +251 9XX XXX XXX"/>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Displayed to buyers upon order placement.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">🔑 Seller Studio Password</label>
+          <input class="form-input" id="regPassword" type="password" placeholder="Minimum 4 characters" style="font-family:monospace;"/>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Required to unlock and manage your Seller Studio dashboard.</div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button class="btn-secondary" onclick="App._showRegStep(1)" style="flex:1;">← Back</button>
+          <button class="btn-primary" onclick="App._nextRegStep(2, 3)" style="flex:2;">Next: Connect Telegram →</button>
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Your Telebirr Shortcode / Phone</label>
-        <input class="form-input" id="regTelebirr" type="tel" placeholder="e.g. 891204 or +251 9XX XXX XXX"/>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Buyers pay directly to this account — zero marketplace holding.</div>
-      </div>
+      <!-- ── CARD STEP 3: TELEGRAM GROUP & LAUNCH ── -->
+      <div id="regStepCard3" style="display:none;">
+        <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Step 3 — Connect Your Telegram Group</div>
 
-      <div class="form-group">
-        <label class="form-label">🔑 Seller Password</label>
-        <input class="form-input" id="regPassword" type="password" placeholder="Minimum 4 characters" style="font-family:monospace;"/>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">You'll need this to access the Seller Studio — don't forget it!</div>
-      </div>
-
-      <!-- Step 2: Telegram Group -->
-      <div style="font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin:20px 0 12px 0;">Step 2 — Connect Your Telegram Group</div>
-
-      <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;">
-        <div style="font-size:13px;font-weight:800;color:#60A5FA;margin-bottom:8px;">📢 Why connect a group?</div>
-        <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
-          When you publish a product in the Seller Studio, the bot automatically posts it to your Telegram group with a <strong style="color:white;">Buy Now</strong> button.<br/>
-          New paid orders are sent to your group instantly.
+        <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:white;line-height:1.5;">
+          📢 When connected, products published in your Seller Studio automatically post to your Telegram channel/group with an interactive <strong>Buy Now</strong> button!
         </div>
-      </div>
 
-      <div class="form-group">
-        <label class="form-label">Your Telegram Group or Channel Username</label>
-        <div style="position:relative;">
-          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;">@</span>
-          <input class="form-input" id="regGroupUsername" placeholder="YourGroupUsername" style="padding-left:28px;"/>
+        <div class="form-group">
+          <label class="form-label">Telegram Group / Channel Username</label>
+          <div style="position:relative;">
+            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;">@</span>
+            <input class="form-input" id="regGroupUsername" placeholder="e.g. BoleAppleDeals" style="padding-left:28px;"/>
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Must be a public channel or group where the bot is added as admin.</div>
         </div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Must be a public group or channel (e.g. @BoleAppleDeals)</div>
-      </div>
 
-      <!-- Make bot admin instructions -->
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;">
-        <div style="font-size:12px;font-weight:800;color:white;margin-bottom:10px;">📋 How to make @${botUsername} an admin:</div>
-        <div style="font-size:12px;color:var(--text-secondary);line-height:2;">
-          1. Open your Telegram group or channel<br/>
-          2. Tap the group name → <strong style="color:white;">Administrators</strong><br/>
-          3. Tap <strong style="color:white;">Add Administrator</strong><br/>
-          4. Search <strong style="color:var(--accent);">@${botUsername}</strong><br/>
-          5. Enable <strong style="color:white;">Post Messages</strong> → Save
+        <!-- Make bot admin instructions -->
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:800;color:white;margin-bottom:6px;">📋 How to add @${botUsername} as admin:</div>
+          <div style="font-size:11px;color:var(--text-secondary);line-height:1.7;">
+            1. Open your Telegram group or channel → <strong>Administrators</strong><br/>
+            2. Tap <strong>Add Administrator</strong> &amp; search <strong style="color:var(--accent);">@${botUsername}</strong><br/>
+            3. Enable <strong>Post Messages</strong> &amp; save!
+          </div>
         </div>
-        <a href="https://t.me/${botUsername}" target="_blank"
-           style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.3);border-radius:8px;padding:10px;margin-top:12px;color:var(--accent);text-decoration:none;font-size:12px;font-weight:800;">
-          💬 Open @${botUsername} in Telegram
-        </a>
-      </div>
 
-      <div id="groupVerifyResult" style="display:none;"></div>
+        <div id="groupVerifyResult" style="display:none;margin-bottom:10px;"></div>
+        <button id="verifyGroupBtn" style="display:none;margin-bottom:12px;width:100%;" class="btn-secondary" onclick="App._verifyGroupLink()">
+          ✅ Verify @${botUsername} is Admin
+        </button>
 
-      <button id="verifyGroupBtn" style="display:none;margin-bottom:10px;" class="btn-secondary" onclick="App._verifyGroupLink()">
-        ✅ Verify @${botUsername} is Admin
-      </button>
+        <div class="form-group">
+          <label class="form-label">Brief Description (optional)</label>
+          <textarea class="form-textarea" id="regDesc" placeholder="What makes your shop special?" style="height:60px;"></textarea>
+        </div>
 
-      <div class="form-group">
-        <label class="form-label">Brief Description (optional)</label>
-        <textarea class="form-textarea" id="regDesc" placeholder="What makes your shop special?"></textarea>
-      </div>
-
-      <button class="btn-primary" onclick="App.submitRegisterStore()">
-        🚀 Register My Store — Free
-      </button>
-
-      <div style="text-align:center;margin-top:12px;font-size:11px;color:var(--text-secondary);">
-        After registration your store is reviewed within 24 hours.<br/>
-        You can start adding products immediately.
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn-secondary" onclick="App._showRegStep(2)" style="flex:1;">← Back</button>
+          <button class="btn-primary" onclick="App.submitRegisterStore()" style="flex:2;background:var(--success);color:white;">
+            🚀 Launch My Store Free!
+          </button>
+        </div>
       </div>
     `);
 
-    // Show verify button when group username is entered
     document.getElementById('regGroupUsername')?.addEventListener('input', function() {
       const verifyBtn = document.getElementById('verifyGroupBtn');
       if (verifyBtn) verifyBtn.style.display = this.value.trim() ? 'block' : 'none';
     });
+  },
+
+  _showRegStep(step) {
+    [1, 2, 3].forEach(s => {
+      const card = document.getElementById(`regStepCard${s}`);
+      const badge = document.getElementById(`regStepBadge${s}`);
+      if (card) card.style.display = s === step ? 'block' : 'none';
+      if (badge) {
+        badge.style.color = s === step ? 'var(--accent)' : (s < step ? 'var(--success)' : 'var(--text-muted)');
+        badge.style.fontWeight = s === step ? '800' : '700';
+      }
+    });
+  },
+
+  _nextRegStep(fromStep, toStep) {
+    if (fromStep === 1) {
+      const name = document.getElementById('regStoreName')?.value?.trim();
+      if (!name) {
+        this.toast('Please enter your store / shop name to proceed', 'error');
+        document.getElementById('regStoreName')?.focus();
+        return;
+      }
+    } else if (fromStep === 2) {
+      const telebirr = document.getElementById('regTelebirr')?.value?.trim();
+      const pwd = document.getElementById('regPassword')?.value?.trim();
+      if (!telebirr || !pwd) {
+        this.toast('Please enter your Telebirr account and seller password', 'error');
+        if (!telebirr) document.getElementById('regTelebirr')?.focus();
+        else document.getElementById('regPassword')?.focus();
+        return;
+      }
+      if (pwd.length < 4) {
+        this.toast('Seller password must be at least 4 characters long', 'error');
+        document.getElementById('regPassword')?.focus();
+        return;
+      }
+    }
+    this._showRegStep(toStep);
   },
 
   // Called after store is created to verify group link
