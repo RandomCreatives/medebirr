@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    CheckoutPage — Full-screen floating checkout
-   Step 1: Delivery (built first, others follow)
-══════════════════════════════════════════════════ */
+   Step 1: Delivery  |  Step 2: Payment  |  Step 3: Confirm
+═══════════════════════════════════════════════════ */
 
 const CheckoutPage = {
   _shopId: null,
@@ -62,7 +62,9 @@ const CheckoutPage = {
     return this._pkg.items.reduce((s, i) => s + Number(i.product.price_etb) * i.qty, 0);
   },
 
-  // ── Step 1: Delivery ──────────────────────────────
+  // ═══════════════════════════════════════════════════
+  // STEP 1 — Delivery
+  // ═══════════════════════════════════════════════════
   _renderStep1() {
     const pkg = this._pkg;
     const sub = this._subtotal();
@@ -229,6 +231,298 @@ const CheckoutPage = {
       const subCity = document.getElementById('coSubCity')?.value;
       if (!subCity) { App.toast('Please select your sub-city', 'error'); return; }
     }
-    App.toast('Step 2 coming next!', 'info');
+    this._step = 2;
+    this._renderStep2();
+  },
+
+  // ═══════════════════════════════════════════════════
+  // STEP 2 — Payment
+  // ═══════════════════════════════════════════════════
+  _renderStep2() {
+    const pkg = this._pkg;
+    const user = State.user || {};
+
+    document.getElementById('checkoutPage').innerHTML = `
+      <div class="co-topbar">
+        <button class="co-back" onclick="CheckoutPage._goStep1()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="co-topbar-title">Checkout</div>
+        <div style="width:36px;"></div>
+      </div>
+
+      <div class="co-progress">
+        <div class="co-step done">
+          <div class="co-step-circle">✓</div>
+          <div class="co-step-label">Delivery</div>
+        </div>
+        <div class="co-step-line active"></div>
+        <div class="co-step active">
+          <div class="co-step-circle">2</div>
+          <div class="co-step-label">Payment</div>
+        </div>
+        <div class="co-step-line"></div>
+        <div class="co-step">
+          <div class="co-step-circle">3</div>
+          <div class="co-step-label">Confirm</div>
+        </div>
+      </div>
+
+      <div class="co-scroll">
+        <div class="co-card">
+          <div class="co-title">How will you pay?</div>
+
+          <div class="co-field">
+            <label class="co-label">Phone Number</label>
+            <input class="form-input" id="coPhone" type="tel" placeholder="+251 9XX XXX XXX" value="${user.phone || ''}" />
+          </div>
+
+          <div class="co-section-label">Payment Method</div>
+          <div class="co-pay-grid">
+            <button class="co-pay-card ${this._paymentMethod==='telebirr'?'selected':''}" onclick="CheckoutPage._pickPayment(this,'telebirr')">
+              <div class="co-pay-logo" style="background:rgba(52,152,219,0.15);color:#3498DB;">T</div>
+              <div class="co-pay-name">Telebirr</div>
+              <div class="co-pay-sub">Mobile Money</div>
+            </button>
+            <button class="co-pay-card ${this._paymentMethod==='cbe'?'selected':''}" onclick="CheckoutPage._pickPayment(this,'cbe')">
+              <div class="co-pay-logo" style="background:rgba(239,68,68,0.15);color:#EF4444;">C</div>
+              <div class="co-pay-name">CBE</div>
+              <div class="co-pay-sub">Bank Transfer</div>
+            </button>
+            <button class="co-pay-card disabled" onclick="App.toast('Coming soon','info')">
+              <div class="co-pay-logo" style="background:rgba(128,128,128,0.1);color:#888;">$</div>
+              <div class="co-pay-name">Cash</div>
+              <div class="co-pay-sub">Pay on Delivery</div>
+              <div class="co-pay-badge">Soon</div>
+            </button>
+            <button class="co-pay-card disabled" onclick="App.toast('Coming soon','info')">
+              <div class="co-pay-logo" style="background:rgba(128,128,128,0.1);color:#888;">💳</div>
+              <div class="co-pay-name">Card</div>
+              <div class="co-pay-sub">Visa / Mastercard</div>
+              <div class="co-pay-badge">Soon</div>
+            </button>
+          </div>
+
+          <div id="coPayDetails"></div>
+
+          <div class="co-field" style="margin-top:16px;">
+            <label class="co-label">Coupon Code (optional)</label>
+            <input class="form-input" id="coCoupon" placeholder="e.g. SHR1234ABCD" style="font-family:monospace;text-transform:uppercase;" />
+          </div>
+        </div>
+      </div>
+
+      <div class="co-bottom">
+        <button class="co-btn secondary" onclick="CheckoutPage._goStep1()">← Back</button>
+        <button class="co-btn primary" onclick="CheckoutPage._goStep3()">Review Order →</button>
+      </div>
+    `;
+
+    this._renderPayDetails();
+  },
+
+  _pickPayment(el, method) {
+    this._paymentMethod = method;
+    document.querySelectorAll('.co-pay-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    this._renderPayDetails();
+  },
+
+  _renderPayDetails() {
+    const area = document.getElementById('coPayDetails');
+    if (!area) return;
+    const pkg = this._pkg;
+
+    if (this._paymentMethod === 'telebirr') {
+      area.innerHTML = `
+        <div class="co-card accent-blue" style="margin-top:16px;">
+          <div class="co-card-title" style="color:#3498DB;">📱 Pay via Telebirr</div>
+          <div class="co-card-body" style="margin-bottom:8px;">Send payment to the seller's Telebirr account:</div>
+          <div style="background:var(--bg-primary);border-radius:8px;padding:12px;margin-bottom:10px;">
+            <div class="co-detail-label">Account Name</div>
+            <div class="co-detail-value">${pkg.telebirrAccountName || 'Not set'}</div>
+            <div class="co-detail-label" style="margin-top:6px;">Number</div>
+            <div class="co-detail-value accent">${pkg.telebirrCode || 'Not set'}</div>
+          </div>
+          <div class="co-field" style="margin-top:10px;margin-bottom:0;">
+            <label class="co-label" style="font-size:10px;">Transaction Code (optional)</label>
+            <input class="form-input" id="coTxCode" placeholder="Paste Telebirr ref code" />
+          </div>
+        </div>`;
+    } else if (this._paymentMethod === 'cbe') {
+      area.innerHTML = `
+        <div class="co-card accent-red" style="margin-top:16px;">
+          <div class="co-card-title" style="color:#EF4444;">🏦 Pay via CBE</div>
+          <div class="co-card-body" style="margin-bottom:8px;">Transfer to the seller's CBE account:</div>
+          <div style="background:var(--bg-primary);border-radius:8px;padding:12px;margin-bottom:10px;">
+            <div class="co-detail-label">Account Name</div>
+            <div class="co-detail-value">${pkg.cbeAccountName || pkg.shopName}</div>
+            <div class="co-detail-label" style="margin-top:6px;">Account Number</div>
+            <div class="co-detail-value accent">${pkg.cbeAccountNumber || 'Not set'}</div>
+          </div>
+          <div class="co-field" style="margin-top:10px;margin-bottom:0;">
+            <label class="co-label" style="font-size:10px;">Transaction Code (optional)</label>
+            <input class="form-input" id="coTxCode" placeholder="Paste CBE ref code" />
+          </div>
+        </div>`;
+    } else {
+      area.innerHTML = '';
+    }
+  },
+
+  _validateStep2() {
+    const phone = document.getElementById('coPhone')?.value?.trim();
+    if (!phone) { App.toast('Please enter your phone number', 'error'); return false; }
+    return true;
+  },
+
+  _goStep1() {
+    this._step = 1;
+    this._renderStep1();
+  },
+
+  _goStep3() {
+    if (!this._validateStep2()) return;
+    this._step = 3;
+    this._renderStep3();
+  },
+
+  // ═══════════════════════════════════════════════════
+  // STEP 3 — Review & Confirm (stub for now)
+  // ═══════════════════════════════════════════════════
+  _renderStep3() {
+    const pkg = this._pkg;
+    const sub = this._subtotal();
+    const del = this._deliveryMethod === 'pickup' ? 0 : this._deliveryFee;
+    const total = sub + del;
+    const subCity = document.getElementById('coSubCity')?.value || '';
+    const landmark = document.getElementById('coLandmark')?.value || '';
+    const phone = document.getElementById('coPhone')?.value || '';
+    const coupon = document.getElementById('coCoupon')?.value || '';
+
+    const payLabels = { telebirr: '📱 Telebirr', cbe: '🏦 CBE', cash: '💵 Cash' };
+    const delLabel = this._deliveryMethod === 'pickup' ? '🏪 Store Pickup' : `🛵 ${subCity}`;
+
+    document.getElementById('checkoutPage').innerHTML = `
+      <div class="co-topbar">
+        <button class="co-back" onclick="CheckoutPage._goStep2()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="co-topbar-title">Checkout</div>
+        <div style="width:36px;"></div>
+      </div>
+
+      <div class="co-progress">
+        <div class="co-step done"><div class="co-step-circle">✓</div><div class="co-step-label">Delivery</div></div>
+        <div class="co-step-line active"></div>
+        <div class="co-step done"><div class="co-step-circle">✓</div><div class="co-step-label">Payment</div></div>
+        <div class="co-step-line active"></div>
+        <div class="co-step active"><div class="co-step-circle">3</div><div class="co-step-label">Confirm</div></div>
+      </div>
+
+      <div class="co-scroll">
+        <div class="co-card">
+          <div class="co-title">Review Your Order</div>
+
+          <div class="co-section-label">${pkg.shopName}</div>
+          <div class="co-card">
+            ${pkg.items.map(i => `
+              <div class="co-review-row">
+                <span class="co-review-name">${i.product.name} × ${i.qty}</span>
+                <span class="co-review-price">${State.formatETB(Number(i.product.price_etb) * i.qty)}</span>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="co-section-label">Delivery</div>
+          <div class="co-card">
+            <div class="co-review-row"><span class="co-review-name">${delLabel}</span><span class="co-review-price">${del > 0 ? State.formatETB(del) : 'Free'}</span></div>
+            ${landmark ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">${landmark}</div>` : ''}
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">📞 ${phone}</div>
+          </div>
+
+          <div class="co-section-label">Payment</div>
+          <div class="co-card">
+            <div class="co-review-row"><span class="co-review-name">${payLabels[this._paymentMethod] || this._paymentMethod}</span></div>
+          </div>
+
+          <label class="co-check" style="margin-top:16px;">
+            <input type="checkbox" id="coPolicy" style="accent-color:var(--accent);" />
+            <span>I agree to <strong>${pkg.shopName}'s ${State.policyLabel(pkg.returnPolicy)}</strong> policy</span>
+          </label>
+
+          <div class="co-summary">
+            <div class="co-summary-row"><span>Subtotal</span><span>${State.formatETB(sub)}</span></div>
+            <div class="co-summary-row"><span>Delivery</span><span>${del > 0 ? State.formatETB(del) : 'Free'}</span></div>
+            ${coupon ? `<div class="co-summary-row" style="color:var(--success);"><span>Coupon</span><span>- applied</span></div>` : ''}
+            <div class="co-summary-row total"><span>Total</span><span style="color:var(--accent);">${State.formatETB(total)}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="co-bottom">
+        <button class="co-btn secondary" onclick="CheckoutPage._goStep2()">← Back</button>
+        <button class="co-btn confirm" onclick="CheckoutPage._confirmOrder()">🛒 Confirm & Pay — ${State.formatETB(total)}</button>
+      </div>
+    `;
+  },
+
+  // ── Confirm Order ─────────────────────────────────
+  async _confirmOrder() {
+    const policyChecked = document.getElementById('coPolicy')?.checked;
+    if (!policyChecked) { App.toast('Please agree to the store policy', 'error'); return; }
+
+    const pkg = this._pkg;
+    const shopId = this._shopId;
+    const phone = document.getElementById('coPhone')?.value?.trim() || '';
+    const subCity = document.getElementById('coSubCity')?.value || '';
+    const landmark = document.getElementById('coLandmark')?.value || '';
+    const couponCode = document.getElementById('coCoupon')?.value?.trim() || '';
+    const txCode = document.getElementById('coTxCode')?.value?.trim() || `TXN-${Date.now()}`;
+    const saveAddr = document.getElementById('coSaveAddress')?.checked;
+
+    const isPickup = this._deliveryMethod === 'pickup';
+    const deliveryAddress = isPickup
+      ? { sub_city: pkg.location || 'Store', house_number: 'Customer collects', phone }
+      : { sub_city: subCity, house_number: landmark, phone };
+
+    const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
+
+    try {
+      App.toast('Placing order...', 'info');
+
+      const orderData = await Api.orders.create({
+        store_id: shopId,
+        items,
+        delivery_address: deliveryAddress,
+        delivery_method: isPickup ? 'pickup' : 'delivery',
+        payment_method: this._paymentMethod,
+        ...(couponCode ? { coupon_code: couponCode } : {})
+      });
+
+      const order = orderData.order;
+
+      if (this._paymentMethod === 'telebirr' || this._paymentMethod === 'cbe') {
+        await Api.payments.confirmTx(order.order_id, txCode);
+      } else {
+        await Api.payments.confirmCash(order.order_id);
+      }
+
+      if (saveAddr && subCity && !isPickup) {
+        Api.users.addAddress({ label: 'Home', sub_city: subCity, house_number: landmark, phone, is_default: false }).catch(() => {});
+      }
+
+      State.clearStoreCart(shopId);
+      App.renderNavigation();
+      this.close();
+
+      setTimeout(() => {
+        Modals.showOrderConfirmed(order.order_ref, order.store?.store_name || pkg.shopName, order.order_id);
+        App.refreshOrders();
+      }, 300);
+
+    } catch (err) {
+      App.toast(err.message || 'Order failed — please try again', 'error');
+    }
   }
 };
