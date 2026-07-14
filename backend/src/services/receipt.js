@@ -228,8 +228,13 @@ async function generateReceiptPDF({ order, items, buyer, store, rider, qrBuffer 
 async function generateAndUploadReceipt({ order, items, buyer, store, rider, qrBuffer }) {
   const pdfBuffer = await generateReceiptPDF({ order, items, buyer, store, rider, qrBuffer });
   const filePath = `receipts/${order.order_id}/${Date.now()}.pdf`;
-  const url = await uploadImage(pdfBuffer, filePath, 'application/pdf');
-  return url;
+  try {
+    const url = await uploadImage(pdfBuffer, filePath, 'application/pdf');
+    return url;
+  } catch (uploadErr) {
+    console.warn('Receipt storage upload failed, using inline data URL:', uploadErr.message);
+    return `data:application/pdf;base64,${pdfBuffer.toString('base64')}`;
+  }
 }
 
 module.exports = { generateReceiptPDF, generateAndUploadReceipt };

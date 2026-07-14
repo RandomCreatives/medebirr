@@ -56,8 +56,14 @@ async function generateQRAndReceipt(orderId) {
   // Send PDF receipt via Telegram to buyer and seller
   try {
     const tgService = require('../services/telegram');
-    const pdfResp = await axios.get(pdfUrl, { responseType: 'arraybuffer', timeout: 15000 });
-    const pdfBuffer = Buffer.from(pdfResp.data);
+    let pdfBuffer;
+    if (pdfUrl && pdfUrl.startsWith('data:')) {
+      const base64 = pdfUrl.split(',')[1];
+      pdfBuffer = Buffer.from(base64, 'base64');
+    } else {
+      const pdfResp = await axios.get(pdfUrl, { responseType: 'arraybuffer', timeout: 15000 });
+      pdfBuffer = Buffer.from(pdfResp.data);
+    }
 
     // Send to buyer
     await tgService.sendDocument(

@@ -346,8 +346,10 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
       qrBuffer
     });
 
-    // Cache the PDF URL
-    await query('UPDATE orders SET receipt_pdf_url = $1 WHERE order_id = $2', [pdfUrl, req.params.orderId]);
+    // Cache Supabase URLs (skip huge data URLs)
+    if (pdfUrl && !pdfUrl.startsWith('data:')) {
+      await query('UPDATE orders SET receipt_pdf_url = $1 WHERE order_id = $2', [pdfUrl, req.params.orderId]);
+    }
 
     res.json({ receipt_url: pdfUrl, cached: false });
   } catch (err) {

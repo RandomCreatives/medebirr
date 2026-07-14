@@ -693,38 +693,23 @@ const CheckoutPage = {
       return;
     }
 
-    // Wait 2s for backend to generate receipt
-    await new Promise(r => setTimeout(r, 2000));
-
-    try {
-      const data = await Api.delivery.receipt(orderId);
-      if (data && data.receipt_url) {
-        area.innerHTML = `
-          <iframe src="${data.receipt_url}" style="width:100%;height:320px;border:1px solid var(--border);border-radius:8px;background:white;"></iframe>
-        `;
-        const dlBtn = document.getElementById('coReceiptDownload');
-        if (dlBtn) {
-          dlBtn.href = data.receipt_url;
-          actions.style.display = 'block';
-        }
-      } else {
-        area.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">Receipt available in order history.</div>`;
-      }
-    } catch (err) {
-      // Retry once after 3s
-      await new Promise(r => setTimeout(r, 3000));
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 2000));
       try {
-        const data2 = await Api.delivery.receipt(orderId);
-        if (data2 && data2.receipt_url) {
-          area.innerHTML = `<iframe src="${data2.receipt_url}" style="width:100%;height:320px;border:1px solid var(--border);border-radius:8px;background:white;"></iframe>`;
+        const data = await Api.delivery.receipt(orderId);
+        if (data && data.receipt_url) {
+          area.innerHTML = `<iframe src="${data.receipt_url}" style="width:100%;height:320px;border:1px solid var(--border);border-radius:8px;background:white;"></iframe>`;
           const dlBtn = document.getElementById('coReceiptDownload');
-          if (dlBtn) { dlBtn.href = data2.receipt_url; actions.style.display = 'block'; }
-        } else {
-          area.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">Receipt will be available in your order history.</div>`;
+          if (dlBtn) {
+            dlBtn.href = data.receipt_url;
+            if (!data.receipt_url.startsWith('data:')) dlBtn.download = '';
+            actions.style.display = 'block';
+          }
+          return;
         }
-      } catch (_) {
-        area.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">📄 Receipt will be sent to you via Telegram.</div>`;
-      }
+      } catch (err) { /* retry */ }
     }
+
+    area.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">📄 Receipt will be sent to you via Telegram.</div>`;
   }
 };

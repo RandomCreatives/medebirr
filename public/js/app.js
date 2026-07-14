@@ -1817,129 +1817,110 @@ const App = {
     this._showSellerWelcome();
   },
 
-  // ── Seller Welcome Slider ──────────────────────────
-  _sellerWelcomeSlide: 0,
-
+  // ── Seller Welcome (single-page, half-modal + slide-to-open) ──
   _showSellerWelcome() {
-    this._sellerWelcomeSlide = 0;
-    const overlay = document.getElementById('checkoutOverlay');
-    if (!overlay) return this.openRegisterStoreModal_();
+    Modals.open(`
+      <div class="modal-handle"></div>
+      <div style="text-align:center;padding:4px 0 0;">
+        <div style="font-size:42px;margin-bottom:6px;">🏪</div>
+        <div class="modal-title" style="margin-bottom:2px;">Open Your Shop</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:16px;">Ethiopia's marketplace · Zero commission</div>
+      </div>
 
-    overlay.classList.add('co-open');
-    this._renderSellerSlide(0);
-  },
-
-  _renderSellerSlide(idx) {
-    this._sellerWelcomeSlide = idx;
-    const overlay = document.getElementById('checkoutOverlay');
-    if (!overlay) return;
-
-    const slides = [
-      {
-        bg: 'linear-gradient(135deg, #111216 0%, #1a1c24 50%, #111216 100%)',
-        emoji: '👋',
-        title: 'Welcome to Medebirr',
-        subtitle: 'Your Free Shopping Experience',
-        body: "Ethiopia's marketplace where sellers thrive.\nZero commission. Zero barriers. Just sell.",
-        accent: 'var(--accent)'
-      },
-      {
-        bg: 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
-        emoji: '💰',
-        title: 'Keep Every Birr',
-        subtitle: 'Direct Seller Checkout',
-        body: 'Buyers pay you directly — Telebirr, CBE, or cash.\nNo escrow. No delays. Money lands in your account.',
-        accent: '#3498DB'
-      },
-      {
-        bg: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-        emoji: '📢',
-        title: 'Auto-Broadcast Products',
-        subtitle: 'Telegram-Powered Selling',
-        body: 'Post a photo in your Telegram group — our bot detects it, lists it, and buyers can purchase instantly.',
-        accent: '#A78BFA'
-      },
-      {
-        bg: 'linear-gradient(135deg, #1a2a1a 0%, #2d4a2d 50%, #1a2a1a 100%)',
-        emoji: '🚀',
-        title: 'Ready to Launch?',
-        subtitle: 'Set Up in 60 Seconds',
-        body: 'Store name, payment details, Telegram link.\nThat\'s it — your shop goes live immediately.',
-        accent: 'var(--success)'
-      }
-    ];
-
-    const s = slides[idx];
-    const isLast = idx === slides.length - 1;
-    const bodyLines = s.body.split('\n').map(l => l.trim()).join('<br/>');
-
-    overlay.querySelector('#checkoutPage') || (overlay.innerHTML = '<div id="checkoutPage"></div>');
-    const page = overlay.querySelector('#checkoutPage') || overlay;
-
-    page.innerHTML = `
-      <div style="position:relative;height:100%;display:flex;flex-direction:column;">
-        <!-- Slide Content -->
-        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;background:${s.bg};overflow:hidden;" 
-             ontouchstart="App._swipeStart(event)" ontouchmove="App._swipeMove(event)" ontouchend="App._swipeEnd(event)">
-          
-          <div style="font-size:72px;margin-bottom:16px;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.3));">${s.emoji}</div>
-          
-          <div style="font-size:24px;font-weight:900;color:white;margin-bottom:4px;line-height:1.2;">${s.title}</div>
-          <div style="font-size:13px;font-weight:700;color:${s.accent};text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">${s.subtitle}</div>
-          
-          <div style="font-size:13px;color:var(--text-secondary);line-height:1.8;max-width:300px;">${bodyLines}</div>
-        </div>
-
-        <!-- Bottom Controls -->
-        <div style="padding:20px 24px 28px;background:var(--bg-main);border-top:1px solid var(--border);">
-          <!-- Dot Indicators -->
-          <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px;">
-            ${slides.map((_, i) => `
-              <div onclick="App._renderSellerSlide(${i})" style="width:${i === idx ? '24px' : '8px'};height:8px;border-radius:4px;background:${i === idx ? s.accent : 'var(--border)'};cursor:pointer;transition:all 0.3s;"></div>
-            `).join('')}
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
+          <div style="font-size:22px;line-height:1;">💰</div>
+          <div>
+            <div style="font-size:12px;font-weight:800;color:white;">Keep Every Birr</div>
+            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Buyers pay you directly — Telebirr, CBE, or cash. No middleman.</div>
           </div>
-
-          ${isLast ? `
-            <button onclick="App._closeWelcomeAndRegister()" style="width:100%;padding:14px;border-radius:12px;border:none;font-size:15px;font-weight:800;cursor:pointer;background:${s.accent};color:white;transition:transform 0.15s;" ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform='scale(1)'">
-              🏪 Open My Store — Free
-            </button>
-            <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text-muted);">Takes less than 60 seconds</div>
-          ` : `
-            <div style="display:flex;gap:10px;">
-              <button onclick="App._closeWelcome()" style="flex:1;padding:13px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);font-size:13px;font-weight:700;cursor:pointer;">
-                Skip
-              </button>
-              <button onclick="App._renderSellerSlide(${idx + 1})" style="flex:2;padding:13px;border-radius:10px;border:none;background:${s.accent};color:white;font-size:14px;font-weight:800;cursor:pointer;transition:transform 0.15s;" ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform='scale(1)'">
-                Next →
-              </button>
-            </div>
-          `}
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
+          <div style="font-size:22px;line-height:1;">📢</div>
+          <div>
+            <div style="font-size:12px;font-weight:800;color:white;">Auto-Broadcast</div>
+            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Post in your Telegram group — bot lists it and buyers purchase instantly.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          <div style="font-size:22px;line-height:1;">🚀</div>
+          <div>
+            <div style="font-size:12px;font-weight:800;color:white;">Live in 60 Seconds</div>
+            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Store name, payment details, Telegram link — done.</div>
+          </div>
         </div>
       </div>
-    `;
+
+      <div class="slide-to-enter" style="position:relative;bottom:auto;left:auto;right:auto;">
+        <div class="slide-track" id="sellerSlideTrack">
+          <div class="slide-thumb" id="sellerSlideThumb">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="slide-label" id="sellerSlideLabel">Slide to open your store →</div>
+        </div>
+      </div>
+    `);
+
+    setTimeout(() => this._initSellerSlideToOpen(), 50);
   },
 
-  _closeWelcome() {
-    const overlay = document.getElementById('checkoutOverlay');
-    if (overlay) overlay.classList.remove('co-open');
-  },
+  _sellerSlideDragging: false,
+  _sellerSlideStartX: 0,
+  _sellerSlideThumbLeft: 4,
 
-  _closeWelcomeAndRegister() {
-    const overlay = document.getElementById('checkoutOverlay');
-    if (overlay) overlay.classList.remove('co-open');
-    setTimeout(() => this.openRegisterStoreModal_(), 200);
-  },
+  _initSellerSlideToOpen() {
+    const thumb = document.getElementById('sellerSlideThumb');
+    const track = document.getElementById('sellerSlideTrack');
+    if (!thumb || !track) return;
 
-  // ── Swipe Detection ─────────────────────────────────
-  _swipeStartX: 0,
-  _swipeStart(e) { this._swipeStartX = e.touches[0].clientX; },
-  _swipeMove(e) { e.preventDefault(); },
-  _swipeEnd(e) {
-    const dx = e.changedTouches[0].clientX - this._swipeStartX;
-    if (Math.abs(dx) < 50) return;
-    const current = this._sellerWelcomeSlide || 0;
-    if (dx < 0 && current < 3) this._renderSellerSlide(current + 1);
-    else if (dx > 0 && current > 0) this._renderSellerSlide(current - 1);
+    const getTrackWidth = () => track.offsetWidth;
+    const maxLeft = () => getTrackWidth() - 56;
+
+    const onStart = (clientX) => {
+      this._sellerSlideDragging = true;
+      this._sellerSlideStartX = clientX - this._sellerSlideThumbLeft;
+      thumb.style.transition = 'none';
+    };
+
+    const onMove = (clientX) => {
+      if (!this._sellerSlideDragging) return;
+      const x = clientX - this._sellerSlideStartX;
+      const clamped = Math.max(4, Math.min(x, maxLeft()));
+      this._sellerSlideThumbLeft = clamped;
+      thumb.style.left = clamped + 'px';
+
+      const pct = clamped / maxLeft();
+      const label = document.getElementById('sellerSlideLabel');
+      if (label) label.style.opacity = 1 - pct;
+    };
+
+    const onEnd = () => {
+      if (!this._sellerSlideDragging) return;
+      this._sellerSlideDragging = false;
+      thumb.style.transition = 'left 0.2s ease';
+
+      const pct = this._sellerSlideThumbLeft / maxLeft();
+      if (pct > 0.8) {
+        thumb.style.left = maxLeft() + 'px';
+        track.classList.add('done');
+        const label = document.getElementById('sellerSlideLabel');
+        if (label) { label.textContent = '✓ Opening...'; label.style.opacity = 1; }
+        setTimeout(() => { Modals.close(); this.openRegisterStoreModal_(); }, 300);
+      } else {
+        thumb.style.left = '4px';
+        this._sellerSlideThumbLeft = 4;
+        const label = document.getElementById('sellerSlideLabel');
+        if (label) label.style.opacity = 1;
+      }
+    };
+
+    thumb.addEventListener('mousedown', (e) => { e.preventDefault(); onStart(e.clientX); });
+    document.addEventListener('mousemove', (e) => onMove(e.clientX));
+    document.addEventListener('mouseup', onEnd);
+
+    thumb.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX), { passive: true });
+    thumb.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e.touches[0].clientX); }, { passive: false });
+    thumb.addEventListener('touchend', onEnd);
   },
 
   openRegisterStoreModal_() {
