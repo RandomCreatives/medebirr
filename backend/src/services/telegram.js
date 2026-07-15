@@ -11,15 +11,18 @@ const axios = require('axios');
 const { downloadAndUpload } = require('./storage');
 const crypto = require('crypto');
 
-const TG_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
 const BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || 'medebirrbot';
 
 /**
- * Call Telegram Bot API
+ * Call Telegram Bot API.
+ * @param {string} method - Telegram API method (e.g. 'sendMessage')
+ * @param {object} params - API payload
+ * @param {string} [botToken] - bot token to use (defaults to TELEGRAM_BOT_TOKEN)
  */
-async function tgCall(method, params = {}) {
+async function tgCall(method, params = {}, botToken = process.env.TELEGRAM_BOT_TOKEN) {
+  const base = `https://api.telegram.org/bot${botToken}`;
   try {
-    const res = await axios.post(`${TG_API}/${method}`, params, { timeout: 10000 });
+    const res = await axios.post(`${base}/${method}`, params, { timeout: 10000 });
     return res.data;
   } catch (err) {
     const msg = err.response?.data?.description || err.message;
@@ -264,8 +267,7 @@ function escapeMd(text) {
  * @param {string} pendingId - Pending product UUID for path
  * @returns {Array<string>} Public URLs of downloaded images
  */
-async function downloadProductImages(photoArray, storeId, pendingId) {
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+async function downloadProductImages(photoArray, storeId, pendingId, botToken = process.env.TELEGRAM_BOT_TOKEN) {
   if (!botToken) throw new Error('TELEGRAM_BOT_TOKEN not set');
 
   const urls = [];
@@ -326,12 +328,15 @@ function parseCaptionForProduct(caption) {
     title = lines[0].replace(/\/(sell|newproduct)/i, '').trim().slice(0, 100);
   }
 
-  // Look for price pattern: number + (Birr|Br|ETB)
-  const priceRegex = /(\d[\d,\.]*)\s*(Birr|Br|ETB)/i;
+  // Look for price pattern: number + (Birr|Br|ETB|k)
+  const priceRegex = /(\d[\d,\.]*)\s*(birr|br|etb|k)\b/i;
   for (const line of lines) {
     const match = line.match(priceRegex);
     if (match) {
-      price = parseFloat(match[1].replace(/,/g, ''));
+      const raw = parseFloat(match[1].replace(/,/g, ''));
+      const unit = (match[2] || '').toLowerCase();
+      // "k" suffix means thousands (e.g. "5k" -> 5000)
+      price = unit === 'k' ? raw * 1000 : raw;
       break;
     }
   }
@@ -420,6 +425,20 @@ async function notifySellerNewProduct(tgUserId, pendingProduct, store) {
   });
 }
 
+/**
+ * Download a Telegram file (by file_id) and return its raw bytes.
+ * Used by the Payment Verification Bot to OCR receipt screenshots.
+ */
+async function downloadTelegramFileBuffer(fileId, botToken = process.env.TELEGRAM_BOT_TOKEN) {
+  if (!botToken) throw new Error('TELEGRAM_BOT_TOKEN not set');
+  const fileInfo = await tgCall('getFile', { file_id: fileId });
+  if (!fileInfo || !fileInfo.ok) throw new Error('getFile failed');
+  const filePath = fileInfo.result.file_path;
+  const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+  const resp = await axios.get(fileUrl, { responseType: 'arraybuffer', timeout: 20000 });
+  return Buffer.from(resp.data);
+}
+
 module.exports = {
   tgCall,
   resolveChatId,
@@ -430,6 +449,7 @@ module.exports = {
   sendWelcomeMessage,
   getBotId,
   downloadProductImages,
+  downloadTelegramFileBuffer,
   parseCaptionForProduct,
   checkProductRateLimit,
   notifySellerNewProduct,

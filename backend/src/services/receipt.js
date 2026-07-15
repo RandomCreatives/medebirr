@@ -113,6 +113,23 @@ async function generateReceiptPDF({ order, items, buyer, store, rider, qrBuffer 
     }
     y += 50;
 
+    // ── Payment proof (OCR'd screenshot) ──
+    let proof = order.payment_proof;
+    if (typeof proof === 'string') { try { proof = JSON.parse(proof); } catch (_) { proof = null; } }
+    if (proof && (proof.tx_ref || proof.amount)) {
+      doc.roundedRect(LEFT, y, W, 30, 4).fill('#ECFDF5');
+      doc.fontSize(8).font('Helvetica-Bold').fillColor('#065F46')
+        .text('PAYMENT PROOF · verified from screenshot', LEFT + 12, y + 7);
+      const proofParts = [];
+      if (proof.tx_ref) proofParts.push(`TX: ${proof.tx_ref}`);
+      if (proof.amount) proofParts.push(`Br ${Number(proof.amount).toLocaleString()}`);
+      if (proofParts.length) {
+        doc.fontSize(8).font('Helvetica').fillColor('#065F46')
+          .text(proofParts.join('   ·   '), LEFT + 12, y + 18, { width: W - 24 });
+      }
+      y += 38;
+    }
+
     // ── Items table ──
     doc.fontSize(11).font('Helvetica-Bold').fillColor('#111111')
        .text('Order Items', LEFT, y);

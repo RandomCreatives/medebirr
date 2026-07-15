@@ -389,10 +389,13 @@ const CheckoutPage = {
         <div style="background:rgba(252,205,4,0.08);border:1px solid rgba(252,205,4,0.3);border-radius:8px;padding:14px;">
           <div style="font-weight:800;color:var(--accent);font-size:13px;margin-bottom:6px;">📱 Pay via Telebirr</div>
           <div style="font-size:12px;color:white;line-height:1.6;">
-            1. Open Telebirr App &amp; transfer <strong>${State.formatETB(this._total())}</strong> to:<br/>
-            <span style="display:inline-block;background:var(--bg-main);padding:4px 10px;border-radius:4px;font-family:monospace;font-size:14px;color:var(--accent);font-weight:800;margin:6px 0;">${pkg.telebirrMerchantId || '891204 (Merchant Account)'}</span><br/>
-            2. Enter your SMS Transaction ID below:
+            1. Open Telebirr App &amp; transfer <strong>${State.formatETB(this._total())}</strong> to:
           </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;">
+            <span style="display:inline-block;background:var(--bg-main);padding:4px 10px;border-radius:4px;font-family:monospace;font-size:14px;color:var(--accent);font-weight:800;">${pkg.telebirrMerchantId || '891204 (Merchant Account)'}</span>
+            <button type="button" onclick="CheckoutPage._copyText('${pkg.telebirrMerchantId || '891204'}','Account copied!')" style="background:rgba(252,205,4,0.12);border:1px solid rgba(252,205,4,0.3);border-radius:6px;padding:5px 10px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;">📋 Copy</button>
+          </div>
+          <div style="font-size:12px;color:white;line-height:1.6;">2. Enter your SMS Transaction ID below:</div>
           <input class="form-input" id="coTxCode" placeholder="e.g. TBX-891204-99218401" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:8px;background:var(--bg-main);border:1px solid var(--border);padding:10px;border-radius:6px;color:white;font-family:monospace;font-size:13px;" />
         </div>`;
     } else if (this._paymentMethod === 'cbe') {
@@ -400,10 +403,13 @@ const CheckoutPage = {
         <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:14px;">
           <div style="font-weight:800;color:#60A5FA;font-size:13px;margin-bottom:6px;">🏦 Pay via Commercial Bank of Ethiopia (CBE)</div>
           <div style="font-size:12px;color:white;line-height:1.6;">
-            1. Transfer <strong>${State.formatETB(this._total())}</strong> via CBE Birr / Mobile Banking to:<br/>
-            <span style="display:inline-block;background:var(--bg-main);padding:4px 10px;border-radius:4px;font-family:monospace;font-size:14px;color:#60A5FA;font-weight:800;margin:6px 0;">${pkg.cbeAccount || '100023491823 (CBE Account)'}</span><br/>
-            2. Paste your Bank Transaction Code below:
+            1. Transfer <strong>${State.formatETB(this._total())}</strong> via CBE Birr / Mobile Banking to:
           </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;">
+            <span style="display:inline-block;background:var(--bg-main);padding:4px 10px;border-radius:4px;font-family:monospace;font-size:14px;color:#60A5FA;font-weight:800;">${pkg.cbeAccount || '100023491823 (CBE Account)'}</span>
+            <button type="button" onclick="CheckoutPage._copyText('${pkg.cbeAccount || '100023491823'}','Account copied!')" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:5px 10px;color:#60A5FA;font-size:11px;font-weight:700;cursor:pointer;">📋 Copy</button>
+          </div>
+          <div style="font-size:12px;color:white;line-height:1.6;">2. Paste your Bank Transaction Code below:</div>
           <input class="form-input" id="coTxCode" placeholder="e.g. FT26194204812" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:8px;background:var(--bg-main);border:1px solid var(--border);padding:10px;border-radius:6px;color:white;font-family:monospace;font-size:13px;" />
         </div>`;
     } else {
@@ -414,6 +420,40 @@ const CheckoutPage = {
             Please have exact cash (` + State.formatETB(this._total()) + `) ready for the courier or cashier upon item inspection.
           </div>
         </div>`;
+    }
+  },
+
+  _copyText(text, msg) {
+    text = (text || '').toString();
+    const done = () => { if (App && typeof App.toast === 'function') App.toast(msg || 'Copied!', 'success'); };
+    try {
+      const tg = window.Telegram && window.Telegram.WebApp;
+      if (tg && tg.Clipboard && typeof tg.Clipboard.writeText === 'function') {
+        tg.Clipboard.writeText(text);
+        done();
+        return;
+      }
+    } catch (_) { /* fall through to web clipboard */ }
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      navigator.clipboard.writeText(text).then(done).catch(() => this._fallbackCopy(text, done));
+    } else {
+      this._fallbackCopy(text, done);
+    }
+  },
+
+  _fallbackCopy(text, done) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (done) done();
+    } catch (_) {
+      if (App && typeof App.toast === 'function') App.toast('Copy failed', 'error');
     }
   },
 
@@ -624,7 +664,7 @@ const CheckoutPage = {
       if (App && typeof App.refreshOrders === 'function') App.refreshOrders();
 
       // Render success screen inside the checkout overlay
-      this._renderSuccess(orderRef, orderId, pkg.shopName);
+      this._renderSuccess(orderRef, orderId, pkg.shopName, order && order.delivery_otp);
 
       // Auto-fetch receipt in background
       this._loadReceipt(orderId);
@@ -636,7 +676,7 @@ const CheckoutPage = {
     }
   },
 
-  _renderSuccess(orderRef, orderId, storeName) {
+  _renderSuccess(orderRef, orderId, storeName, otp) {
     document.getElementById('checkoutPage').innerHTML = `
       <div class="co-topbar">
         <div style="width:36px;"></div>
@@ -659,6 +699,23 @@ const CheckoutPage = {
             🛵 You'll get a Telegram message when rider is assigned<br/>
             🛡️ Purchase protected by the store's return policy
           </div>
+
+          ${['telebirr', 'cbe'].includes(this._paymentMethod) ? `
+          <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:14px;margin-bottom:16px;font-size:12px;color:#93C5FD;text-align:left;line-height:1.7;">
+            📤 <strong style="color:#60A5FA;">Verify your payment</strong><br/>
+            Send your transaction screenshot to our Verification Bot — it reads the receipt and marks your order paid automatically.
+            <a href="https://t.me/medebirrbot?start=verify_order_${orderId}" target="_blank"
+               style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;background:#60A5FA;color:#0B1220;border-radius:10px;padding:12px;text-decoration:none;font-size:13px;font-weight:800;">
+              🤖 Upload Receipt to Verification Bot
+            </a>
+          </div>` : ''}
+
+          ${otp ? `
+          <div style="background:rgba(252,205,4,0.08);border:1px solid rgba(252,205,4,0.3);border-radius:8px;padding:14px;margin-bottom:16px;font-size:12px;color:var(--text-secondary);text-align:left;">
+            🛡️ <strong style="color:var(--accent);">Delivery verification code</strong><br/>
+            <div style="font-family:monospace;font-size:22px;font-weight:900;letter-spacing:6px;color:var(--accent);margin:6px 0;">${otp}</div>
+            Share this with your rider when they arrive — they enter it to confirm handover.
+          </div>` : ''}
 
           <div id="coReceiptArea" style="margin-bottom:16px;">
             <div style="padding:20px;color:var(--text-secondary);font-size:12px;">

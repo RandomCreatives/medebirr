@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { requireAuth, requireSellerOf } = require('../middleware/auth');
 const { query, getClient } = require('../db');
+const { generateOTP } = require('../utils/otp');
 
 const router = express.Router();
 
@@ -40,7 +41,8 @@ router.post(
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
 
-      const { store_id, items, delivery_address, payment_method, address_id, delivery_method, coupon_code } = req.body;
+      const { store_id, items, delivery_address, payment_method, address_id, delivery_method, coupon_code,
+              delivery_latitude, delivery_longitude } = req.body;
       const isPickup = delivery_method === 'pickup';
       await client.query('BEGIN');
 
@@ -185,18 +187,23 @@ router.post(
 
       // Create order
       const orderRef = generateOrderRef();
+      const deliveryOtp = generateOTP(4);
       const orderResult = await client.query(
         `INSERT INTO orders (
           order_ref, buyer_tg_user_id, store_id, address_id, delivery_address,
           subtotal_etb, delivery_fee_etb, total_etb, payment_method,
           payment_status, order_status, policy_snapshot, delivery_method,
-          coupon_code, discount_etb
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11,$12,$13)
+          coupon_code, discount_etb, delivery_otp,
+          delivery_latitude, delivery_longitude
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11,$12,$13,$14,$15,$16)
         RETURNING *`,
         [orderRef, req.user.tg_user_id, store_id, address_id || null,
          JSON.stringify(delivery_address), subtotal, deliveryFee, total,
          payment_method, JSON.stringify(policySnapshot), delivery_method || 'delivery',
-         appliedCoupon ? appliedCoupon.code : null, discountAmount]
+         appliedCoupon ? appliedCoupon.code : null, discountAmount,
+         deliveryOtp,
+         delivery_latitude != null ? Number(delivery_latitude) : null,
+         delivery_longitude != null ? Number(delivery_longitude) : null]
       );
       const order = orderResult.rows[0];
 
@@ -269,6 +276,7 @@ router.get('/', requireAuth, async (req, res, next) => {
     const result = await query(
       `SELECT o.order_id, o.order_ref, o.total_etb, o.order_status, o.payment_status,
               o.payment_method, o.delivery_address, o.created_at, o.rider_name, o.rider_phone,
+              o.delivery_provider, o.delivery_otp, o.payment_proof,
               o.qr_scan_attempts, o.qr_verified_by_rider, o.qr_verified_by_buyer, o.receipt_pdf_url,
               s.store_name, s.store_slug, s.tg_channel_username
        FROM orders o
@@ -336,6 +344,7 @@ router.get('/store/:storeId', requireAuth, requireSellerOf('storeId'), async (re
     const result = await query(
       `SELECT o.order_id, o.order_ref, o.total_etb, o.order_status, o.payment_status,
               o.payment_method, o.delivery_address, o.created_at, o.rider_name, o.rider_phone,
+              o.delivery_provider, o.delivery_otp,
               o.qr_scan_attempts, o.qr_verified_by_rider, o.qr_verified_by_buyer, o.receipt_pdf_url,
               u.first_name, u.last_name, u.username AS buyer_username
        FROM orders o
@@ -558,14 +567,13 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
 
 router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
   try {
-    const { rider_name, rider_phone, dispatch_note } = req.body;
-    if (!rider_name || !rider_phone) {
-      return res.status(400).json({ error: 'rider_name and rider_phone are required' });
-    }
+    const { rider_name, rider_phone, dispatch_note, delivery_provider } = req.body;
+    const provider = ['self', 'company'].includes(delivery_provider) ? delivery_provider : 'rider';
 
     // Verify seller owns the store
     const orderCheck = await query(
-      `SELECT o.order_id, o.buyer_tg_user_id, o.payment_status, s.admin_tg_user_id
+      `SELECT o.order_id, o.buyer_tg_user_id, o.payment_status, s.admin_tg_user_id,
+              s.store_name, s.business_phone
        FROM orders o JOIN stores s ON o.store_id = s.store_id
        WHERE o.order_id = $1`,
       [req.params.orderId]
@@ -580,34 +588,57 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
       return res.status(400).json({ error: 'Cannot dispatch unpaid order' });
     }
 
+    // Resolve rider identity per delivery provider.
+    // 'self'   -> the seller delivers (no external rider)
+    // 'company'-> a local delivery company (name required, phone optional)
+    // 'rider'  -> a named individual rider (name + phone required)
+    let finalName = rider_name ? String(rider_name).trim() : '';
+    let finalPhone = rider_phone ? String(rider_phone).trim() : '';
+
+    if (provider === 'self') {
+      if (!finalName) finalName = `${ord.store_name || 'Seller'} (Self-delivery)`;
+      if (!finalPhone) finalPhone = ord.business_phone || '';
+    } else if (provider === 'company') {
+      if (!finalName) return res.status(400).json({ error: 'Delivery company name is required' });
+    } else {
+      if (!finalName || !finalPhone) {
+        return res.status(400).json({ error: 'rider_name and rider_phone are required' });
+      }
+    }
+
     const result = await query(
       `UPDATE orders SET
         order_status = 'dispatched', rider_name = $1, rider_phone = $2,
-        dispatch_note = $3, updated_at = NOW()
-       WHERE order_id = $4 RETURNING *`,
-      [rider_name, rider_phone, dispatch_note || null, req.params.orderId]
+        dispatch_note = $3, delivery_provider = $4, updated_at = NOW()
+       WHERE order_id = $5 RETURNING *`,
+      [finalName, finalPhone, dispatch_note || null, provider, req.params.orderId]
     );
 
     // Notify buyer via Telegram bot with rich interactive message
+    const label = provider === 'self'
+      ? `${ord.store_name || 'The seller'} is delivering your order`
+      : provider === 'company'
+        ? `Delivery partner: ${finalName}`
+        : finalName;
     try {
       const tgService = require('../services/telegram');
       await tgService.notifyBuyerRiderAssigned(
         ord.buyer_tg_user_id,
         result.rows[0],
-        rider_name,
-        rider_phone
+        label,
+        finalPhone
       );
     } catch (e) {
       console.warn('Buyer interactive dispatch notification failed, falling back to simple text:', e.message);
       try {
         const notif = require('../services/notifications');
-        await notif.notifyOrderStatus(result.rows[0], 'dispatched', { rider_name, rider_phone });
+        await notif.notifyOrderStatus(result.rows[0], 'dispatched', { rider_name: label, rider_phone: finalPhone });
       } catch (err) {
         console.error('Fallback notification also failed:', err.message);
       }
     }
 
-    res.json({ order: result.rows[0], message: 'Rider assigned. Buyer will be notified.' });
+    res.json({ order: result.rows[0], message: 'Delivery assigned. Buyer will be notified.' });
   } catch (err) {
     next(err);
   }

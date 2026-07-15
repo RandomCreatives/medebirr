@@ -1381,13 +1381,33 @@ const App = {
   },
 
   async assignRider(orderId) {
+    const provider = (window.__deliveryProvider || 'rider');
     const riderName = document.getElementById('riderName')?.value?.trim();
     const riderPhone = document.getElementById('riderPhone')?.value?.trim();
     const note = document.getElementById('dispatchNote')?.value;
-    if (!riderName || !riderPhone) { this.toast('Rider name and phone required', 'error'); return; }
+
+    if (provider === 'rider' && (!riderName || !riderPhone)) {
+      this.toast('Rider name and phone are required', 'error');
+      return;
+    }
+    if (provider === 'company' && !riderName) {
+      this.toast('Delivery company name is required', 'error');
+      return;
+    }
+
     try {
-      await Api.orders.dispatch(orderId, { rider_name: riderName, rider_phone: riderPhone, dispatch_note: note });
-      this.toast('Rider assigned! Buyer notified.', 'success');
+      await Api.orders.dispatch(orderId, {
+        delivery_provider: provider,
+        rider_name: riderName || null,
+        rider_phone: riderPhone || null,
+        dispatch_note: note
+      });
+      const msg = provider === 'self'
+        ? 'Self-delivery set! Buyer notified.'
+        : provider === 'company'
+          ? 'Delivery partner assigned! Buyer notified.'
+          : 'Rider assigned! Buyer notified.';
+      this.toast(msg, 'success');
       Modals.close();
       const ordersData = await Api.orders.storeOrders(State.currentStoreId, { limit: 200 });
       State.storeOrders = ordersData.orders || [];

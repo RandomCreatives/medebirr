@@ -1037,27 +1037,72 @@ const Modals = {
     `);
   },
 
-  // ── Assign Rider ──────────────────────────────────
+  // ── Assign Rider / Delivery ───────────────────────
   openAssignRider(orderId) {
     this.open(`
       <div class="modal-handle"></div>
-      <div class="modal-title">🛵 Assign Delivery Rider</div>
-      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Buyer will receive a Telegram notification with your rider's name and phone.</p>
+      <div class="modal-title">🛵 Assign Delivery</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Choose who delivers this order. The buyer gets a delivery code + QR either way.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;">
+        <button type="button" class="co-radio ${'selected'}" onclick="Modals._pickProvider(this,'self')" style="cursor:pointer;border:1px solid var(--border);border-radius:10px;padding:12px 6px;background:var(--bg-surface);color:white;font-size:12px;font-weight:800;text-align:center;">
+          🏪<br/>I'll Deliver
+        </button>
+        <button type="button" class="co-radio" onclick="Modals._pickProvider(this,'rider')" style="cursor:pointer;border:1px solid var(--border);border-radius:10px;padding:12px 6px;background:var(--bg-surface);color:white;font-size:12px;font-weight:800;text-align:center;">
+          🛵<br/>Assign Rider
+        </button>
+        <button type="button" class="co-radio" onclick="Modals._pickProvider(this,'company')" style="cursor:pointer;border:1px solid var(--border);border-radius:10px;padding:12px 6px;background:var(--bg-surface);color:white;font-size:12px;font-weight:800;text-align:center;">
+          🚚<br/>Delivery Co.
+        </button>
+      </div>
+
+      <div id="providerFields">
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;">
+          You'll deliver this order yourself. The buyer still receives the delivery code &amp; QR for handover.
+        </div>
+      </div>
 
       <div class="form-group">
-        <label class="form-label">Rider Full Name</label>
-        <input class="form-input" id="riderName" placeholder="e.g. Abebe Girma"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Rider Phone Number</label>
-        <input class="form-input" id="riderPhone" type="tel" placeholder="+251 922 000 000"/>
-      </div>
-      <div class="form-group">
         <label class="form-label">Dispatch Note (optional)</label>
-        <input class="form-input" id="dispatchNote" placeholder="Rider is picking up now..."/>
+        <input class="form-input" id="dispatchNote" placeholder="Picking up now..."/>
       </div>
-      <button class="btn-primary" onclick="App.assignRider('${orderId}')">Confirm Rider Assignment</button>
+      <button class="btn-primary" onclick="App.assignRider('${orderId}')">Confirm Delivery Assignment</button>
     `);
+    window.__deliveryProvider = 'self';
+  },
+
+  _pickProvider(btn, provider) {
+    window.__deliveryProvider = provider;
+    document.querySelectorAll('#providerFields, .co-radio').forEach(el => {});
+    const radios = btn.parentElement.querySelectorAll('.co-radio');
+    radios.forEach(r => r.classList.remove('selected'));
+    btn.classList.add('selected');
+
+    const fields = document.getElementById('providerFields');
+    if (provider === 'self') {
+      fields.innerHTML = `<div style="font-size:12px;color:var(--text-secondary);line-height:1.6;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:12px;">You'll deliver this order yourself. The buyer still receives the delivery code &amp; QR for handover.</div>`;
+    } else if (provider === 'rider') {
+      fields.innerHTML = `
+        <div class="form-group">
+          <label class="form-label">Rider Full Name</label>
+          <input class="form-input" id="riderName" placeholder="e.g. Abebe Girma"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rider Phone Number</label>
+          <input class="form-input" id="riderPhone" type="tel" placeholder="+251 922 000 000"/>
+        </div>`;
+    } else {
+      fields.innerHTML = `
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:10px;margin-bottom:10px;">Local delivery partner integration coming soon — add the company name now so the buyer is notified.</div>
+        <div class="form-group">
+          <label class="form-label">Delivery Company Name</label>
+          <input class="form-input" id="riderName" placeholder="e.g. Sendit Express"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Company Phone (optional)</label>
+          <input class="form-input" id="riderPhone" type="tel" placeholder="+251 911 000 000"/>
+        </div>`;
+    }
   },
 
   // ── Payment Processing ────────────────────────────
@@ -1186,6 +1231,8 @@ const Modals = {
     try {
       const data = await Api.delivery.qr(orderId);
       const bothDone = data.verified_by_rider && data.verified_by_buyer;
+      const localOrder = (State.storeOrders || []).find(o => o.order_id === orderId);
+      const otp = localOrder && localOrder.delivery_otp;
       this.open(`
         <div class="modal-handle"></div>
         <div class="modal-title">📱 Your QR Code</div>
@@ -1196,6 +1243,12 @@ const Modals = {
         <div style="text-align:center;margin-bottom:16px;">
           <img src="${data.qr_url}" alt="QR Code" style="width:220px;height:220px;border-radius:12px;border:2px solid var(--border);"/>
         </div>
+        ${otp ? `
+        <div style="background:rgba(252,205,4,0.08);border:1px solid rgba(252,205,4,0.3);border-radius:8px;padding:10px;margin-bottom:16px;text-align:center;">
+          <div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;font-weight:800;letter-spacing:0.5px;">Delivery Verification Code</div>
+          <div style="font-family:monospace;font-size:22px;font-weight:900;color:var(--accent);letter-spacing:4px;">${otp}</div>
+          <div style="font-size:10px;color:var(--text-secondary);">Share with the buyer for the handover handshake.</div>
+        </div>` : ''}
         <div style="display:flex;justify-content:center;gap:16px;margin-bottom:16px;">
           <div style="text-align:center;">
             <div style="font-size:11px;color:var(--text-secondary);">Rider</div>

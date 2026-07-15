@@ -782,6 +782,14 @@ const BuyerViews = {
         <div style="font-size:11px;color:var(--text-secondary);margin:4px 0 2px 0;">💳 ${o.payment_method.toUpperCase()}: <span style="font-family:monospace;color:white;">${o.transaction_code || o.payment_tx_ref || 'Cash on Delivery'}</span></div>
         ${Number(o.discount_etb) > 0 ? `<div style="font-size:11px;color:var(--success);font-weight:700;margin-bottom:4px;">🎟️ Promo Coupon Saved: -${State.formatETB(o.discount_etb)}</div>` : ''}
         ${o.rider_name ? `<div class="order-detail-rider">🛵 ${o.rider_name} · ${o.rider_phone}</div>` : ''}
+        ${o.delivery_otp && ['confirmed','dispatched'].includes(o.order_status) ? `
+          <div class="order-detail-rider" style="border-color:rgba(252,205,4,0.4);color:var(--accent);">
+            🔑 Delivery code: <strong style="font-family:monospace;letter-spacing:2px;">${o.delivery_otp}</strong> — give this to the ${o.delivery_provider === 'self' ? 'seller' : 'rider'} at handover
+          </div>` : ''}
+        ${o.payment_proof && o.payment_proof.tx_ref ? `
+          <div class="order-detail-rider" style="border-color:rgba(16,185,129,0.4);color:var(--success);">
+            ✅ Payment verified from screenshot · TX <strong style="font-family:monospace;">${o.payment_proof.tx_ref}</strong>
+          </div>` : ''}
         <div class="order-detail-actions">
           ${isActive && o.order_status === 'dispatched' ? `
             <button class="order-action-btn primary" onclick="event.stopPropagation();Modals.openShowQR('${o.order_id}','buyer')">📱 Show My QR</button>

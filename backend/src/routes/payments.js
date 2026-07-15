@@ -377,50 +377,64 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
  * POST /api/v1/payments/confirm-tx
  * Buyer submits transaction code after paying via Telebirr/CBE directly to seller
  */
-router.post('/confirm-tx', requireAuth, async (req, res, next) => {
-  try {
-    const { order_id, transaction_code } = req.body;
-    if (!order_id) {
-      return res.status(400).json({ error: 'order_id is required' });
-    }
+  router.post('/confirm-tx', requireAuth, async (req, res, next) => {
+    try {
+      const { order_id, transaction_code } = req.body;
+      if (!order_id) {
+        return res.status(400).json({ error: 'order_id is required' });
+      }
 
-    const orderResult = await query(
-      `SELECT o.*, s.telebirr_merchant_id, s.cbe_account_number, s.store_name, s.admin_tg_user_id
-       FROM orders o JOIN stores s ON o.store_id = s.store_id
-       WHERE o.order_id = $1 AND o.buyer_tg_user_id = $2`,
-      [order_id, req.user.tg_user_id]
-    );
-    if (orderResult.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+      const orderResult = await query(
+        `SELECT o.*, s.telebirr_merchant_id, s.cbe_account_number, s.store_name, s.admin_tg_user_id
+         FROM orders o JOIN stores s ON o.store_id = s.store_id
+         WHERE o.order_id = $1 AND o.buyer_tg_user_id = $2`,
+        [order_id, req.user.tg_user_id]
+      );
+      if (orderResult.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
-    const order = orderResult.rows[0];
-    if (!['telebirr', 'cbe'].includes(order.payment_method)) {
-      return res.status(400).json({ error: 'This order does not use a manual payment method' });
-    }
-    if (order.payment_status === 'paid') {
-      return res.status(400).json({ error: 'Order is already paid' });
-    }
+      const order = orderResult.rows[0];
+      if (!['telebirr', 'cbe'].includes(order.payment_method)) {
+        return res.status(400).json({ error: 'This order does not use a manual payment method' });
+      }
+      if (order.payment_status === 'paid') {
+        return res.status(400).json({ error: 'Order is already paid' });
+      }
 
-    // Store the transaction code and mark as paid
+      await markOrderPaid(order, transaction_code);
+
+      res.json({ message: 'Payment confirmed with transaction code. Order confirmed.', order_id });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  /**
+   * Mark an order as paid + confirmed and run all side effects
+   * (payment record, stock deduction, QR/receipt, buyer + seller notifications).
+   * Shared by the in-app confirm-tx route and the Payment Verification Bot.
+   * @param {Object} order - order row joined with store fields (admin_tg_user_id, telebirr_merchant_id, cbe_account_number, store_name)
+   * @param {string} [transactionCode] - optional transaction reference
+   */
+  async function markOrderPaid(order, transactionCode, paymentProof) {
+    const orderId = order.order_id;
     const gateway = order.payment_method;
-    const txRef = transaction_code || `TXN-${Date.now()}`;
+    const txRef = transactionCode || `TXN-${Date.now()}`;
     await query(
       `INSERT INTO payment_transactions (order_id, gateway, gateway_tx_ref, amount_etb, merchant_code, status)
        VALUES ($1, $2, $3, $4, $5, 'completed')
        ON CONFLICT DO NOTHING`,
-      [order_id, gateway, txRef, order.total_etb,
+      [orderId, gateway, txRef, order.total_etb,
        gateway === 'telebirr' ? order.telebirr_merchant_id : order.cbe_account_number]
     );
 
-    // Mark order paid + confirmed
     await query(
       `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed',
-        transaction_code = $1, payment_tx_ref = $2, updated_at = NOW()
-       WHERE order_id = $3`,
-      [txRef, txRef, order_id]
+        transaction_code = $1, payment_tx_ref = $2, payment_proof = $3, updated_at = NOW()
+       WHERE order_id = $4`,
+      [txRef, txRef, paymentProof ? JSON.stringify(paymentProof) : null, orderId]
     );
 
-    // Deduct stock
-    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [order_id]);
+    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [orderId]);
     for (const item of items.rows) {
       await query(
         `UPDATE products SET stock_quantity = GREATEST(0, stock_quantity - $1), reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2`,
@@ -428,32 +442,25 @@ router.post('/confirm-tx', requireAuth, async (req, res, next) => {
       );
     }
 
-    // Generate QR + receipt
-    try { await generateQRAndReceipt(order_id); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
+    try { await generateQRAndReceipt(orderId); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
 
-    // Notify seller via Telegram (private DM)
     try {
       const tgService = require('../services/telegram');
-      const sellerId = order.admin_tg_user_id;
-      if (sellerId) {
+      if (order.admin_tg_user_id) {
         await tgService.tgCall('sendMessage', {
-          chat_id: sellerId,
-          text: `💰 *Payment Received!*\n\nOrder *${order.order_ref}* — Br ${Number(order.total_etb).toLocaleString()}\nMethod: ${gateway.toUpperCase()}\nTransaction Code: \`${transaction_code}\`\n\nPlease prepare for dispatch.`,
+          chat_id: order.admin_tg_user_id,
+          text: `💰 *Payment Received!*\n\nOrder *${order.order_ref}* — Br ${Number(order.total_etb).toLocaleString()}\nMethod: ${gateway.toUpperCase()}\nTransaction Code: \`${transactionCode || txRef}\`\n\nPlease prepare for dispatch.`,
           parse_mode: 'MarkdownV2'
         });
       }
     } catch (_) {}
 
-    // Notify buyer
     try {
       const notif = require('../services/notifications');
       await notif.notifyOrderStatus(order, 'confirmed');
     } catch (_) {}
-
-    res.json({ message: 'Payment confirmed with transaction code. Order confirmed.', order_id });
-  } catch (err) {
-    next(err);
   }
-});
 
-module.exports = router;
+  module.exports = router;
+  // Expose the helper so the bot can confirm payments without re-implementing logic.
+  router.markOrderPaid = markOrderPaid;

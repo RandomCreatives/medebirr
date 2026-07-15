@@ -9,6 +9,7 @@ const { query } = require('../db');
 const tg = require('../services/telegram');
 const qrService = require('../services/qrcode');
 const receiptService = require('../services/receipt');
+const { withinRadius } = require('../utils/geo');
 
 const router = express.Router();
 
@@ -200,6 +201,95 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
       product: validation.product,
       price: validation.price,
       attempt: attemptNumber
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/v1/delivery/:orderId/verify-otp
+ * Rider verifies the handover via the buyer's 4-digit delivery OTP.
+ * Optional geofence: if both the buyer's pinned location and the rider's
+ * current location are present, the OTP is rejected when the rider is
+ * outside GEOFENCE_RADIUS_METERS (default 200m).
+ * Body: { otp, rider_latitude, rider_longitude }
+ */
+router.post('/:orderId/verify-otp', requireAuth, async (req, res, next) => {
+  try {
+    const { otp, rider_latitude, rider_longitude } = req.body || {};
+    if (!otp) return res.status(400).json({ error: 'otp is required' });
+
+    const result = await query(
+      `SELECT o.*, s.admin_tg_user_id, s.store_name
+       FROM orders o JOIN stores s ON o.store_id = s.store_id
+       WHERE o.order_id = $1`,
+      [req.params.orderId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    const order = result.rows[0];
+
+    if (!order.delivery_otp) {
+      return res.status(400).json({ success: false, message: 'No delivery code set for this order' });
+    }
+    if (String(otp).trim() !== String(order.delivery_otp)) {
+      return res.status(400).json({ success: false, message: 'Invalid delivery code' });
+    }
+
+    const radius = Number(process.env.GEOFENCE_RADIUS_METERS || 200);
+    if (!withinRadius(order.delivery_latitude, order.delivery_longitude, rider_latitude, rider_longitude, radius)) {
+      return res.status(403).json({
+        success: false,
+        geofence: true,
+        message: `Rider is outside the allowed delivery area. Move within ${radius}m of the buyer to confirm.`
+      });
+    }
+
+    const alreadyRider = order.qr_verified_by_rider;
+    await query(
+      `UPDATE orders SET
+         qr_verified_by_rider = TRUE,
+         rider_latitude = $1,
+         rider_longitude = $2,
+         updated_at = NOW()
+       WHERE order_id = $3`,
+      [rider_latitude != null ? Number(rider_latitude) : order.rider_latitude,
+       rider_longitude != null ? Number(rider_longitude) : order.rider_longitude,
+       req.params.orderId]
+    );
+
+    let deliveryComplete = false;
+    if (order.qr_verified_by_buyer) {
+      await query(
+        `UPDATE orders SET
+           order_status = 'delivered',
+           delivered_at = NOW(),
+           buyer_confirmed_at = NOW(),
+           updated_at = NOW()
+         WHERE order_id = $1`,
+        [req.params.orderId]
+      );
+      await query(
+        `UPDATE stores SET total_orders = total_orders + 1, total_revenue = total_revenue + $1, updated_at = NOW() WHERE store_id = $2`,
+        [order.total_etb, order.store_id]
+      );
+      const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
+      for (const item of items.rows) {
+        await query(
+          'UPDATE products SET order_count = order_count + $1, reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2',
+          [item.quantity, item.product_id]
+        );
+      }
+      deliveryComplete = true;
+      await notifyDeliveryComplete(order);
+    }
+
+    res.json({
+      success: true,
+      message: 'Delivery code verified',
+      rider_verified: true,
+      already_verified: alreadyRider,
+      delivery_complete: deliveryComplete
     });
   } catch (err) {
     next(err);

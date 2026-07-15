@@ -428,6 +428,40 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS transaction_code VARCHAR(100);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_method VARCHAR(30) DEFAULT 'delivery'; -- delivery, pickup
 
 -- ============================================================
+-- ORDER COLUMNS: secure delivery handshake (OTP + geofence)
+-- ============================================================
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_otp VARCHAR(8);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_latitude DOUBLE PRECISION;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_longitude DOUBLE PRECISION;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS rider_latitude DOUBLE PRECISION;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS rider_longitude DOUBLE PRECISION;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_provider VARCHAR(20) DEFAULT 'rider'; -- self, rider, company
+
+-- ============================================================
+-- PAYMENT VERIFICATIONS: buyer-submitted receipt proofs
+-- ============================================================
+CREATE TABLE IF NOT EXISTS payment_verifications (
+    verification_id   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id          UUID NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+    buyer_tg_user_id  BIGINT NOT NULL,
+    photo_file_id     TEXT,
+    photo_url         TEXT,
+    transaction_note  TEXT,
+    status            VARCHAR(20) DEFAULT 'awaiting_receipt', -- awaiting_receipt, pending_seller_confirm, confirmed, rejected
+    created_at        TIMESTAMP DEFAULT NOW(),
+    updated_at        TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_payment_verifications_buyer ON payment_verifications(buyer_tg_user_id, status);
+
+-- OCR-extracted fields from the buyer's receipt screenshot
+ALTER TABLE payment_verifications ADD COLUMN IF NOT EXISTS ocr_tx_ref VARCHAR(100);
+ALTER TABLE payment_verifications ADD COLUMN IF NOT EXISTS ocr_amount DECIMAL(10,2);
+ALTER TABLE payment_verifications ADD COLUMN IF NOT EXISTS ocr_text TEXT;
+
+-- Structured payment-proof snapshot embedded into the PDF receipt
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_proof JSONB;
+
+-- ============================================================
 -- COUPON POLICY: sharing rewards + group buying config per store
 -- ============================================================
 CREATE TABLE IF NOT EXISTS coupon_policies (
