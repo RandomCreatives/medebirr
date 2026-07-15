@@ -2263,12 +2263,21 @@ const App = {
         seller_password: sellerPassword || null
       });
 
-      // Reload user stores
-      const meData = await Api.users.me();
-      State.stores = meData.stores || [];
-      if (State.stores.length > 0) {
-        State.currentStoreId = State.stores[0].store_id;
-        State.user.isSeller = true;
+      // Reload user stores (non-fatal if fails)
+      try {
+        const meData = await Api.users.me();
+        State.stores = meData.stores || [];
+        if (State.stores.length > 0) {
+          State.currentStoreId = State.stores[0].store_id;
+          State.user.isSeller = true;
+        }
+      } catch (_) {
+        // Fallback: use store from create response
+        if (data.store) {
+          State.stores = [data.store];
+          State.currentStoreId = data.store.store_id;
+          State.user.isSeller = true;
+        }
       }
 
       // Auto-verify group if username was provided
@@ -2292,7 +2301,9 @@ const App = {
       State.sellerUnlocked = true;
       State.role = 'seller';
       State.currentTab = 'dashboard';
-      await this.loadSellerData();
+
+      // Load seller data (non-fatal if fails)
+      try { await this.loadSellerData(); } catch (_) {}
 
       // Show brief floating success, then auto-enter seller studio
       this._openFloat(`
