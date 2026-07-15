@@ -35,14 +35,20 @@ const Api = {
     try {
       const res = await fetch(`${API_BASE}${path}`, options);
       clearTimeout(timeout);
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Server error (${res.status}): ${text.slice(0, 200) || 'Empty response'}`);
+      }
       if (!res.ok) throw Object.assign(new Error(data.error || 'API Error'), { status: res.status, data });
       return data;
     } catch (err) {
       clearTimeout(timeout);
       if (err.name === 'AbortError') throw new Error('Request timed out');
       if (err.status) throw err;
-      throw new Error('Network error — check your connection');
+      throw err;
     }
   },
 
