@@ -1125,6 +1125,37 @@ body { background: var(--bg-body); color: var(--text-primary); display: flex;
 .slide-track.done .slide-label { color: var(--success); }
 
 /* ═══════════════════════════════════════════════════════
+   FLOATING OVERLAY — Luxury Centered Card
+═══════════════════════════════════════════════════════ */
+.float-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.float-overlay.fo-open { display: flex; }
+.float-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 20px; width: 100%; max-width: 400px;
+  max-height: 85vh; overflow-y: auto;
+  animation: foIn 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes foIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.fo-section { padding: 28px 24px; }
+.fo-brand { text-align: center; margin-bottom: 4px; }
+.fo-brand-logo {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: var(--accent); color: var(--accent-text);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 900; margin-bottom: 10px;
+}
+.fo-brand-name { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 2px; text-transform: uppercase; }
+.fo-title { font-size: 20px; font-weight: 900; color: white; text-align: center; margin: 8px 0 4px; line-height: 1.2; }
+.fo-sub { font-size: 12px; color: var(--text-secondary); text-align: center; margin-bottom: 20px; line-height: 1.5; }
+.fo-divider { height: 1px; background: var(--border); margin: 0 24px; }
+.fo-actions { padding: 16px 24px 24px; }
+
+/* ═══════════════════════════════════════════════════════
    BRANDING FOOTER
 ═══════════════════════════════════════════════════════ */
 .app-footer {

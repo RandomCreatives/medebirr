@@ -1817,46 +1817,66 @@ const App = {
     this._showSellerWelcome();
   },
 
-  // ── Seller Welcome (single-page, half-modal + slide-to-open) ──
+  // ── Floating Overlay Helpers ────────────────────────────────
+  _openFloat(html) {
+    const o = document.getElementById('floatOverlay');
+    const c = document.getElementById('floatCard');
+    if (!o || !c) return false;
+    c.innerHTML = html;
+    o.classList.add('fo-open');
+    return true;
+  },
+  _closeFloat() {
+    const o = document.getElementById('floatOverlay');
+    if (o) o.classList.remove('fo-open');
+  },
+
+  // ── Seller Welcome (floating, luxury) ───────────────────────
   _showSellerWelcome() {
-    Modals.open(`
-      <div class="modal-handle"></div>
-      <div style="text-align:center;padding:4px 0 0;">
-        <div style="font-size:42px;margin-bottom:6px;">🏪</div>
-        <div class="modal-title" style="margin-bottom:2px;">Open Your Shop</div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:16px;">Ethiopia's marketplace · Zero commission</div>
+    this._openFloat(`
+      <div class="fo-section">
+        <div class="fo-brand">
+          <div class="fo-brand-logo">M</div>
+          <div class="fo-brand-name">Medebirr</div>
+        </div>
+        <div class="fo-title">Launch Your Medeb</div>
+        <div class="fo-sub">Zero commission. Direct payments. Ethiopia's marketplace.</div>
+
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💰</div>
+            <div>
+              <div style="font-size:12px;font-weight:800;color:white;">Keep Every Birr</div>
+              <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Buyers pay you directly. No middleman, no delay.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📢</div>
+            <div>
+              <div style="font-size:12px;font-weight:800;color:white;">Auto-Broadcast</div>
+              <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Post in Telegram. Bot lists it. Buyers purchase.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start;">
+            <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🚀</div>
+            <div>
+              <div style="font-size:12px;font-weight:800;color:white;">Live in 60 Seconds</div>
+              <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Name, payment, Telegram link — done.</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;">
-        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
-          <div style="font-size:22px;line-height:1;">💰</div>
-          <div>
-            <div style="font-size:12px;font-weight:800;color:white;">Keep Every Birr</div>
-            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Buyers pay you directly — Telebirr, CBE, or cash. No middleman.</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px;">
-          <div style="font-size:22px;line-height:1;">📢</div>
-          <div>
-            <div style="font-size:12px;font-weight:800;color:white;">Auto-Broadcast</div>
-            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Post in your Telegram group — bot lists it and buyers purchase instantly.</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:flex-start;">
-          <div style="font-size:22px;line-height:1;">🚀</div>
-          <div>
-            <div style="font-size:12px;font-weight:800;color:white;">Live in 60 Seconds</div>
-            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Store name, payment details, Telegram link — done.</div>
-          </div>
-        </div>
-      </div>
+      <div class="fo-divider"></div>
 
-      <div class="slide-to-enter" style="position:relative;bottom:auto;left:auto;right:auto;">
-        <div class="slide-track" id="sellerSlideTrack">
-          <div class="slide-thumb" id="sellerSlideThumb">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      <div style="padding:20px 24px 24px;">
+        <div class="slide-to-enter" style="position:relative;bottom:auto;left:auto;right:auto;">
+          <div class="slide-track" id="sellerSlideTrack">
+            <div class="slide-thumb" id="sellerSlideThumb">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <div class="slide-label" id="sellerSlideLabel">Slide to launch your medeb →</div>
           </div>
-          <div class="slide-label" id="sellerSlideLabel">Slide to open your store →</div>
         </div>
       </div>
     `);
@@ -1888,7 +1908,6 @@ const App = {
       const clamped = Math.max(4, Math.min(x, maxLeft()));
       this._sellerSlideThumbLeft = clamped;
       thumb.style.left = clamped + 'px';
-
       const pct = clamped / maxLeft();
       const label = document.getElementById('sellerSlideLabel');
       if (label) label.style.opacity = 1 - pct;
@@ -1904,8 +1923,8 @@ const App = {
         thumb.style.left = maxLeft() + 'px';
         track.classList.add('done');
         const label = document.getElementById('sellerSlideLabel');
-        if (label) { label.textContent = '✓ Opening...'; label.style.opacity = 1; }
-        setTimeout(() => { Modals.close(); this.openRegisterStoreModal_(); }, 300);
+        if (label) { label.textContent = '✓ Launching...'; label.style.opacity = 1; }
+        setTimeout(() => this._showSellerTerms(), 350);
       } else {
         thumb.style.left = '4px';
         this._sellerSlideThumbLeft = 4;
@@ -1914,13 +1933,97 @@ const App = {
       }
     };
 
+    const onMoveBound = (e) => onMove(e.clientX);
+    const onEndBound = () => onEnd();
+
     thumb.addEventListener('mousedown', (e) => { e.preventDefault(); onStart(e.clientX); });
-    document.addEventListener('mousemove', (e) => onMove(e.clientX));
-    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('mousemove', onMoveBound);
+    document.addEventListener('mouseup', onEndBound);
 
     thumb.addEventListener('touchstart', (e) => onStart(e.touches[0].clientX), { passive: true });
     thumb.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e.touches[0].clientX); }, { passive: false });
     thumb.addEventListener('touchend', onEnd);
+  },
+
+  // ── Terms & Conditions (floating, luxury) ───────────────────
+  _showSellerTerms() {
+    this._openFloat(`
+      <div class="fo-section" style="padding-bottom:12px;">
+        <div class="fo-brand">
+          <div class="fo-brand-logo">M</div>
+          <div class="fo-brand-name">Medebirr</div>
+        </div>
+        <div class="fo-title">Terms &amp; Conditions</div>
+        <div class="fo-sub" style="margin-bottom:14px;">Please review before launching your Medeb</div>
+
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:14px;max-height:260px;overflow-y:auto;font-size:11px;color:var(--text-secondary);line-height:1.7;">
+          <div style="font-weight:800;color:white;margin-bottom:6px;">1. Seller Responsibilities</div>
+          You are solely responsible for your store's products, pricing, and customer service. All listings must be accurate and comply with Ethiopian law.
+
+          <div style="font-weight:800;color:white;margin:10px 0 6px;">2. Payments</div>
+          Payments are made directly from buyers to you via Telebirr, CBE, or cash. Medebirr does not hold, escrow, or process your funds. You receive 100% of the sale price.
+
+          <div style="font-weight:800;color:white;margin:10px 0 6px;">3. Zero Commission</div>
+          Medebirr charges zero commission on sales. The platform is free for sellers. Transaction fees from Telebirr/CBE are borne by the buyer.
+
+          <div style="font-weight:800;color:white;margin:10px 0 6px;">4. Product Listings</div>
+          Products must be legal, accurately described, and available. Counterfeit, prohibited, or misleading items are grounds for immediate removal.
+
+          <div style="font-weight:800;color:white;margin:10px 0 6px;">5. Store Suspension</div>
+          Medebirr reserves the right to suspend stores that violate these terms, engage in fraud, or receive repeated buyer complaints.
+
+          <div style="font-weight:800;color:white;margin:10px 0 6px;">6. Data &amp; Privacy</div>
+          Your store information (name, phone, category) is displayed to buyers. Personal data is not sold to third parties. See our full Privacy Policy for details.
+
+          <div style="font-weight:800;color:white;margin:10px 0 6px;">7. Limitation of Liability</div>
+          Medebirr is a marketplace platform. We are not a party to transactions between buyers and sellers. Disputes must be resolved directly between parties.
+        </div>
+      </div>
+
+      <div class="fo-divider"></div>
+
+      <div class="fo-actions">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:16px;" onclick="event.stopPropagation()">
+          <input type="checkbox" id="sellerTosCheck" style="accent-color:var(--accent);width:18px;height:18px;margin-top:1px;flex-shrink:0;"/>
+          <span style="font-size:11px;color:var(--text-secondary);line-height:1.5;">
+            I have read and agree to Medebirr's <strong style="color:white;">Terms &amp; Conditions</strong> and understand my responsibilities as a seller.
+          </span>
+        </label>
+        <button id="sellerTosBtn" onclick="App._confirmSellerTerms()" disabled
+          style="width:100%;padding:14px;border-radius:12px;border:none;font-size:14px;font-weight:800;cursor:pointer;transition:all 0.2s;
+          background:var(--border);color:var(--text-muted);pointer-events:none;">
+          Launch My Medeb
+        </button>
+        <button onclick="App._closeFloat()" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;margin-top:6px;">
+          Go Back
+        </button>
+      </div>
+    `);
+
+    const check = document.getElementById('sellerTosCheck');
+    const btn = document.getElementById('sellerTosBtn');
+    if (check && btn) {
+      check.addEventListener('change', () => {
+        if (check.checked) {
+          btn.disabled = false;
+          btn.style.background = 'var(--accent)';
+          btn.style.color = 'var(--accent-text)';
+          btn.style.pointerEvents = 'auto';
+        } else {
+          btn.disabled = true;
+          btn.style.background = 'var(--border)';
+          btn.style.color = 'var(--text-muted)';
+          btn.style.pointerEvents = 'none';
+        }
+      });
+    }
+  },
+
+  _confirmSellerTerms() {
+    const check = document.getElementById('sellerTosCheck');
+    if (!check || !check.checked) return;
+    this._closeFloat();
+    setTimeout(() => this.openRegisterStoreModal_(), 250);
   },
 
   openRegisterStoreModal_() {
