@@ -269,9 +269,21 @@ router.post('/telebirr/webhook', async (req, res, next) => {
         const items = await query('SELECT * FROM order_items WHERE order_id = $1', [tx.order_id]);
         const ord = orderFull.rows[0];
         if (ord) {
-          const chatId = ord.admin_tg_user_id || ord.tg_group_id;
-          if (chatId) {
-            await tgService.notifySellerNewOrder(chatId, ord, ord, items.rows);
+          // ROUTE TO PRIVATE DM (Preferred)
+          if (ord.admin_tg_user_id) {
+            await tgService.notifySellerNewOrder(ord.admin_tg_user_id, ord, ord, items.rows);
+          } else if (ord.tg_group_id) {
+            // Safe fallback: send to group, but let's notify seller of privacy risk
+            console.warn(`Privacy Warning: Routing order notification for #${ord.order_ref} to public group.`);
+            const sanitizedBuyer = { first_name: 'Buyer', last_name: '', username: '' };
+            const sanitizedOrd = {
+              ...ord,
+              delivery_address: JSON.stringify({
+                sub_city: ord.location_sub_city || 'Addis Ababa',
+                phone: 'REDACTED (View in Seller Studio)'
+              })
+            };
+            await tgService.notifySellerNewOrder(ord.tg_group_id, sanitizedOrd, sanitizedBuyer, items.rows);
           }
         }
       } catch (e) {

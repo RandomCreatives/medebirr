@@ -10,11 +10,14 @@ const tg = require('../services/telegram');
 
 const router = express.Router();
 
+// Secure all routes under /pending-products
+router.use(requireAuth);
+
 /**
  * GET /api/v1/pending-products/store/:storeId
  * List pending products for a store (seller only)
  */
-router.get('/store/:storeId', requireAuth, async (req, res, next) => {
+router.get('/store/:storeId', async (req, res, next) => {
   try {
     const result = await query(
       `SELECT pp.*, s.store_name, s.admin_tg_user_id
@@ -37,7 +40,7 @@ router.get('/store/:storeId', requireAuth, async (req, res, next) => {
  * PUT /api/v1/pending-products/:id/complete
  * Seller completes a pending product (adds description, category, etc.)
  */
-router.put('/:id/complete', requireAuth, async (req, res, next) => {
+router.put('/:id/complete', async (req, res, next) => {
   try {
     const { title, description, category, sub_category, price_etb, compare_price,
             stock_quantity, tags, image_urls } = req.body;
@@ -87,7 +90,7 @@ router.put('/:id/complete', requireAuth, async (req, res, next) => {
  * POST /api/v1/pending-products/:id/publish
  * Publish a completed pending product → creates product + broadcasts to Telegram group
  */
-router.post('/:id/publish', requireAuth, async (req, res, next) => {
+router.post('/:id/publish', async (req, res, next) => {
   try {
     // Verify ownership and get pending product
     const check = await query(
@@ -164,7 +167,7 @@ router.post('/:id/publish', requireAuth, async (req, res, next) => {
  * DELETE /api/v1/pending-products/:id
  * Discard a pending product
  */
-router.delete('/:id', requireAuth, async (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const check = await query(
       `SELECT pp.pending_id, s.admin_tg_user_id

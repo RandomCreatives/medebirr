@@ -152,6 +152,8 @@ CREATE TABLE IF NOT EXISTS orders (
     payment_tx_ref      VARCHAR(100),
     telebirr_tx_id      VARCHAR(100),
     policy_snapshot     JSONB,  -- Store policy at time of order
+    coupon_code         VARCHAR(50),
+    discount_etb        DECIMAL(10,2) DEFAULT 0,
     rider_name          VARCHAR(100),
     rider_phone         VARCHAR(30),
     dispatch_note       TEXT,
