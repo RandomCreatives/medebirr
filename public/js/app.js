@@ -2276,39 +2276,52 @@ const App = {
       if (groupUsername && State.currentStoreId) {
         try {
           const verifyResult = await Api.bot.verifyGroup(State.currentStoreId, groupUsername);
-          groupVerifyMsg = `<div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--success);margin-bottom:12px;">
-            ✅ @medebirrbot verified as admin of <strong style="color:white;">${verifyResult.chatTitle}</strong><br/>
-            Products will auto-post to your group when published.
+          groupVerifyMsg = `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
+            <div style="font-size:16px;">✅</div>
+            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;"><strong style="color:white;">@${groupUsername}</strong> verified — products will auto-post.</div>
           </div>`;
         } catch (e) {
-          groupVerifyMsg = `<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--warning);margin-bottom:12px;">
-            ⚠️ Group not verified yet — add @medebirrbot as admin in your group, then re-verify from Policy settings.
+          groupVerifyMsg = `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
+            <div style="font-size:16px;">⚠️</div>
+            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Add @medebirrbot as admin in your group, then re-verify from settings.</div>
           </div>`;
         }
       }
 
-      Modals.open(`
-        <div class="modal-handle"></div>
-        <div style="text-align:center;padding:16px 0 20px 0;">
-          <div style="font-size:52px;margin-bottom:14px;">🎉</div>
-          <div style="font-size:20px;font-weight:900;margin-bottom:6px;color:var(--success);">Store Registered!</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;line-height:1.7;">
-            <strong style="color:white;">${storeName}</strong> is now live.<br/>
-            Status: <span style="color:var(--success);">✅ Verified & Active</span>
+      // Mark seller as unlocked (they just created the store + set password)
+      State.sellerUnlocked = true;
+      State.role = 'seller';
+      State.currentTab = 'dashboard';
+      await this.loadSellerData();
+
+      // Show brief floating success, then auto-enter seller studio
+      this._openFloat(`
+        <div class="fo-section" style="text-align:center;">
+          <div style="font-size:48px;margin-bottom:12px;">🎉</div>
+          <div class="fo-title">${storeName}</div>
+          <div class="fo-sub" style="margin-bottom:16px;">Your Medeb is now live!</div>
+
+          <div style="text-align:left;background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:20px;">
+            <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
+              <div style="font-size:16px;">✅</div>
+              <div style="font-size:11px;color:var(--text-secondary);">Store profile created & verified</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
+              <div style="font-size:16px;">✅</div>
+              <div style="font-size:11px;color:var(--text-secondary);">Telebirr payment linked</div>
+            </div>
+            ${groupVerifyMsg || `<div style="display:flex;gap:8px;align-items:flex-start;">
+              <div style="font-size:16px;">📦</div>
+              <div style="font-size:11px;color:var(--text-secondary);">Ready to add products</div>
+            </div>`}
           </div>
-          ${groupVerifyMsg}
-          <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-md);padding:14px;margin-bottom:20px;font-size:12px;color:var(--success);text-align:left;line-height:2;">
-            ✅ Store profile created<br/>
-            ✅ Telebirr account linked<br/>
-            ${groupUsername ? '✅ Telegram group connected' : '⚠️ No group connected yet — add one in Policy settings'}<br/>
-            📦 Start adding products immediately
-          </div>
-          <button class="btn-primary" onclick="App.toggleRole();Modals.close();">
-            🏬 Open Seller Studio →
+
+          <button class="btn-primary" onclick="App._closeFloat();App.render();" style="width:100%;padding:14px;border-radius:12px;font-size:14px;font-weight:800;background:var(--accent);color:var(--accent-text);">
+            Enter Seller Studio →
           </button>
         </div>
       `);
-      this.render();
+
     } catch (err) {
       this.toast(err.message || 'Registration failed', 'error');
     }
