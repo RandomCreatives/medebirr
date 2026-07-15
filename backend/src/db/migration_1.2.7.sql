@@ -16,17 +16,20 @@ CREATE TABLE IF NOT EXISTS coupon_policies (
 );
 
 -- Coupons issued to users
+-- Coupons issued to users (Unified: platform + social share + group buy)
 CREATE TABLE IF NOT EXISTS coupons (
-    coupon_id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    store_id            UUID NOT NULL REFERENCES stores(store_id) ON DELETE CASCADE,
-    tg_user_id          BIGINT NOT NULL REFERENCES users(tg_user_id),
-    code                VARCHAR(20) UNIQUE NOT NULL,
-    discount_percent    DECIMAL(5,2) NOT NULL,
-    status              VARCHAR(20) DEFAULT 'active',
-    valid_until         TIMESTAMP NOT NULL,
-    used_at             TIMESTAMP,
-    order_id            UUID REFERENCES orders(order_id) ON DELETE SET NULL,
-    created_at          TIMESTAMP DEFAULT NOW()
+    coupon_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    code            VARCHAR(50) UNIQUE NOT NULL,
+    discount_type   VARCHAR(20) NOT NULL DEFAULT 'percent', -- percent, fixed
+    discount_value  DECIMAL(10,2) NOT NULL,
+    store_id        UUID REFERENCES stores(store_id) ON DELETE CASCADE,
+    tg_user_id      BIGINT REFERENCES users(tg_user_id) ON DELETE CASCADE,
+    min_order_etb   DECIMAL(10,2) DEFAULT 0,
+    max_uses        INTEGER,
+    used_count      INTEGER DEFAULT 0,
+    expires_at      TIMESTAMP,
+    is_active       BOOLEAN DEFAULT TRUE,
+    created_at      TIMESTAMP DEFAULT NOW()
 );
 
 -- Track product shares for coupon eligibility

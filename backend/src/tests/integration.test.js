@@ -209,13 +209,15 @@ await test('Receipt has escaped HTML (XSS fix verified)', async () => {
 // ─── 9. Security: Unauthenticated Access ────────────────────────────────────
 console.log('\n🔒 Security Checks');
 
-await test('POST /pending-products without token returns 401', async () => {
+await test('POST /products without token returns 401', async () => {
   const savedToken = token;
   token = null;
-  const { status } = await api('POST', '/pending-products', {
+  const { status } = await api('POST', '/products', {
     store_id: testStoreId,
-    tg_group_id: 'fake',
-    title: 'Hacked Product'
+    title: 'Hacked Product',
+    price_etb: 100,
+    stock_quantity: 10,
+    category: 'electronics'
   });
   token = savedToken;
   assertEqual(status, 401, 'Unauthenticated request should be rejected');

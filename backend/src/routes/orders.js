@@ -140,11 +140,12 @@ router.post(
       }
       const totalBeforeDiscount = subtotal + deliveryFee;
 
-      // Apply coupon if provided
+      // Apply coupon if provided (Social shares, Group buys, etc.)
       let discountAmount = 0;
       let appliedCoupon = null;
 
       if (coupon_code && coupon_code.trim()) {
+        console.log(`[Checkout] Validating coupon code: ${coupon_code} for store: ${store_id}`);
         const couponResult = await client.query(
           `SELECT * FROM coupons
            WHERE UPPER(code) = UPPER($1)
@@ -166,7 +167,12 @@ router.post(
               discountAmount = Number(coupon.discount_value);
             }
             discountAmount = Math.min(discountAmount, subtotal);
+            console.log(`[Checkout] Applied coupon ${coupon_code} with discount value: Br ${discountAmount}`);
+          } else {
+            console.log(`[Checkout] Subtotal Br ${subtotal} is below minimum order threshold Br ${coupon.min_order_etb}`);
           }
+        } else {
+          console.log(`[Checkout] Coupon code ${coupon_code} is invalid, expired, or not owned by user.`);
         }
       }
 
@@ -591,6 +597,7 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
     // Notify buyer via Telegram bot with rich interactive message
     try {
       const tgService = require('../services/telegram');
+      console.log(`[Dispatch] Sending rich buyer notification for order ${result.rows[0].order_ref} to user ${ord.buyer_tg_user_id}`);
       await tgService.notifyBuyerRiderAssigned(
         ord.buyer_tg_user_id,
         result.rows[0],
