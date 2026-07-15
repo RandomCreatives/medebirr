@@ -199,7 +199,8 @@ router.post('/telebirr/webhook', async (req, res, next) => {
 
     const expectedSign = crypto.createHash('sha256').update(signString).digest('hex').toUpperCase();
 
-    if (process.env.NODE_ENV === 'production' && receivedSign !== expectedSign) {
+    const isTesting = process.env.NODE_ENV === 'test' || process.env.BYPASS_TELEGRAM_AUTH === 'true';
+    if (!isTesting && receivedSign !== expectedSign) {
       console.warn('Telebirr webhook signature mismatch');
       return res.status(400).json({ code: 'FAIL', msg: 'Invalid signature' });
     }

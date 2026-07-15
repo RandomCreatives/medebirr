@@ -216,14 +216,15 @@ router.post(
         );
       }
 
-      await client.query('COMMIT');
-
-      // Increment coupon usage count
+      // Increment coupon usage count atomically inside the transaction
       if (appliedCoupon) {
-        try {
-          await query('UPDATE coupons SET used_count = used_count + 1 WHERE coupon_id = $1', [appliedCoupon.coupon_id]);
-        } catch (_) {}
+        await client.query(
+          'UPDATE coupons SET used_count = used_count + 1 WHERE coupon_id = $1',
+          [appliedCoupon.coupon_id]
+        );
       }
+
+      await client.query('COMMIT');
 
       // Notify buyer
       try {
