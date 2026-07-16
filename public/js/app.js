@@ -935,7 +935,8 @@ const App = {
   },
 
   async toggleWishlist(productId) {
-    if (State.wishlist.has(productId)) {
+    const wasSaved = State.wishlist.has(productId);
+    if (wasSaved) {
       State.wishlist.delete(productId);
       await Api.users.removeWishlist(productId).catch(() => {});
       this.toast('Removed from saved', 'info');
@@ -944,6 +945,15 @@ const App = {
       await Api.users.addWishlist(productId).catch(() => {});
       this.toast('Saved!', 'success');
     }
+    this._syncHeartIcons(productId, !wasSaved);
+  },
+
+  // Live-update heart icons across any visible card without a full re-render
+  _syncHeartIcons(productId, saved) {
+    document.querySelectorAll(`.item-heart-btn[data-pid="${productId}"]`).forEach(btn => {
+      btn.classList.toggle('saved', saved);
+      btn.innerHTML = saved ? '♥' : '♡';
+    });
   },
 
   // ── Order Placement ───────────────────────────────

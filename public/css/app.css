@@ -275,7 +275,28 @@ body { background: var(--bg-body); color: var(--text-primary); display: flex;
   width: 100%; padding: 7px; background: var(--bg-surface); border: 1px solid var(--border);
   color: var(--text-primary); border-radius: 9px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s;
 }
-.btn-add-cart:hover, .btn-add-cart:active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.btn-add-cart:hover, .btn-add-cart:active { background: var(--accent); color: 
+var(--accent-text); border-color: var(--accent); }
+
+/* Compact icon-only Add-to-Cart button on product cards */
+.item-cart-btn {
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px;
+  background: var(--accent); color: var(--accent-text); border: none;
+  font-size: 15px; line-height: 1; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: transform 0.15s ease, filter 0.15s ease;
+}
+.item-cart-btn:hover, .item-cart-btn:active { filter: brightness(1.08); transform: scale(1.06); }
+
+/* Heart overlay on product image to save to favorites from the card */
+.item-heart-btn {
+  position: absolute; top: 7px; right: 7px; width: 30px; height: 30px;
+  border-radius: 50%; border: none; cursor: pointer; font-size: 16px; line-height: 1;
+  background: rgba(11,12,14,0.55); backdrop-filter: blur(4px);
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s ease, background-color 0.15s ease; z-index: 2;
+}
+.item-heart-btn:hover, .item-heart-btn:active { transform: scale(1.12); background: rgba(11,12,14,0.75); }
+.item-heart-btn.saved { color: #FF4D6D; background: rgba(255,77,109,0.18); }
 
 /* Cart */
 .store-package { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: 14px; overflow: hidden; }

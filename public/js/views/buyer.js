@@ -58,10 +58,13 @@ const BuyerViews = {
     const gradient = this._categoryGradient(p.category);
     const thumbStyle = (p.image_urls && p.image_urls[0]) ? `background:url('${p.image_urls[0]}') center/cover no-repeat,${gradient};` : `background:${gradient};`;
     const compare = p.compare_price ? `<span class="item-compare">${State.formatETB(p.compare_price)}</span>` : '';
+    const saved = State.wishlist.has(p.product_id);
     return `
       <div class="item-card" onclick="App.openProduct('${p.product_id}')">
         <div class="item-thumb" style="${thumbStyle}">
           ${p.return_policy_type ? `<span class="item-policy-tag">${State.policyLabel(p.return_policy_type).split('-')[0]}</span>` : ''}
+          <button class="item-heart-btn ${saved ? 'saved' : ''}" data-pid="${p.product_id}" aria-label="Save for later" title="Save for later"
+                  onclick="event.stopPropagation();App.toggleWishlist('${p.product_id}')">${saved ? '♥' : '♡'}</button>
           <div class="item-store-badge" onclick="event.stopPropagation();App.openStorePage('${p.store_id}')">🏪 ${p.store_name}</div>
         </div>
         <div class="item-body">
@@ -73,7 +76,8 @@ const BuyerViews = {
             <div style="display:flex;align-items:baseline;gap:4px;">
               <span class="item-price">${State.formatETB(p.price_etb)}</span>${compare}
             </div>
-            <button class="btn-add-cart" onclick="event.stopPropagation();App.addToCart('${p.product_id}')">${State.t('addToCart')}</button>
+            <button class="item-cart-btn" aria-label="Add to cart" title="Add to cart"
+                    onclick="event.stopPropagation();App.addToCart('${p.product_id}')">🛒</button>
           </div>
         </div>
       </div>
@@ -84,10 +88,13 @@ const BuyerViews = {
     const gradient = this._categoryGradient(p.category);
     const thumbStyle = (p.image_urls && p.image_urls[0]) ? `background:url('${p.image_urls[0]}') center/cover no-repeat,${gradient};` : `background:${gradient};`;
     const compare = p.compare_price ? `<span class="item-compare">${State.formatETB(p.compare_price)}</span>` : '';
+    const saved = State.wishlist.has(p.product_id);
     return `
       <div class="item-card" onclick="App.openProduct('${p.product_id}')">
         <div class="item-thumb" style="${thumbStyle}">
           ${p.return_policy_type ? `<span class="item-policy-tag">${State.policyLabel(p.return_policy_type).split('-')[0]}</span>` : ''}
+          <button class="item-heart-btn ${saved ? 'saved' : ''}" data-pid="${p.product_id}" aria-label="Save for later" title="Save for later"
+                  onclick="event.stopPropagation();App.toggleWishlist('${p.product_id}')">${saved ? '♥' : '♡'}</button>
           <div class="item-store-badge" onclick="event.stopPropagation();App.openStorePage('${p.store_id}')">🏪 ${p.store_name}</div>
         </div>
         <div class="item-body">
@@ -99,7 +106,8 @@ const BuyerViews = {
             <div style="display:flex;align-items:baseline;gap:4px;">
               <span class="item-price">${State.formatETB(p.price_etb)}</span>${compare}
             </div>
-            <button class="btn-add-cart" onclick="event.stopPropagation();App.addToCart('${p.product_id}')">${State.t('addToCart')}</button>
+            <button class="item-cart-btn" aria-label="Add to cart" title="Add to cart"
+                    onclick="event.stopPropagation();App.addToCart('${p.product_id}')">🛒</button>
           <div style="display:flex;gap:6px;margin-top:8px;">
             <button onclick="event.stopPropagation();Modals.openShareProduct('${p.product_id}','${p.store_id}')" style="flex:1;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:8px;font-size:11px;font-weight:700;color:#60A5FA;cursor:pointer;">📤 Share</button>
             <button onclick="event.stopPropagation();Modals.openChat(null,'${p.store_id}','${p.product_id}')" style="flex:1;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:8px;font-size:11px;font-weight:700;color:var(--success);cursor:pointer;">💬 Chat</button>
