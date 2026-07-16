@@ -195,7 +195,10 @@ router.post(
     body('title').trim().notEmpty().isLength({ min: 3, max: 255 }),
     body('price_etb').isFloat({ min: 0 }),
     body('stock_quantity').isInt({ min: 0 }),
-    body('category').notEmpty()
+    body('category').notEmpty(),
+    body('product_story').trim().notEmpty().withMessage('Product Story is required'),
+    body('specifications').trim().notEmpty().withMessage('Specifications are required'),
+    body('materials').trim().notEmpty().withMessage('Materials are required')
   ],
   async (req, res, next) => {
     try {
@@ -214,20 +217,23 @@ router.post(
       const {
         store_id, title, description, price_etb, compare_price,
         sku, stock_quantity, category, sub_category, tags,
-        image_urls, variants, is_published = false, is_featured = false
+        image_urls, variants, is_published = false, is_featured = false,
+        product_story, specifications, materials, shipping_info, duty_info, return_info
       } = req.body;
 
       const result = await query(
         `INSERT INTO products (
           store_id, title, description, price_etb, compare_price, sku,
           stock_quantity, category, sub_category, tags, image_urls, variants,
-          is_published, is_featured
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          is_published, is_featured, product_story, specifications, materials,
+          shipping_info, duty_info, return_info
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
         RETURNING *`,
         [store_id, title, description || null, price_etb, compare_price || null,
          sku || null, stock_quantity, category, sub_category || null,
          tags || [], image_urls || [], JSON.stringify(variants || []),
-         is_published, is_featured]
+         is_published, is_featured, product_story || null, specifications || null,
+         materials || null, shipping_info || null, duty_info || null, return_info || null]
       );
 
       // If published and store has a linked group, broadcast to Telegram
@@ -279,7 +285,8 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
     const {
       title, description, price_etb, compare_price, sku,
       stock_quantity, category, sub_category, tags,
-      image_urls, variants, is_published, is_featured
+      image_urls, variants, is_published, is_featured,
+      product_story, specifications, materials, shipping_info, duty_info, return_info
     } = req.body;
 
     const result = await query(
@@ -297,13 +304,20 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
         variants = COALESCE($11, variants),
         is_published = COALESCE($12, is_published),
         is_featured = COALESCE($13, is_featured),
+        product_story = COALESCE($14, product_story),
+        specifications = COALESCE($15, specifications),
+        materials = COALESCE($16, materials),
+        shipping_info = COALESCE($17, shipping_info),
+        duty_info = COALESCE($18, duty_info),
+        return_info = COALESCE($19, return_info),
         updated_at = NOW()
-       WHERE product_id = $14
+       WHERE product_id = $20
        RETURNING *`,
       [title, description, price_etb, compare_price, sku,
        stock_quantity, category, sub_category, tags,
        image_urls, variants ? JSON.stringify(variants) : null,
-       is_published, is_featured, req.params.productId]
+       is_published, is_featured, product_story, specifications,
+       materials, shipping_info, duty_info, return_info, req.params.productId]
     );
 
       // If just published (is_published toggled to true), broadcast to Telegram group
@@ -331,10 +345,7 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
       }
 
       return res.json({ product: result.rows[0], telegram_warning: telegramWarning });
-    }
-
-    return res.json({ product: result.rows[0] });
-  } catch (err) {
+    } catch (err) {
     next(err);
   }
 });

@@ -1219,6 +1219,12 @@ const App = {
     if (!title) { this.toast('Title is required', 'error'); return null; }
     if (!price || price <= 0) { this.toast('Valid price required', 'error'); return null; }
     if (stock === undefined || stock < 0) { this.toast('Valid stock quantity required', 'error'); return null; }
+    const product_story = document.getElementById('prodStory')?.value?.trim();
+    const specifications = document.getElementById('prodSpecs')?.value?.trim();
+    const materials = document.getElementById('prodMaterials')?.value?.trim();
+    if (!product_story) { this.toast('Product Story is required', 'error'); return null; }
+    if (!specifications) { this.toast('Specifications are required', 'error'); return null; }
+    if (!materials) { this.toast('Materials are required', 'error'); return null; }
     const image_urls = [...document.querySelectorAll('.prod-img-url')].map(i => i.value.trim()).filter(Boolean);
     const tagsRaw = document.getElementById('prodTags')?.value?.trim();
     return {
@@ -1232,7 +1238,13 @@ const App = {
       tags: tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : null,
       sku: document.getElementById('prodSku')?.value || null,
       image_urls: image_urls.length ? image_urls : null,
-      is_published: document.getElementById('prodPublish')?.checked || false
+      is_published: document.getElementById('prodPublish')?.checked || false,
+      product_story,
+      specifications,
+      materials,
+      shipping_info: document.getElementById('prodShipping')?.value?.trim() || null,
+      duty_info: document.getElementById('prodDuty')?.value?.trim() || null,
+      return_info: document.getElementById('prodReturn')?.value?.trim() || null
     };
   },
 

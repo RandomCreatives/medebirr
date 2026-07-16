@@ -106,6 +106,12 @@ CREATE TABLE IF NOT EXISTS products (
     tags            TEXT[],
     image_urls      TEXT[] DEFAULT '{}',
     variants        JSONB DEFAULT '[]', -- [{name: "Size", options: ["S","M","L"]}]
+    product_story   TEXT,                 -- Seller's Product Story section
+    specifications  TEXT,                 -- Key specs (free text / bullet list)
+    materials       TEXT,                 -- Materials composition
+    shipping_info   TEXT,                 -- Per-product shipping notes
+    duty_info       TEXT,                 -- Import duty / customs notes
+    return_info     TEXT,                 -- Per-product return notes (overrides store policy)
     is_published    BOOLEAN DEFAULT FALSE,
     is_featured     BOOLEAN DEFAULT FALSE,
     view_count      INTEGER DEFAULT 0,

@@ -672,7 +672,7 @@ const Modals = {
             <span class="pdp-accordion-arrow">▾</span>
           </button>
           <div class="pdp-accordion-body">
-            ${product.description || 'No description provided.'}
+            ${product.product_story ? this._escapeHtml(product.product_story) : (product.description || 'No description provided.')}
           </div>
         </div>
 
@@ -682,7 +682,9 @@ const Modals = {
             <span class="pdp-accordion-arrow">▾</span>
           </button>
           <div class="pdp-accordion-body">
-            <div style="display:grid;gap:6px;">
+            ${product.specifications ? `<div style="white-space:pre-wrap;margin-bottom:10px;">${this._escapeHtml(product.specifications)}</div>` : ''}
+            ${product.materials ? `<div style="margin-bottom:8px;"><strong style="color:white;">Materials:</strong> ${this._escapeHtml(product.materials)}</div>` : ''}
+            <div style="display:grid;gap:6px;margin-top:8px;">
               ${specs.map(s => `
                 <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
                   <span style="color:var(--text-secondary);">${s.label}</span>
@@ -701,11 +703,22 @@ const Modals = {
           <div class="pdp-accordion-body">
             <div style="margin-bottom:8px;"><strong style="color:white;">Delivery:</strong> Addis Ababa: ${State.formatETB(product.addis_delivery_fee || 150)} · Regional: ${State.formatETB(product.regional_dispatch_fee || 400)}</div>
             <div style="margin-bottom:8px;"><strong style="color:white;">Free shipping:</strong> On orders over ${State.formatETB(product.free_delivery_threshold || 2000)}</div>
-            <div style="margin-bottom:8px;"><strong style="color:white;">Returns:</strong> ${State.policyLabel(product.return_policy_type)}</div>
-            <div>${product.custom_policy_text || 'Contact the store for full policy details. All purchases are covered by the store\'s return policy.'}</div>
+            ${product.shipping_info ? `<div style="margin-bottom:8px;"><strong style="color:white;">Seller shipping notes:</strong> ${this._escapeHtml(product.shipping_info)}</div>` : ''}
+            ${product.duty_info ? `<div style="margin-bottom:8px;"><strong style="color:white;">Duty &amp; customs:</strong> ${this._escapeHtml(product.duty_info)}</div>` : ''}
+            <div style="margin-bottom:8px;"><strong style="color:white;">Returns:</strong> ${product.return_info ? this._escapeHtml(product.return_info) : State.policyLabel(product.return_policy_type)}</div>
+            <div>${product.return_info ? '' : (product.custom_policy_text || 'Contact the store for full policy details. All purchases are covered by the store\'s return policy.')}</div>
           </div>
         </div>
       </div>`;
+  },
+
+  _escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   },
 
   _toggleAccordion(header) {
@@ -849,6 +862,31 @@ const Modals = {
       <div class="form-group">
         <label class="form-label">Description</label>
         <textarea class="form-textarea" id="prodDesc">${isEdit ? (product.description || '') : ''}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Product Story <span style="color:var(--danger);">*</span></label>
+        <textarea class="form-textarea" id="prodStory" placeholder="Tell buyers the story behind this product — inspiration, craftsmanship, best use...">${isEdit ? (product.product_story || '') : ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Specifications <span style="color:var(--danger);">*</span></label>
+        <textarea class="form-textarea" id="prodSpecs" placeholder="Key specs, dimensions, weight, technical details (one per line)">${isEdit ? (product.specifications || '') : ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Materials <span style="color:var(--danger);">*</span></label>
+        <textarea class="form-textarea" id="prodMaterials" placeholder="e.g. 100% cotton, genuine leather, aluminum alloy">${isEdit ? (product.materials || '') : ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Shipping Info</label>
+        <textarea class="form-textarea" id="prodShipping" placeholder="Lead time, handling notes, dispatch details (optional — store policy applies if blank)">${isEdit ? (product.shipping_info || '') : ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Duty / Customs</label>
+        <textarea class="form-textarea" id="prodDuty" placeholder="Import duty, customs, or tax notes (optional)">${isEdit ? (product.duty_info || '') : ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Returns (per product)</label>
+        <textarea class="form-textarea" id="prodReturn" placeholder="Product-specific return notes (optional — store policy applies if blank)">${isEdit ? (product.return_info || '') : ''}</textarea>
       </div>
 
       <!-- Image URLs -->

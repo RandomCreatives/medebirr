@@ -13,14 +13,19 @@ const pool = new Pool({
 });
 
 async function run() {
-  const sql = fs.readFileSync(path.join(__dirname, 'migration_1.2.0.sql'), 'utf8');
-  try {
-    await pool.query(sql);
-    console.log('Migration 1.2.0 applied successfully');
-  } catch (err) {
-    console.error('Migration failed:', err.message);
-  } finally {
-    await pool.end();
+  const dir = __dirname;
+  const files = fs.readdirSync(dir)
+    .filter(f => /^migration_.*\.sql$/.test(f))
+    .sort();
+  for (const file of files) {
+    const sql = fs.readFileSync(path.join(dir, file), 'utf8');
+    try {
+      await pool.query(sql);
+      console.log(`${file} applied successfully`);
+    } catch (err) {
+      console.error(`Migration ${file} failed:`, err.message);
+    }
   }
+  await pool.end();
 }
 run();
