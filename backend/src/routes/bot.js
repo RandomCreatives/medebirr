@@ -154,11 +154,12 @@ router.post('/webhook', async (req, res) => {
   try {
     // Verify Telegram secret token to prevent fake updates
     const secretToken = process.env.TELEGRAM_WEBHOOK_SECRET;
-    if (secretToken) {
-      const provided = req.headers['x-telegram-bot-api-secret-token'];
-      if (provided !== secretToken) {
-        return res.status(403).json({ error: 'Invalid secret token' });
-      }
+    const provided = req.headers['x-telegram-bot-api-secret-token'];
+    if (process.env.NODE_ENV === 'production' && !secretToken) {
+      return res.status(500).json({ error: 'Webhook secret is not configured' });
+    }
+    if (secretToken && provided !== secretToken) {
+      return res.status(403).json({ error: 'Invalid secret token' });
     }
 
     const update = req.body;

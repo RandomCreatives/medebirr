@@ -38,24 +38,46 @@ const reviewRoutes = require('../backend/src/routes/reviews');
 const paymentMethodRoutes = require('../backend/src/routes/payment-methods');
 const couponRoutes = require('../backend/src/routes/coupons');
 const settingsRoutes = require('../backend/src/routes/settings');
-const pendingProductRoutes = require('../backend/src/routes/pending-products');
 const imageRoutes = require('../backend/src/routes/images');
 const deliveryRoutes = require('../backend/src/routes/delivery');
 const errorHandler = require('../backend/src/middleware/errorHandler');
 
 // ─── Validate required env vars at startup ──────────────────────────────────
-if (!process.env.JWT_SECRET) {
-  console.error('❌ FATAL: JWT_SECRET is not set. Auth will fail.');
-}
-if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
-  console.error('❌ FATAL: DATABASE_URL (or POSTGRES_URL) is not set. DB queries will fail.');
-}
-if (!process.env.TELEGRAM_BOT_TOKEN) {
-  console.warn('⚠️ TELEGRAM_BOT_TOKEN is not set. Bot features will not work.');
-}
-if (!process.env.TELEGRAM_WEBHOOK_SECRET) {
-  console.warn('⚠️ TELEGRAM_WEBHOOK_SECRET is not set. Bot webhook is not authenticated — anyone can send fake updates.');
-}
+const validateEnv = () => {
+  const isProd = process.env.NODE_ENV === 'production';
+  const missing = [];
+  const warnings = [];
+
+  const required = [
+    'JWT_SECRET',
+    'DATABASE_URL',
+    'TELEGRAM_BOT_TOKEN',
+    'TELEGRAM_WEBHOOK_SECRET',
+    'SUPABASE_SERVICE_ROLE_KEY',
+    'TELEBIRR_APP_ID',
+    'TELEBIRR_APP_SECRET'
+  ];
+
+  for (const v of required) {
+    if (!process.env[v]) {
+      if (isProd) {
+        missing.push(v);
+      } else {
+        warnings.push(v);
+      }
+    }
+  }
+
+  if (warnings.length > 0) {
+    console.warn(`⚠️ WARNING: Missing development environment variables: ${warnings.join(', ')}`);
+  }
+
+  if (missing.length > 0) {
+    console.error(`❌ FATAL: Missing critical production environment variables: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+};
+validateEnv();
 
 const app = express();
 const isProd = process.env.NODE_ENV === 'production';
@@ -118,7 +140,6 @@ app.use('/api/v1/users/me/settings', settingsRoutes);
 app.use('/api/v1/bot', botRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/coupons', couponRoutes);
-app.use('/api/v1/pending-products', pendingProductRoutes);
 app.use('/api/v1/images', imageRoutes);
 app.use('/api/v1/delivery', deliveryRoutes);
 
