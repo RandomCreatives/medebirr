@@ -72,7 +72,7 @@ const BuyerViews = {
             <div class="item-title">${p.title}</div>
             <div class="item-location">📍 ${p.location_sub_city || 'Addis Ababa'} ${p.verified_badge ? '<span class="verified-check">✓</span>' : ''}</div>
           </div>
-          <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <div style="display:flex;align-items:baseline;gap:4px;">
               <span class="item-price">${State.formatETB(p.price_etb)}</span>${compare}
             </div>
@@ -102,12 +102,13 @@ const BuyerViews = {
             <div class="item-title">${p.title}</div>
             <div class="item-location">📍 ${p.location_sub_city || 'Addis Ababa'} ${p.verified_badge ? '<span class="verified-check">✓</span>' : ''}</div>
           </div>
-          <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <div style="display:flex;align-items:baseline;gap:4px;">
               <span class="item-price">${State.formatETB(p.price_etb)}</span>${compare}
             </div>
             <button class="item-cart-btn" aria-label="Add to cart" title="Add to cart"
                     onclick="event.stopPropagation();App.addToCart('${p.product_id}')">🛒</button>
+          </div>
           <div style="display:flex;gap:6px;margin-top:8px;">
             <button onclick="event.stopPropagation();Modals.openShareProduct('${p.product_id}','${p.store_id}')" style="flex:1;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:8px;font-size:11px;font-weight:700;color:#60A5FA;cursor:pointer;">📤 Share</button>
             <button onclick="event.stopPropagation();Modals.openChat(null,'${p.store_id}','${p.product_id}')" style="flex:1;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:8px;font-size:11px;font-weight:700;color:var(--success);cursor:pointer;">💬 Chat</button>
