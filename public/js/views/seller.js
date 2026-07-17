@@ -353,12 +353,14 @@ const SellerViews = {
           <input type="number" class="form-input" id="regionalFee" value="${store.regional_dispatch_fee || 400}" />
         </div>
       </div>
-      <button class="btn-secondary" style="width:100%;" onclick="App.savePolicy()">💾 Save Store Policy</button>
+      <button class="btn-secondary" style="width:100%;" onclick="App.savePolicy()">💾 Save Store Policy</button>`;
 
-      <div style="margin-top:16px;">
-        <div style="font-size:13px;font-weight:800;margin-bottom:12px;">🎁 Coupon & Group Buying</div>
+    // ── Promotions (Coupon & Group Buying) ──
+    const promotions = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Grow sales with share-to-save coupons and group-buy discounts.</div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <div>
             <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📤 Share-to-Save Coupons</div>
             <div style="font-size:11px;color:var(--text-secondary);">Customers earn a coupon when they share a product N times.</div>
@@ -375,21 +377,23 @@ const SellerViews = {
             <input type="number" class="form-input" id="shareDiscount" value="${cp.share_discount}" placeholder="5" />
           </div>
         </div>
-        <div class="form-group" style="margin-bottom:12px;">
+        <div class="form-group" style="margin-bottom:0;">
           <label class="form-label">Coupon Valid (days)</label>
           <input type="number" class="form-input" id="couponValidityDays" value="${cp.coupon_validity_days}" placeholder="7" />
         </div>
+      </div>
 
-        <hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <div>
             <div style="font-size:13px;font-weight:800;margin-bottom:2px;">👥 Group Buying</div>
             <div style="font-size:11px;color:var(--text-secondary);">Customers can form a group to buy together and get a discount.</div>
           </div>
           ${this._toggle('groupBuyToggle', cp.group_buy_active)}
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0;">
           <div class="form-group">
             <label class="form-label">Min Members</label>
             <input type="number" class="form-input" id="groupMinMembers" value="${cp.group_min_members}" placeholder="3" />
@@ -399,8 +403,9 @@ const SellerViews = {
             <input type="number" class="form-input" id="groupDiscount" value="${cp.group_discount}" placeholder="10" />
           </div>
         </div>
-        <button class="btn-secondary" style="width:100%;" onclick="App.saveCouponPolicy()">💾 Save Coupon Settings</button>
-      </div>`;
+      </div>
+
+      <button class="btn-secondary" style="width:100%;" onclick="App.saveCouponPolicy()">💾 Save Promotions</button>`;
 
     // ── Automation ──
     const automation = `
@@ -465,10 +470,11 @@ const SellerViews = {
       identity:   { title: 'Store Identity',     icon: '🏪', body: identity },
       payout:     { title: 'Payout & Payment',   icon: '💳', body: payout },
       policies:   { title: 'Store Policies',     icon: '📋', body: policies },
+      promotions: { title: 'Coupons & Group Buy', icon: '🎁', body: promotions },
       automation: { title: 'Automation',         icon: '⚙️', body: automation },
       account:    { title: 'Account & Safety',   icon: '🔒', body: account }
     };
-    const order = ['identity', 'payout', 'policies', 'automation', 'account'];
+    const order = ['identity', 'payout', 'policies', 'promotions', 'automation', 'account'];
 
     // ── Detail view (a single section with a back button) ──
     if (State.sellerSettingsSection && sections[State.sellerSettingsSection]) {
