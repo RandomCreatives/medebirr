@@ -12,6 +12,7 @@ const State = {
   currentTab: 'explore',
   currentStoreId: null,
   profileSubSection: null,  // null = hub, 'profile'|'address'|'payment'|'orders'|'coupons'|'settings'|'help'|'privacy'
+  sellerSettingsSection: null, // null = menu list, else 'identity'|'payout'|'policies'|'automation'|'account'
 
   // Language
   language: 'en',

@@ -106,6 +106,37 @@
 }
 .settings-section-body { display: block; }
 
+/* Settings menu (list of sections) */
+.settings-menu { display: flex; flex-direction: column; gap: 8px; }
+.settings-menu-row {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 14px 16px; cursor: pointer;
+  text-align: left; transition: background 0.15s;
+}
+.settings-menu-row:hover, .settings-menu-row:active { background: var(--bg-hover); }
+.settings-menu-icon {
+  width: 34px; height: 34px; border-radius: 10px; background: var(--bg-hover);
+  display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.settings-menu-label {
+  flex: 1; font-size: 14px; font-weight: 700; color: var(--text-primary);
+}
+.settings-menu-arrow { font-size: 22px; color: var(--text-muted); line-height: 1; }
+
+/* Settings detail (drill-down) header with back button */
+.settings-detail-header {
+  display: grid; grid-template-columns: 32px 1fr 32px; align-items: center;
+  padding: 12px 16px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+}
+.settings-detail-title {
+  font-size: 15px; font-weight: 800; text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.settings-detail-header .pdp-back-btn {
+  position: static; transform: none; width: 32px; height: 32px;
+}
+
 /* iOS-style toggle driven by :checked (no JS needed for visuals) */
 .settings-toggle input:checked + span { background: var(--accent) !important; }
 .settings-toggle input:checked + span > span { left: 22px !important; }

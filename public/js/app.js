@@ -607,6 +607,7 @@ const App = {
   async switchTab(tab) {
     State.currentTab = tab;
     State.profileSubSection = null;
+    State.sellerSettingsSection = null;
     if (tab === 'orders' && !State.myOrders.length) {
       await this.refreshOrders();
     }

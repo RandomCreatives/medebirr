@@ -254,15 +254,6 @@ const SellerViews = {
     const storeUrl = `${window.location.origin}${window.location.pathname}?store=${store.store_code}`;
     const tgConnected = !!store.tg_channel_username;
 
-    const section = (title, icon, body, opts = '') => `
-      <div class="settings-section" ${opts}>
-        <div class="settings-section-head">
-          <span class="settings-section-icon">${icon}</span>
-          <span class="settings-section-title">${title}</span>
-        </div>
-        <div class="settings-section-body">${body}</div>
-      </div>`;
-
     // ── Identity ──
     const identity = `
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
@@ -469,14 +460,57 @@ const SellerViews = {
         Log Out
       </button>`;
 
+    // ── Section registry ──
+    const sections = {
+      identity:   { title: 'Store Identity',     icon: '🏪', body: identity },
+      payout:     { title: 'Payout & Payment',   icon: '💳', body: payout },
+      policies:   { title: 'Store Policies',     icon: '📋', body: policies },
+      automation: { title: 'Automation',         icon: '⚙️', body: automation },
+      account:    { title: 'Account & Safety',   icon: '🔒', body: account }
+    };
+    const order = ['identity', 'payout', 'policies', 'automation', 'account'];
+
+    // ── Detail view (a single section with a back button) ──
+    if (State.sellerSettingsSection && sections[State.sellerSettingsSection]) {
+      const s = sections[State.sellerSettingsSection];
+      container.innerHTML = `
+        <div class="settings-detail-header">
+          <button class="pdp-back-btn" onclick="SellerViews._backToSettingsMenu()" aria-label="Back">&#8249;</button>
+          <div class="settings-detail-title">${s.icon} ${s.title}</div>
+          <div style="width:28px;"></div>
+        </div>
+        <div style="padding:4px 0 8px;">${s.body}</div>
+      `;
+      return;
+    }
+
+    // ── Menu list view ──
+    const rows = order.map(key => {
+      const s = sections[key];
+      return `
+        <button class="settings-menu-row" onclick="SellerViews._openSettingsSection('${key}')">
+          <span class="settings-menu-icon">${s.icon}</span>
+          <span class="settings-menu-label">${s.title}</span>
+          <span class="settings-menu-arrow">›</span>
+        </button>`;
+    }).join('');
+
     container.innerHTML = `
       <div class="section-header"><span class="section-title">👤 Account &amp; Settings</span></div>
-      ${section('Store Identity', '🏪', identity)}
-      ${section('Payout & Payment', '💳', payout)}
-      ${section('Store Policies', '📋', policies)}
-      ${section('Automation', '⚙️', automation)}
-      ${section('Account & Safety', '🔒', account)}
+      <div class="settings-menu">${rows}</div>
     `;
+  },
+
+  _openSettingsSection(key) {
+    State.sellerSettingsSection = key;
+    const body = document.getElementById('appBody');
+    if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
+  },
+
+  _backToSettingsMenu() {
+    State.sellerSettingsSection = null;
+    const body = document.getElementById('appBody');
+    if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
   },
 
   // Reusable iOS-style toggle markup. `onchange` (optional) wires the live
