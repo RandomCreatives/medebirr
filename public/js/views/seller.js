@@ -594,5 +594,18 @@ const SellerViews = {
         <button class="btn-primary" onclick="App.switchTab('dashboard')" style="width:100%;">📊 Back to Dashboard</button>
       </div>
     `;
+  },
+
+  // ── Combined Account & Settings (opened from the 3-dots menu) ──
+  // Replaces the old seller "Profile" bottom-nav tab: store profile/account
+  // info on top, store policy & settings below.
+  renderSellerMenu(container) {
+    container.innerHTML = `
+      <div class="section-header"><span class="section-title">👤 Account &amp; Settings</span></div>
+      <div id="sellerMenuProfile"></div>
+      <div id="sellerMenuPolicy"></div>
+    `;
+    this.renderProfile(container.querySelector('#sellerMenuProfile'));
+    this.renderPolicy(container.querySelector('#sellerMenuPolicy'));
   }
 };

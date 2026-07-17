@@ -457,14 +457,18 @@ const App = {
     const badge = document.getElementById('roleBadge');
     const sub   = document.getElementById('roleSub');
     const btn   = document.getElementById('roleSwitchBtn');
+    const shopName = document.getElementById('roleShopName');
+    const menuBtn = document.getElementById('roleMenuBtn');
     const searchWrap = document.getElementById('roleSearchWrap');
     const isSeller = State.stores.length > 0;
 
     if (State.role === 'buyer') {
-      // Show search bar, hide badge
+      // Show search bar, hide seller-only bits
       if (searchWrap) searchWrap.style.display = 'flex';
       if (badge) badge.style.display = 'none';
       if (sub) sub.style.display = 'none';
+      if (shopName) shopName.style.display = 'none';
+      if (menuBtn) menuBtn.style.display = 'none';
 
       if (isSeller) {
         btn.innerHTML = `🏬 ${State.t('badgeSeller')} →`;
@@ -475,13 +479,17 @@ const App = {
       }
 
     } else {
-      // Seller mode: hide search, show badge
+      // Seller mode: hide search + old badge; show shop name + Explore Hub + menu
       if (searchWrap) searchWrap.style.display = 'none';
-      badge.className = 'role-badge seller-badge';
-      badge.innerHTML = `🏬 ${State.t('badgeSeller')}`;
-      badge.style.display = '';
-      sub.textContent = State.stores[0]?.store_name || 'Your Shop Dashboard';
-      sub.style.display = '';
+      if (badge) badge.style.display = 'none';
+      if (sub) sub.style.display = 'none';
+
+      if (shopName) {
+        shopName.textContent = State.stores[0]?.store_name || 'Your Shop';
+        shopName.style.display = '';
+      }
+      if (menuBtn) menuBtn.style.display = '';
+
       btn.innerHTML = `🛒 ${State.t('tabExplore')} Hub →`;
       btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#60A5FA;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;';
       btn.onclick = () => App.toggleRole();
@@ -492,6 +500,15 @@ const App = {
     if (searchInput && searchInput.value !== State.searchQuery) {
       searchInput.value = State.searchQuery;
     }
+  },
+
+  // Open the Store Policy & Settings page (3-dots menu in the seller header)
+  openSellerSettings() {
+    if (!State.currentStoreId) {
+      this.toast('No store selected', 'error');
+      return;
+    }
+    this.switchTab('policy');
   },
 
   renderNavigation() {
@@ -559,10 +576,6 @@ const App = {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
           Items
         </button>
-        <button class="nav-item ${State.currentTab==='profile'?'active':''}" onclick="App.switchTab('profile')">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Profile
-        </button>
         <button class="nav-item ${State.currentTab==='dispatch'?'active':''}" onclick="App.switchTab('dispatch')">
           ${pendingCount > 0 ? `<span class="nav-badge">${pendingCount}</span>` : ''}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
@@ -584,7 +597,7 @@ const App = {
       if (State.currentTab === 'dashboard')  SellerViews.renderDashboard(body);
       else if (State.currentTab === 'pending')    SellerViews.renderPending(body);
       else if (State.currentTab === 'inventory')  SellerViews.renderInventory(body);
-      else if (State.currentTab === 'profile')    SellerViews.renderProfile(body);
+      else if (State.currentTab === 'policy')     SellerViews.renderSellerMenu(body);
       else if (State.currentTab === 'dispatch')   SellerViews.renderDispatch(body);
     }
     document.getElementById('appBody').scrollTop = 0;
@@ -625,6 +638,15 @@ const App = {
     }
     if (tab === 'dispatch' && State.role === 'seller') {
       if (!State.storeOrders.length) await this.loadSellerData();
+      this.loadCouponPolicy();
+    }
+    if (tab === 'policy' && State.role === 'seller') {
+      if (!State.storeDetail && State.currentStoreId) {
+        try {
+          const d = await Api.stores.get(State.currentStoreId);
+          State.storeDetail = d.store;
+        } catch (e) {}
+      }
       this.loadCouponPolicy();
     }
     this.render();

@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const { requireAuth, requireSellerOf } = require('../middleware/auth');
 const { query, getClient } = require('../db');
 const { generateOTP } = require('../utils/otp');
+const inventory = require('../services/inventory');
 
 const router = express.Router();
 
@@ -680,26 +681,8 @@ router.put('/:orderId/confirm-delivery', requireAuth, async (req, res, next) => 
       [req.params.orderId]
     );
 
-    // Release reserved stock and increment order count
-    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
-    for (const item of items.rows) {
-      await query(
-        `UPDATE products SET
-          reserved_stock = GREATEST(0, reserved_stock - $1),
-          order_count = order_count + $1
-         WHERE product_id = $2`,
-        [item.quantity, item.product_id]
-      );
-    }
-
-    // Update store total_orders and total_revenue
-    await query(
-      `UPDATE stores SET
-        total_orders = total_orders + 1,
-        total_revenue = total_revenue + (SELECT total_etb FROM orders WHERE order_id = $1)
-       WHERE store_id = (SELECT store_id FROM orders WHERE order_id = $1)`,
-      [req.params.orderId]
-    );
+    // Release reserved stock, increment order count, update store stats
+    await inventory.completeDelivery(req.params.orderId, ord.total_etb, ord.store_id);
 
     // Notify buyer
     try {
@@ -741,15 +724,7 @@ router.patch('/:orderId/cancel', requireAuth, async (req, res, next) => {
     );
 
     // Release reserved stock
-    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
-    for (const item of items.rows) {
-      await query(
-        `UPDATE products SET
-          reserved_stock = GREATEST(0, reserved_stock - $1)
-         WHERE product_id = $2`,
-        [item.quantity, item.product_id]
-      );
-    }
+    await inventory.releaseReservedStock(req.params.orderId);
 
     // Notify buyer
     try {
@@ -791,13 +766,7 @@ router.patch('/:orderId/cancel-seller', requireAuth, async (req, res, next) => {
     );
 
     // Release reserved stock
-    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
-    for (const item of items.rows) {
-      await query(
-        `UPDATE products SET reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2`,
-        [item.quantity, item.product_id]
-      );
-    }
+    await inventory.releaseReservedStock(req.params.orderId);
 
     // Notify buyer via Telegram
     try {

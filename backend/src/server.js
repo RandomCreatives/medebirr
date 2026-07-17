@@ -18,18 +18,14 @@ const validateEnv = () => {
 
   for (const v of required) {
     if (!process.env[v]) {
-      if (isProd) {
-        missing.push(v);
-      } else {
-        warnings.push(v);
-      }
+      if (isProd) missing.push(v);
+      else warnings.push(v);
     }
   }
 
   if (warnings.length > 0) {
     console.warn(`⚠️ WARNING: Missing development environment variables: ${warnings.join(', ')}`);
   }
-
   if (missing.length > 0) {
     console.error(`❌ FATAL: Missing critical production environment variables: ${missing.join(', ')}`);
     process.exit(1);
@@ -42,110 +38,11 @@ if (process.env.NODE_ENV === 'production' && process.env.BYPASS_TELEGRAM_AUTH ==
   console.warn('⚠️ BYPASS_TELEGRAM_AUTH=true in production — mock login is enabled for browser testing.');
 }
 
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-const path = require('path');
+const { createApp } = require('./app');
 
-// Route imports
-const authRoutes = require('./routes/auth');
-const storeRoutes = require('./routes/stores');
-const productRoutes = require('./routes/products');
-const orderRoutes = require('./routes/orders');
-const paymentRoutes = require('./routes/payments');
-const userRoutes = require('./routes/users');
-const botRoutes = require('./routes/bot');
-const reviewRoutes = require('./routes/reviews');
-const paymentMethodRoutes = require('./routes/payment-methods');
-const couponRoutes = require('./routes/coupons');
-const settingsRoutes = require('./routes/settings');
-const deliveryRoutes = require('./routes/delivery');
-const socialRoutes = require('./routes/social');
-const errorHandler = require('./middleware/errorHandler');
-
-const app = express();
+const app = createApp({ serveStatic: true });
 const PORT = process.env.PORT || 3000;
 
-// ─── Security & Middleware ────────────────────────────────────────────────────
-app.use(helmet({
-  contentSecurityPolicy: false, // Disabled for TMA compatibility
-  crossOriginEmbedderPolicy: false
-}));
-
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? [process.env.FRONTEND_URL]
-    : true, // Allow all origins in development
-  credentials: true
-}));
-
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-
-// ─── Rate Limiting ────────────────────────────────────────────────────────────
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many requests, please try again later' }
-});
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 30,
-  message: { error: 'Too many auth attempts' }
-});
-
-app.use('/api/', apiLimiter);
-app.use('/api/v1/auth', authLimiter);
-
-// ─── Static Frontend ──────────────────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, '../../public')));
-
-// ─── API Routes ───────────────────────────────────────────────────────────────
-app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/stores', storeRoutes);
-app.use('/api/v1/products', productRoutes);
-app.use('/api/v1/orders', orderRoutes);
-app.use('/api/v1/payments', paymentRoutes);
-app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/users/me/payment-methods', paymentMethodRoutes);
-app.use('/api/v1/users/me/settings', settingsRoutes);
-app.use('/api/v1/bot', botRoutes);
-app.use('/api/v1/reviews', reviewRoutes);
-app.use('/api/v1/coupons', couponRoutes);
-app.use('/api/v1/delivery', deliveryRoutes);
-app.use('/api/v1/social', socialRoutes);
-
-// ─── Health Check ─────────────────────────────────────────────────────────────
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    service: 'e-Merkato API',
-    version: '1.2.2',
-    timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV
-  });
-});
-
-// ─── API 404 ──────────────────────────────────────────────────────────────────
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ error: `API route not found: ${req.method} ${req.path}` });
-});
-
-// ─── SPA Catch-all (serve frontend for all non-API routes) ────────────────────
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../public/index.html'));
-});
-
-// ─── Global Error Handler ─────────────────────────────────────────────────────
-app.use(errorHandler);
-
-// ─── Start Server ─────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════════════╗

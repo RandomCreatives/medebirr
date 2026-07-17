@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<link rel="stylesheet" href="css/app.css?v=8">
+<link rel="stylesheet" href="css/app.css?v=a33b1e1">
 <script>
   // Apply theme instantly before render (prevent flash)
   const t = localStorage.getItem('em_theme');
@@ -84,10 +84,15 @@
              oninput="App.handleSearch(this.value)" />
     </div>
     <span class="role-badge buyer-badge" id="roleBadge" style="display:none;">🛒 Buyer Hub</span>
+    <span class="role-shop-name" id="roleShopName" style="display:none;"></span>
     <div class="role-sub" id="roleSub" style="display:none;"></div>
     <button class="role-switch-btn" id="roleSwitchBtn" onclick="App.toggleRole()">
       Seller Studio
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+    <button class="role-menu-btn" id="roleMenuBtn" style="display:none;"
+            onclick="App.openSellerSettings()" aria-label="Account and settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
     </button>
   </div>
 
@@ -111,7 +116,7 @@
 
   <!-- Branding Footer -->
   <div class="app-footer">
-    Random Creatives Studio · v1.2.2 · © 2018 E.C.
+    Random Creatives Studio · v1.3.0 · © 2018 E.C.
   </div>
 
 </div>
@@ -122,12 +127,12 @@
 </div>
 
 <!-- Core app logic -->
-<script src="js/api.js?v=8"></script>
-<script src="js/state.js?v=5"></script>
-<script src="js/views/buyer.js?v=9"></script>
-<script src="js/views/seller.js?v=6"></script>
-<script src="js/views/modals.js?v=6"></script>
-<script src="js/views/checkout.js?v=4"></script>
-<script src="js/app.js?v=9"></script>
+<script src="js/api.js?v=a33b1e1"></script>
+<script src="js/state.js?v=a33b1e1"></script>
+<script src="js/views/buyer.js?v=a33b1e1"></script>
+<script src="js/views/seller.js?v=a33b1e1"></script>
+<script src="js/views/modals.js?v=a33b1e1"></script>
+<script src="js/views/checkout.js?v=a33b1e1"></script>
+<script src="js/app.js?v=a33b1e1"></script>
 </body>
 </html>

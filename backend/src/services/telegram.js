@@ -271,20 +271,10 @@ async function downloadProductImages(photoArray, storeId, pendingId, botToken = 
   if (!botToken) throw new Error('TELEGRAM_BOT_TOKEN not set');
 
   const urls = [];
-  // Take up to 5 images (Telegram sends multiple sizes per photo, pick the largest = last)
-  const uniquePhotos = [];
-  const seenFileIds = new Set();
-  for (const p of photoArray) {
-    // Each "photo" in the array is a different size of the SAME image
-    // Telegram sends: [{file_id: "small"}, {file_id: "medium"}, {file_id: "large"}]
-    // We want the largest (last one) for each unique image
-    // But if multiple photos are sent, we get multiple arrays
-    // Actually, message.photo IS the array of sizes for ONE image
-    // To detect multiple images, we'd need media_group_id — but that's complex
-    // For now, each message has one photo array = one image, pick the largest
-  }
 
-  // Pick the largest size (last element)
+  // message.photo is an array of size variants of a SINGLE image; pick the
+  // largest (last) variant to download. Multiple distinct photos would arrive
+  // as a media_group and are handled one message at a time by the caller.
   const largestPhoto = photoArray[photoArray.length - 1];
   if (!largestPhoto?.file_id) return urls;
 

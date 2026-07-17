@@ -5,6 +5,7 @@ const { requireAuth } = require('../middleware/auth');
 const { query } = require('../db');
 const qrService = require('../services/qrcode');
 const receiptService = require('../services/receipt');
+const inventory = require('../services/inventory');
 
 const router = express.Router();
 
@@ -236,16 +237,7 @@ router.post('/telebirr/webhook', async (req, res, next) => {
       );
 
       // Actual stock deduction (remove reservation, reduce actual stock)
-      const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [tx.order_id]);
-      for (const item of items.rows) {
-        await query(
-          `UPDATE products SET
-            stock_quantity = GREATEST(0, stock_quantity - $1),
-            reserved_stock = GREATEST(0, reserved_stock - $1)
-           WHERE product_id = $2`,
-          [item.quantity, item.product_id]
-        );
-      }
+      await inventory.deductStock(tx.order_id);
 
       console.log(`✅ Telebirr payment confirmed: Order ${tx.order_id}, TX: ${transactionNo}`);
 
@@ -308,13 +300,7 @@ router.post('/telebirr/webhook', async (req, res, next) => {
       );
 
       // Release reserved stock on failure
-      const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [tx.order_id]);
-      for (const item of items.rows) {
-        await query(
-          'UPDATE products SET reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2',
-          [item.quantity, item.product_id]
-        );
-      }
+      await inventory.releaseReservedStock(tx.order_id);
     }
 
     res.json({ code: 'SUCCESS', msg: 'OK' });
@@ -348,13 +334,7 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
       [order_id]
     );
 
-    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [order_id]);
-    for (const item of items.rows) {
-      await query(
-        `UPDATE products SET stock_quantity = GREATEST(0, stock_quantity - $1), reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2`,
-        [item.quantity, item.product_id]
-      );
-    }
+    await inventory.deductStock(order_id);
 
     // Generate QR + receipt for confirmed order
     try { await generateQRAndReceipt(order_id); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
@@ -447,13 +427,7 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
       [txRef, txRef, paymentProof ? JSON.stringify(paymentProof) : null, orderId]
     );
 
-    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [orderId]);
-    for (const item of items.rows) {
-      await query(
-        `UPDATE products SET stock_quantity = GREATEST(0, stock_quantity - $1), reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2`,
-        [item.quantity, item.product_id]
-      );
-    }
+    await inventory.deductStock(orderId);
 
     try { await generateQRAndReceipt(orderId); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
 

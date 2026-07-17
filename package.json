@@ -9,6 +9,8 @@
     "migrate": "cd backend && node src/db/migrate.js",
     "seed": "cd backend && node src/db/seed.js",
     "test": "cd backend && npm test",
+    "bump-cache": "node scripts/bump-cache.js",
+    "build": "node scripts/bump-cache.js",
     "install:backend": "cd backend && npm install"
   },
   "dependencies": {
@@ -26,8 +28,7 @@
     "pdfkit": "^0.19.1",
     "pg": "8.13.0",
     "qrcode": "^1.5.4",
-    "tesseract.js": "^5.1.1",
-    "uuid": "^11.1.1"
+    "tesseract.js": "^5.1.1"
   },
   "engines": {
     "node": ">=18.0.0"

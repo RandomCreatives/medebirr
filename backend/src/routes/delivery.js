@@ -10,6 +10,7 @@ const tg = require('../services/telegram');
 const qrService = require('../services/qrcode');
 const receiptService = require('../services/receipt');
 const { withinRadius } = require('../utils/geo');
+const inventory = require('../services/inventory');
 
 const router = express.Router();
 
@@ -116,13 +117,7 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
         );
 
         // Release reserved stock
-        const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
-        for (const item of items.rows) {
-          await query(
-            'UPDATE products SET reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2',
-            [item.quantity, item.product_id]
-          );
-        }
+        await inventory.releaseReservedStock(req.params.orderId);
 
         // Notify all parties
         await notifyReturnInitiated(order);
@@ -167,24 +162,7 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
         [req.params.orderId]
       );
 
-      // Update store stats
-      await query(
-        `UPDATE stores SET
-          total_orders = total_orders + 1,
-          total_revenue = total_revenue + $1,
-          updated_at = NOW()
-         WHERE store_id = $2`,
-        [order.total_etb, order.store_id]
-      );
-
-      // Update product order counts and release reserved stock
-      const orderItems = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
-      for (const item of orderItems.rows) {
-        await query(
-          'UPDATE products SET order_count = order_count + $1, reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2',
-          [item.quantity, item.product_id]
-        );
-      }
+      await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
 
       deliveryComplete = true;
 
@@ -269,17 +247,7 @@ router.post('/:orderId/verify-otp', requireAuth, async (req, res, next) => {
          WHERE order_id = $1`,
         [req.params.orderId]
       );
-      await query(
-        `UPDATE stores SET total_orders = total_orders + 1, total_revenue = total_revenue + $1, updated_at = NOW() WHERE store_id = $2`,
-        [order.total_etb, order.store_id]
-      );
-      const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
-      for (const item of items.rows) {
-        await query(
-          'UPDATE products SET order_count = order_count + $1, reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2',
-          [item.quantity, item.product_id]
-        );
-      }
+      await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
       deliveryComplete = true;
       await notifyDeliveryComplete(order);
     }
@@ -334,24 +302,8 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
       [req.params.orderId]
     );
 
-    // Update store stats
-    await query(
-      `UPDATE stores SET
-        total_orders = total_orders + 1,
-        total_revenue = total_revenue + $1,
-        updated_at = NOW()
-       WHERE store_id = $2`,
-      [order.total_etb, order.store_id]
-    );
-
-    // Release reserved stock and update order counts
-    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
-    for (const item of items.rows) {
-      await query(
-        'UPDATE products SET reserved_stock = GREATEST(0, reserved_stock - $1), order_count = order_count + $1 WHERE product_id = $2',
-        [item.quantity, item.product_id]
-      );
-    }
+    // Update store stats + release reserved stock + update order counts
+    await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
 
     // Notify buyer
     try {
@@ -481,13 +433,7 @@ router.post('/:orderId/return', requireAuth, async (req, res, next) => {
     );
 
     // Release reserved stock
-    const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [req.params.orderId]);
-    for (const item of items.rows) {
-      await query(
-        'UPDATE products SET reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2',
-        [item.quantity, item.product_id]
-      );
-    }
+    await inventory.releaseReservedStock(req.params.orderId);
 
     // Notify parties
     await notifyReturnInitiated(order);
