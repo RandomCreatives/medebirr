@@ -667,16 +667,6 @@ const Modals = {
     return `
       <div class="pdp-accordion" id="pdpAccordion">
         <div class="pdp-accordion-item open">
-          <button class="pdp-accordion-header" onclick="Modals._toggleAccordion(this)" aria-expanded="true">
-            Product Story
-            <span class="pdp-accordion-arrow">▾</span>
-          </button>
-          <div class="pdp-accordion-body">
-            ${product.product_story ? this._escapeHtml(product.product_story) : (product.description || 'No description provided.')}
-          </div>
-        </div>
-
-        <div class="pdp-accordion-item">
           <button class="pdp-accordion-header" onclick="Modals._toggleAccordion(this)" aria-expanded="false">
             Specifications & Materials
             <span class="pdp-accordion-arrow">▾</span>
@@ -864,10 +854,6 @@ const Modals = {
         <textarea class="form-textarea" id="prodDesc">${isEdit ? (product.description || '') : ''}</textarea>
       </div>
 
-      <div class="form-group">
-        <label class="form-label">Product Story <span style="color:var(--danger);">*</span></label>
-        <textarea class="form-textarea" id="prodStory" placeholder="Tell buyers the story behind this product — inspiration, craftsmanship, best use...">${isEdit ? (product.product_story || '') : ''}</textarea>
-      </div>
       <div class="form-group">
         <label class="form-label">Specifications <span style="color:var(--danger);">*</span></label>
         <textarea class="form-textarea" id="prodSpecs" placeholder="Key specs, dimensions, weight, technical details (one per line)">${isEdit ? (product.specifications || '') : ''}</textarea>

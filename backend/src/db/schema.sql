@@ -106,7 +106,6 @@ CREATE TABLE IF NOT EXISTS products (
     tags            TEXT[],
     image_urls      TEXT[] DEFAULT '{}',
     variants        JSONB DEFAULT '[]', -- [{name: "Size", options: ["S","M","L"]}]
-    product_story   TEXT,                 -- Seller's Product Story section
     specifications  TEXT,                 -- Key specs (free text / bullet list)
     materials       TEXT,                 -- Materials composition
     shipping_info   TEXT,                 -- Per-product shipping notes

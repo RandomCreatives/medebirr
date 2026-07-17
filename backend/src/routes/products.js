@@ -196,7 +196,6 @@ router.post(
     body('price_etb').isFloat({ min: 0 }),
     body('stock_quantity').isInt({ min: 0 }),
     body('category').notEmpty(),
-    body('product_story').trim().notEmpty().withMessage('Product Story is required'),
     body('specifications').trim().notEmpty().withMessage('Specifications are required'),
     body('materials').trim().notEmpty().withMessage('Materials are required')
   ],
@@ -217,22 +216,22 @@ router.post(
       const {
         store_id, title, description, price_etb, compare_price,
         sku, stock_quantity, category, sub_category, tags,
-        image_urls, variants, is_published = false, is_featured = false,
-        product_story, specifications, materials, shipping_info, duty_info, return_info
+        image_urls, variants,         is_published = false, is_featured = false,
+        specifications, materials, shipping_info, duty_info, return_info
       } = req.body;
 
       const result = await query(
         `INSERT INTO products (
           store_id, title, description, price_etb, compare_price, sku,
           stock_quantity, category, sub_category, tags, image_urls, variants,
-          is_published, is_featured, product_story, specifications, materials,
+          is_published, is_featured, specifications, materials,
           shipping_info, duty_info, return_info
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
         RETURNING *`,
         [store_id, title, description || null, price_etb, compare_price || null,
          sku || null, stock_quantity, category, sub_category || null,
          tags || [], image_urls || [], JSON.stringify(variants || []),
-         is_published, is_featured, product_story || null, specifications || null,
+         is_published, is_featured, specifications || null,
          materials || null, shipping_info || null, duty_info || null, return_info || null]
       );
 
@@ -286,7 +285,7 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
       title, description, price_etb, compare_price, sku,
       stock_quantity, category, sub_category, tags,
       image_urls, variants, is_published, is_featured,
-      product_story, specifications, materials, shipping_info, duty_info, return_info
+      specifications, materials, shipping_info, duty_info, return_info
     } = req.body;
 
     const result = await query(
@@ -304,19 +303,18 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
         variants = COALESCE($11, variants),
         is_published = COALESCE($12, is_published),
         is_featured = COALESCE($13, is_featured),
-        product_story = COALESCE($14, product_story),
-        specifications = COALESCE($15, specifications),
-        materials = COALESCE($16, materials),
-        shipping_info = COALESCE($17, shipping_info),
-        duty_info = COALESCE($18, duty_info),
-        return_info = COALESCE($19, return_info),
+        specifications = COALESCE($14, specifications),
+        materials = COALESCE($15, materials),
+        shipping_info = COALESCE($16, shipping_info),
+        duty_info = COALESCE($17, duty_info),
+        return_info = COALESCE($18, return_info),
         updated_at = NOW()
-       WHERE product_id = $20
+       WHERE product_id = $19
        RETURNING *`,
       [title, description, price_etb, compare_price, sku,
        stock_quantity, category, sub_category, tags,
        image_urls, variants ? JSON.stringify(variants) : null,
-       is_published, is_featured, product_story, specifications,
+       is_published, is_featured, specifications,
        materials, shipping_info, duty_info, return_info, req.params.productId]
     );
 

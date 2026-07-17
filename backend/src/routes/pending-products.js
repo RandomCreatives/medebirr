@@ -54,7 +54,7 @@ router.put('/:id/complete', requireAuth, async (req, res, next) => {
     if (ownership.rows.length === 0) return res.status(404).json({ error: 'Pending product not found' });
 
     // NOTE: pending_products only stores the columns below. Rich product fields
-    // (product_story / specifications / materials / etc.) are passed at publish
+    // (specifications / materials / etc.) are passed at publish
     // time (see POST /publish) and inserted directly into the products table.
     const result = await query(
       `UPDATE pending_products SET
@@ -87,9 +87,9 @@ router.put('/:id/complete', requireAuth, async (req, res, next) => {
  * the store's Telegram group if linked.
  *
  * The draft (pending_products) only holds core fields. Seller-entered rich
- * detail (product_story / specifications / materials / shipping / duty /
+ * detail (specifications / materials / shipping / duty /
  * return / sku / variants) may be supplied in the request body and is inserted
- * straight into the products table. Story/specs/materials fall back to the
+ * straight into the products table. Specs/materials fall back to the
  * description so they satisfy the products table's NOT-empty requirement.
  */
 router.post('/:id/publish', requireAuth, async (req, res, next) => {
@@ -111,7 +111,6 @@ router.post('/:id/publish', requireAuth, async (req, res, next) => {
       return res.status(422).json({ error: 'Please complete the product details before publishing' });
     }
 
-    const story = body.product_story || pending.description || '';
     const specs = body.specifications || pending.description || '';
     const materials = body.materials || '';
 
@@ -119,14 +118,14 @@ router.post('/:id/publish', requireAuth, async (req, res, next) => {
       `INSERT INTO products (
          store_id, title, description, price_etb, compare_price, sku,
          stock_quantity, category, sub_category, tags, image_urls, variants,
-         is_published, is_featured, product_story, specifications, materials,
+         is_published, is_featured, specifications, materials,
          shipping_info, duty_info, return_info
-       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,TRUE,FALSE,$13,$14,$15,$16,$17,$18)
+       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,TRUE,FALSE,$13,$14,$15,$16,$17)
        RETURNING *`,
       [pending.store_id, pending.title, pending.description || null, pending.price_etb,
        pending.compare_price || null, body.sku || null, pending.stock_quantity || 0,
        pending.category, pending.sub_category || null, pending.tags || [], pending.image_urls || [],
-       JSON.stringify(body.variants || []), story, specs, materials,
+       JSON.stringify(body.variants || []), specs, materials,
        body.shipping_info || null, body.duty_info || null, body.return_info || null]
     );
     const product = result.rows[0];
