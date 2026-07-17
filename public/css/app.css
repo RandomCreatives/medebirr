@@ -94,6 +94,32 @@
   color: var(--text-primary) !important;
 }
 
+/* ── Seller Account & Settings (grouped) ── */
+.settings-section { margin-bottom: 16px; }
+.settings-section-head {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.settings-section-icon { font-size: 16px; }
+.settings-section-title {
+  font-size: 13px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.6px; color: var(--text-secondary);
+}
+.settings-section-body { display: block; }
+
+/* iOS-style toggle driven by :checked (no JS needed for visuals) */
+.settings-toggle input:checked + span { background: var(--accent) !important; }
+.settings-toggle input:checked + span > span { left: 22px !important; }
+
+/* Logout button (matches buyer settings style) */
+.settings-logout-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--bg-surface); border: 1px solid var(--border);
+  color: var(--danger); font-size: 14px; font-weight: 800;
+  border-radius: var(--radius-md); padding: 13px; cursor: pointer; width: 100%;
+  transition: all 0.2s;
+}
+.settings-logout-btn:hover { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); }
+
 * { box-sizing: border-box; margin: 0; padding: 0;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     -webkit-tap-highlight-color: transparent; }
