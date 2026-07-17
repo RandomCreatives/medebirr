@@ -350,7 +350,7 @@ const Modals = {
     this.open(`
       <div class="pdp-full">
         <div class="pdp-close">
-          <button onclick="Modals.close()" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;padding:4px;" aria-label="Close">✕</button>
+          <button class="pdp-back-btn" onclick="Modals.close()" aria-label="Back">‹ Back</button>
           <div style="font-size:13px;font-weight:700;">Product Details</div>
           <div style="width:28px;"></div>
         </div>
