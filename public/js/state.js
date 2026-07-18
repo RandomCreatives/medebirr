@@ -14,6 +14,10 @@ const State = {
   profileSubSection: null,  // null = hub, 'profile'|'address'|'payment'|'orders'|'coupons'|'settings'|'help'|'privacy'
   sellerSettingsGroup: null,    // null = category list, else group key
   sellerSettingsSection: null,  // null = group list, else section key within group
+  sellerNotifications: [],      // seller notification feed
+  sellerUnread: 0,              // unread count for the seller bell
+  sellerNotifView: false,       // true when showing the seller notification center
+  notifUnread: 0,               // unread in-app notifications (buyer)
 
   // Language
   language: 'en',

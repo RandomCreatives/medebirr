@@ -219,7 +219,7 @@ const BuyerViews = {
       { icon: Icons.credit(20),  label: State.t('payment'),     desc: 'Cards & digital wallet', section: 'payment' },
       { icon: Icons.box(20),     label: State.t('orders'),      desc: orderCount ? `${orderCount} orders` : 'Track purchases & deliveries', section: 'orders', badge: orderCount || null },
       { icon: Icons.tag(20),     label: State.t('coupons'),     desc: couponCount ? `${couponCount} available` : 'Discounts & promo codes', section: 'coupons', badge: couponCount || null },
-      { icon: Icons.bell(20),    label: 'Notifications', desc: 'Messages, orders & delivery updates', section: 'notifications', badge: State.unreadCount || null },
+      { icon: Icons.bell(20),    label: 'Notifications', desc: 'Messages, orders & delivery updates', section: 'notifications', badge: State.notifUnread || null },
       { icon: Icons.settings(20),label: State.t('settings'),    desc: 'Dark mode, notifications, biometrics', section: 'settings' },
       { icon: Icons.help(20),    label: State.t('help'),        desc: 'FAQs, chat support & contact', section: 'help' },
       { icon: Icons.shield(20),  label: State.t('privacy'),     desc: 'Data usage & legal terms', section: 'privacy' },
@@ -919,55 +919,12 @@ const BuyerViews = {
 
   // ── Sub-Section: Notifications ──────────────────────
   _renderNotifications(container) {
-    const notifications = State.notifications || [];
-    const typeIcons = {
-      order_paid: { icon: '💰', color: 'var(--success)', label: 'Payment Confirmed' },
-      order_placed: { icon: '🛒', color: '#60A5FA', label: 'Order Placed' },
-      order_dispatched: { icon: '🛵', color: '#F59E0B', label: 'Order Dispatched' },
-      order_delivered: { icon: '🎉', color: 'var(--success)', label: 'Order Delivered' },
-      order_cancelled: { icon: '❌', color: 'var(--danger)', label: 'Order Cancelled' },
-      rider_assigned: { icon: '🏍️', color: '#A78BFA', label: 'Rider Assigned' },
-      new_order: { icon: '📦', color: '#60A5FA', label: 'New Order' },
-      message: { icon: '💬', color: '#60A5FA', label: 'Message' },
-    };
-    const fallback = { icon: '🔔', color: 'var(--text-secondary)', label: 'Notification' };
-
-    container.innerHTML = `
-      <div class="subsection-header">
-        <button class="subsection-back-btn" onclick="App.backToProfileHub()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <span class="subsection-title">🔔 Notifications</span>
-      </div>
-
-      ${notifications.length ? `
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          ${notifications.map(n => {
-            const meta = typeIcons[n.type] || fallback;
-            const time = n.created_at ? this._timeAgo(new Date(n.created_at)) : '';
-            return `
-              <div class="card" style="padding:12px;${n.is_read ? 'opacity:0.6;' : ''}border-left:3px solid ${meta.color};">
-                <div style="display:flex;align-items:flex-start;gap:10px;">
-                  <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${meta.icon}</div>
-                  <div style="flex:1;min-width:0;">
-                    <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">${n.title || meta.label}</div>
-                    <div style="font-size:12px;color:var(--text-secondary);line-height:1.4;">${n.body || ''}</div>
-                    <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${time}</div>
-                  </div>
-                  ${!n.is_read ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:4px;"></div>' : ''}
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      ` : `
-        <div style="text-align:center;padding:40px 20px;">
-          <div style="font-size:40px;margin-bottom:12px;">🔔</div>
-          <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">No notifications yet</div>
-          <div style="font-size:12px;color:var(--text-secondary);">You'll see order updates, delivery confirmations, and messages here.</div>
-        </div>
-      `}
-    `;
+    NotificationFeed.render(container, State.notifications || [], {
+      onBack: 'App.backToProfileHub()',
+      title: 'Notifications',
+      emptyTitle: 'No notifications yet',
+      emptyDesc: "You'll see order updates, delivery confirmations, and messages here."
+    });
   },
 
   // ── Sub-Section: Settings ──────────────────────────

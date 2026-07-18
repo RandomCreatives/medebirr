@@ -86,7 +86,9 @@ const Api = {
     verifyPassword: (id, password) => Api.post(`/stores/${id}/verify-password`, { password }),
     setPassword:    (id, password) => Api.post(`/stores/${id}/set-password`, { password }),
     couponPolicy:   (id)          => Api.get(`/stores/${id}/coupon-policy`),
-    updateCouponPolicy: (id, data) => Api.put(`/stores/${id}/coupon-policy`, data)
+    updateCouponPolicy: (id, data) => Api.put(`/stores/${id}/coupon-policy`, data),
+    notifications: (id, markRead = false) => Api.get(`/stores/${id}/notifications${markRead ? '?read=1' : ''}`),
+    markNotificationsRead: (id) => Api.put(`/stores/${id}/notifications/read`)
   },
 
   // ── Orders ─────────────────────────────────────────

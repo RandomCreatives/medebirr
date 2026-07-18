@@ -289,6 +289,16 @@ router.post('/telebirr/webhook', async (req, res, next) => {
         const buyerOrder = await query('SELECT * FROM orders WHERE order_id = $1', [tx.order_id]);
         await notif.notifyOrderStatus(buyerOrder.rows[0], 'confirmed');
       } catch (_) {}
+
+      // Notify seller of the new paid order
+      try {
+        const notif = require('../services/notifications');
+        const fullOrder = await query(
+          'SELECT o.*, u.first_name, u.last_name, u.username FROM orders o JOIN users u ON o.buyer_tg_user_id = u.tg_user_id WHERE o.order_id = $1',
+          [tx.order_id]
+        );
+        if (fullOrder.rows[0]) await notif.notifyNewOrder(fullOrder.rows[0].store_id, fullOrder.rows[0], fullOrder.rows[0]);
+      } catch (_) {}
     } else {
       await query(
         `UPDATE payment_transactions SET status = 'failed', gateway_response = $1 WHERE gateway_tx_ref = $2`,
@@ -358,6 +368,16 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
     try {
       const notif = require('../services/notifications');
       await notif.notifyOrderStatus(orderResult.rows[0], 'confirmed');
+    } catch (_) {}
+
+    // Notify seller of the new cash order
+    try {
+      const notif = require('../services/notifications');
+      const fullOrder = await query(
+        'SELECT o.*, u.first_name, u.last_name, u.username FROM orders o JOIN users u ON o.buyer_tg_user_id = u.tg_user_id WHERE o.order_id = $1',
+        [order_id]
+      );
+      if (fullOrder.rows[0]) await notif.notifyNewOrder(fullOrder.rows[0].store_id, fullOrder.rows[0], fullOrder.rows[0]);
     } catch (_) {}
 
     res.json({ message: 'Cash payment confirmed. Order confirmed.' });
@@ -445,6 +465,16 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
     try {
       const notif = require('../services/notifications');
       await notif.notifyOrderStatus(order, 'confirmed');
+    } catch (_) {}
+
+    // Notify seller of the new order
+    try {
+      const notif = require('../services/notifications');
+      const fullOrder = await query(
+        'SELECT o.*, u.first_name, u.last_name, u.username FROM orders o JOIN users u ON o.buyer_tg_user_id = u.tg_user_id WHERE o.order_id = $1',
+        [orderId]
+      );
+      if (fullOrder.rows[0]) await notif.notifyNewOrder(fullOrder.rows[0].store_id, fullOrder.rows[0], fullOrder.rows[0]);
     } catch (_) {}
   }
 

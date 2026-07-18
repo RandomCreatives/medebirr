@@ -334,6 +334,41 @@ router.delete('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, 
 });
 
 /**
+ * GET /api/v1/stores/:storeId/notifications
+ * Seller-facing notification feed (new orders, dispatches, payouts, etc.)
+ * The store owner's tg_user_id maps to the notifications written by the
+ * order/payment event handlers. Marking-as-read is optional via ?read=1.
+ */
+router.get('/:storeId/notifications', requireAuth, requireSellerOf('storeId'), async (req, res, next) => {
+  try {
+    const store = req.store;
+    const result = await query(
+      `SELECT * FROM notifications WHERE tg_user_id = $1 ORDER BY created_at DESC LIMIT 50`,
+      [store.admin_tg_user_id]
+    );
+    if (req.query.read === '1') {
+      await query('UPDATE notifications SET is_read = TRUE WHERE tg_user_id = $1 AND is_read = FALSE', [store.admin_tg_user_id]);
+    }
+    res.json({ notifications: result.rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PUT /api/v1/stores/:storeId/notifications/read
+ * Mark all seller notifications as read.
+ */
+router.put('/:storeId/notifications/read', requireAuth, requireSellerOf('storeId'), async (req, res, next) => {
+  try {
+    await query('UPDATE notifications SET is_read = TRUE WHERE tg_user_id = $1 AND is_read = FALSE', [req.store.admin_tg_user_id]);
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * PUT /api/v1/stores/:storeId/settings
  * Update store settings (auto-detect products, etc.)
  */

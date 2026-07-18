@@ -330,6 +330,7 @@ const App = {
 
     // Check notifications
     this._refreshNotificationDot();
+    this._refreshSellerUnread();
 
     // Handle deep links from Telegram (e.g. ?start=complete_{pendingId})
     this._handleDeepLink();
@@ -601,6 +602,7 @@ const App = {
       else if (State.currentTab === 'inventory')  SellerViews.renderInventory(body);
       else if (State.currentTab === 'policy')     SellerViews.renderSellerMenu(body);
       else if (State.currentTab === 'dispatch')   SellerViews.renderDispatch(body);
+      if (State.sellerNotifView)                  SellerViews.renderSellerNotifications(body);
     }
     document.getElementById('appBody').scrollTop = 0;
   },
@@ -685,6 +687,37 @@ const App = {
   backToProfileHub() {
     State.profileSubSection = null;
     this.renderContent();
+  },
+
+  async openSellerNotifications() {
+    if (!State.currentStoreId) return;
+    try {
+      const data = await Api.stores.notifications(State.currentStoreId, true);
+      State.sellerNotifications = data.notifications || [];
+      State.sellerUnread = 0;
+      // Persist read-state back to the server
+      Api.stores.markNotificationsRead(State.currentStoreId).catch(() => {});
+    } catch (_) {
+      State.sellerNotifications = [];
+    }
+    State.sellerNotifView = true;
+    this.renderContent();
+  },
+
+  backToSellerHub() {
+    State.sellerNotifView = false;
+    this.renderContent();
+  },
+
+  async _refreshSellerUnread() {
+    if (State.role !== 'seller' || !State.currentStoreId) return;
+    try {
+      const data = await Api.stores.notifications(State.currentStoreId, false);
+      const list = data.notifications || [];
+      State.sellerUnread = list.filter(n => !n.is_read).length;
+      State.sellerNotifications = list;
+      this._refreshBellBadge();
+    } catch (_) {}
   },
 
   async _loadPaymentMethods() {
@@ -859,6 +892,7 @@ const App = {
     } catch (err) {
       this.toast('Failed to load seller data', 'error');
     }
+    this._refreshSellerUnread();
   },
 
   async loadSellerStats() {
@@ -2541,10 +2575,32 @@ const App = {
     try {
       const data = await Api.users.notifications();
       State.notifications = data.notifications || [];
-      const unread = State.notifications.filter(n => !n.read_at).length;
-      const dot = document.getElementById('notifDot');
-      if (dot) dot.style.display = unread > 0 ? 'block' : 'none';
+      // Backend column is `is_read`; GET marks read on fetch, so unread reflects
+      // items present in the response that haven't been seen yet this session.
+      const unread = State.notifications.filter(n => !n.is_read && !n.read_at).length;
+      State.notifUnread = unread;
+      this._refreshBellBadge();
     } catch (_) {}
+  },
+
+  // Update the red dot / count on both the buyer notifications row and the
+  // seller hub bell without a full re-render.
+  _refreshBellBadge() {
+    // Buyer: the "Notifications" row badge lives inside the profile hub.
+    const notifRowBadge = document.querySelector('.profile-menu-row[onclick*="\'notifications\'"] .profile-menu-badge');
+    if (notifRowBadge) notifRowBadge.style.display = State.notifUnread > 0 ? 'flex' : 'none';
+    // Seller: bell lives in the hub header.
+    if (State.role === 'seller') {
+      const bell = document.querySelector('.hub-bell-btn .nav-badge');
+      if (State.sellerUnread > 0 && !bell) {
+        const btn = document.querySelector('.hub-bell-btn');
+        if (btn) btn.insertAdjacentHTML('beforeend',
+          `<span class="nav-badge" style="top:-4px;right:-4px;">${State.sellerUnread > 9 ? '9+' : State.sellerUnread}</span>`);
+      } else if (bell) {
+        if (State.sellerUnread > 0) bell.textContent = State.sellerUnread > 9 ? '9+' : State.sellerUnread;
+        else bell.remove();
+      }
+    }
   }
 };
 

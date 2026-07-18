@@ -145,6 +145,24 @@ button:hover .menu-icon,
   margin-left: auto; flex-shrink: 0;
 }
 
+/* Seller hub bell button (top-right of Sales Hub header) */
+.hub-bell-btn {
+  background: var(--bg-surface); border: 1px solid var(--border); border-radius: 50%;
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  color: var(--text-primary); cursor: pointer; position: relative; flex-shrink: 0;
+  transition: all 0.2s;
+}
+.hub-bell-btn:hover { border-color: var(--accent); color: var(--accent); }
+.hub-bell-btn .nav-badge { position: absolute; }
+
+/* Notification feed cards (shared by buyer + seller) */
+.notif-card { display: flex; align-items: flex-start; padding: 12px; }
+.notif-card.is-read { opacity: 0.6; }
+.notif-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+  flex-shrink: 0; margin-top: 4px; box-shadow: 0 0 0 3px rgba(252,205,4,0.18);
+}
+
 /* Settings detail (drill-down) header with back button */
 .settings-detail-header {
   display: grid; grid-template-columns: 32px 1fr 32px; align-items: center;

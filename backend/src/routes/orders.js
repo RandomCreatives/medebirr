@@ -647,6 +647,18 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
       }
     }
 
+    // Notify seller that the order has been dispatched
+    try {
+      const notif = require('../services/notifications');
+      await notif.notifySeller(
+        ord.store_id,
+        'order_dispatched',
+        'Order Dispatched',
+        `Order ${result.rows[0].order_ref} is on its way via ${label}.`,
+        { order_id: result.rows[0].order_id, order_ref: result.rows[0].order_ref }
+      );
+    } catch (_) {}
+
     res.json({ order: result.rows[0], message: 'Delivery assigned. Buyer will be notified.' });
   } catch (err) {
     next(err);
@@ -688,6 +700,18 @@ router.put('/:orderId/confirm-delivery', requireAuth, async (req, res, next) => 
     try {
       const notif = require('../services/notifications');
       await notif.notifyOrderStatus(result.rows[0], 'delivered');
+    } catch (_) {}
+
+    // Notify seller
+    try {
+      const notif = require('../services/notifications');
+      await notif.notifySeller(
+        ord.store_id,
+        'order_delivered',
+        'Order Delivered',
+        `Order ${result.rows[0].order_ref} marked delivered. Warranty period started.`,
+        { order_id: result.rows[0].order_id, order_ref: result.rows[0].order_ref }
+      );
     } catch (_) {}
 
     res.json({ order: result.rows[0], message: 'Delivery confirmed. Warranty period started.' });
@@ -732,6 +756,18 @@ router.patch('/:orderId/cancel', requireAuth, async (req, res, next) => {
       await notif.notifyOrderStatus(result.rows[0], 'cancelled', { reason: 'Cancelled by buyer' });
     } catch (_) {}
 
+    // Notify seller
+    try {
+      const notif = require('../services/notifications');
+      await notif.notifySeller(
+        ord.store_id,
+        'order_cancelled',
+        'Order Cancelled',
+        `Order ${result.rows[0].order_ref} was cancelled by the buyer.`,
+        { order_id: result.rows[0].order_id, order_ref: result.rows[0].order_ref }
+      );
+    } catch (_) {}
+
     res.json({ order: result.rows[0], message: 'Order cancelled.' });
   } catch (err) {
     next(err);
@@ -773,6 +809,18 @@ router.patch('/:orderId/cancel-seller', requireAuth, async (req, res, next) => {
       const notif = require('../services/notifications');
       const fullOrder = await query('SELECT * FROM orders WHERE order_id = $1', [req.params.orderId]);
       await notif.notifyOrderStatus(fullOrder.rows[0], 'cancelled', { reason: reason || 'Cancelled by seller' });
+    } catch (_) {}
+
+    // Notify seller (self-cancel) — informational
+    try {
+      const notif = require('../services/notifications');
+      await notif.notifySeller(
+        ord.store_id,
+        'order_cancelled',
+        'Order Cancelled',
+        `You cancelled order ${result.rows[0].order_ref}.`,
+        { order_id: result.rows[0].order_id, order_ref: result.rows[0].order_ref }
+      );
     } catch (_) {}
 
     res.json({ order: result.rows[0], message: 'Order cancelled by seller.' });

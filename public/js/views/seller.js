@@ -21,7 +21,13 @@ const SellerViews = {
     container.innerHTML = `
       <div class="section-header">
         <span class="section-title">Sales Hub</span>
-        <span style="font-size:11px;color:${verificationTier === 'verified' || verificationTier === 'trusted' ? 'var(--success)' : 'var(--warning)'};">● ${tierBadge[verificationTier] || store?.status || 'Pending'}</span>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <button class="hub-bell-btn" onclick="App.openSellerNotifications()" aria-label="Notifications" style="position:relative;">
+            ${Icons.bell(22)}
+            ${State.sellerUnread > 0 ? `<span class="nav-badge" style="top:-4px;right:-4px;">${State.sellerUnread > 9 ? '9+' : State.sellerUnread}</span>` : ''}
+          </button>
+          <span style="font-size:11px;color:${verificationTier === 'verified' || verificationTier === 'trusted' ? 'var(--success)' : 'var(--warning)'};">● ${tierBadge[verificationTier] || store?.status || 'Pending'}</span>
+        </div>
       </div>
 
       <div class="stat-grid">
@@ -755,6 +761,20 @@ const SellerViews = {
     State.sellerSettingsSection = null;
     const body = document.getElementById('appBody');
     if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
+  },
+
+  // ── Seller Notification Center ──
+  renderSellerNotifications(container) {
+    const feed = (State.sellerNotifications || []).slice();
+    const eta = NotificationFeed.deriveEta(State.storeOrders || [], 'seller');
+    const items = feed.concat(eta).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    NotificationFeed.render(container, items, {
+      onBack: 'App.backToSellerHub()',
+      title: 'Store Notifications',
+      emptyTitle: 'No notifications yet',
+      emptyDesc: 'New orders, dispatches, payouts and delivery updates will appear here.',
+      role: 'seller'
+    });
   },
 
   // ── Dispatch / Orders (seller "Orders" tab) ──
