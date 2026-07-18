@@ -523,6 +523,72 @@ const SellerViews = {
     if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
   },
 
+  // ── Dispatch / Orders (seller "Orders" tab) ──
+  renderDispatch(container) {
+    const orders = State.storeOrders || [];
+    if (!orders.length) {
+      container.innerHTML = `
+        <div class="section-header"><span class="section-title">📦 Orders</span></div>
+        <div class="empty-state"><div class="empty-icon">🛵</div><div class="empty-title">No orders yet</div><div class="empty-desc">Orders from your store will appear here.</div></div>`;
+      return;
+    }
+    const awaiting = orders.filter(o => o.order_status === 'confirmed' && o.payment_status === 'paid').length;
+    container.innerHTML = `
+      <div class="section-header">
+        <span class="section-title">📦 Orders</span>
+        <span style="font-size:11px;color:var(--warning);">${awaiting} awaiting dispatch</span>
+      </div>
+      ${orders.map(o => this._dispatchCard(o)).join('')}
+    `;
+  },
+
+  _dispatchCard(o) {
+    let addr = {};
+    try {
+      addr = typeof o.delivery_address === 'string' ? JSON.parse(o.delivery_address) : (o.delivery_address || {});
+    } catch (_) {}
+    const addrStr = [addr.sub_city, addr.woreda, addr.house_number, addr.landmark].filter(Boolean).join(', ');
+    const provider = o.delivery_provider || 'rider';
+    const providerBadge = provider === 'self'
+      ? `<div style="margin-top:6px;font-size:11px;color:var(--success);font-weight:800;">🏪 Self-delivery (you)</div>`
+      : provider === 'company'
+        ? `<div style="margin-top:6px;font-size:11px;color:#60A5FA;font-weight:800;">🚚 Delivery Co: ${o.rider_name || ''}</div>`
+        : o.rider_name ? `<div style="margin-top:6px;font-size:11px;color:#A78BFA;">🛵 Rider: ${o.rider_name} · ${o.rider_phone}</div>` : '';
+    const statusBadge = {
+      pending: '⏳ Pending', confirmed: '✅ Confirmed', dispatched: '🚚 Dispatched',
+      delivered: '📦 Delivered', cancelled: '✕ Cancelled'
+    }[o.order_status] || o.order_status;
+    return `
+      <div class="dispatch-card">
+        <div class="dispatch-order-ref">${o.order_ref} · ${new Date(o.created_at).toLocaleDateString()} · ${statusBadge}</div>
+        <div class="dispatch-buyer">👤 ${o.first_name} ${o.last_name || ''} (@${o.buyer_username || 'user'})</div>
+        <div class="dispatch-address">📍 ${addrStr}<br>📞 ${addr.phone || 'N/A'}</div>
+        <div style="margin-top:8px;font-size:14px;font-weight:900;color:var(--accent);">${State.formatETB(o.total_etb)} — ${o.payment_method.toUpperCase()}</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">💳 TX ID: <span style="font-family:monospace;color:#1A1A2E;font-weight:800;">${o.transaction_code || o.payment_tx_ref || 'Cash on Delivery'}</span></div>
+        ${Number(o.discount_etb) > 0 ? `<div style="font-size:11px;color:var(--success);font-weight:800;margin-top:2px;">🎟️ Coupon Discount Applied: -${State.formatETB(o.discount_etb)}</div>` : ''}
+        ${providerBadge}
+        ${o.delivery_otp ? `
+          <div style="margin-top:8px;background:rgba(252,205,4,0.08);border:1px solid rgba(252,205,4,0.3);border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div>
+              <div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;font-weight:800;letter-spacing:0.5px;">Delivery Code</div>
+              <div style="font-family:monospace;font-size:18px;font-weight:900;color:var(--accent);letter-spacing:3px;">${o.delivery_otp}</div>
+            </div>
+            <button type="button" onclick="CheckoutPage && CheckoutPage._copyText && CheckoutPage._copyText('${o.delivery_otp}','Code copied!')" style="background:rgba(252,205,4,0.12);border:1px solid rgba(252,205,4,0.3);border-radius:6px;padding:6px 10px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;">📋</button>
+          </div>` : ''}
+        <div class="dispatch-actions">
+          ${o.order_status === 'confirmed' ? `<button class="btn-dispatch" onclick="Modals.openAssignRider('${o.order_id}')">🛵 Assign Delivery</button>` : ''}
+          ${o.order_status === 'dispatched' ? `
+            <button class="btn-dispatch" onclick="Modals.openShowQR('${o.order_id}','rider')">📱 Show QR</button>
+            <button class="btn-dispatch" onclick="Modals.openScanQR('${o.order_id}','rider')">📷 Scan Buyer</button>
+            <button class="btn-dispatch" onclick="App.settleOrder('${o.order_id}')">✅ Settled</button>
+          ` : ''}
+          <button class="btn-call" onclick="window.open('tel:${addr.phone}')">📞 Call Buyer</button>
+          ${['pending','confirmed'].includes(o.order_status) ? `<button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.confirmCancelOrder('${o.order_id}','${o.order_ref}')">✕ Cancel</button>` : ''}
+        </div>
+      </div>
+    `;
+  },
+
   // Reusable iOS-style toggle markup. `onchange` (optional) wires the live
   // save handler; CSS (.settings-toggle) drives the visual state from :checked.
   _toggle(id, on, onchange = '') {
