@@ -463,6 +463,17 @@ const SellerViews = {
         </div>
       </div>
 
+      <div class="settings-danger-zone">
+        <div style="font-size:10px;color:var(--danger);font-weight:800;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">⚠️ Danger Zone</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px;">
+          Deleting your shop permanently unpublishes all its products and removes it from Medebirr.
+          This cannot be undone. You cannot delete the shop while it has active (paid, undelivered) orders.
+        </div>
+        <button class="settings-delete-btn" style="width:100%;" onclick="SellerViews._confirmDeleteStore()">
+          🗑 Delete My Shop &amp; Medebirr Account
+        </button>
+      </div>
+
       <button class="btn-secondary" style="width:100%;margin-bottom:10px;" onclick="App.switchTab('dashboard')">📊 Back to Dashboard</button>
       <button class="settings-logout-btn" style="width:100%;" onclick="SellerViews._confirmLogout()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -611,6 +622,28 @@ const SellerViews = {
         <div style="display:flex;gap:10px;">
           <button class="btn-secondary" onclick="Modals.close();" style="flex:1;">Cancel</button>
           <button onclick="App.clearToken();location.reload();" style="flex:1;background:var(--danger);color:white;border:none;padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:800;cursor:pointer;">Log Out</button>
+        </div>
+      </div>
+    `);
+  },
+
+  _confirmDeleteStore() {
+    const store = State.storeDetail || State.stores[0];
+    const name = store ? store.store_name : 'this shop';
+    Modals.open(`
+      <div class="modal-handle"></div>
+      <div style="padding:8px 4px 4px;">
+        <div style="font-size:38px;text-align:center;margin-bottom:10px;">⚠️</div>
+        <div style="font-size:17px;font-weight:900;text-align:center;margin-bottom:6px;">Delete "${name}"?</div>
+        <div style="font-size:13px;color:var(--text-secondary);text-align:center;line-height:1.5;margin-bottom:18px;">
+          This permanently unpublishes all products and removes your shop from Medebirr. This action cannot be undone.
+        </div>
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:10px 12px;margin-bottom:18px;">
+          <div style="font-size:12px;color:var(--danger);font-weight:700;">⚠️ You cannot delete while there are active (paid, undelivered) orders.</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn-secondary" onclick="Modals.close();" style="flex:1;">Cancel</button>
+          <button onclick="App.deleteStore(${store ? `'${store.store_id}','${store.store_name.replace(/'/g,"\\'")}'` : ''})" style="flex:1;background:var(--danger);color:white;border:none;padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:800;cursor:pointer;">Delete Shop</button>
         </div>
       </div>
     `);
