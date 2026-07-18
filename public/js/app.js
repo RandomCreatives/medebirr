@@ -508,6 +508,8 @@ const App = {
       this.toast('No store selected', 'error');
       return;
     }
+    State.sellerSettingsGroup = null;
+    State.sellerSettingsSection = null;
     this.switchTab('policy');
   },
 
@@ -607,6 +609,7 @@ const App = {
   async switchTab(tab) {
     State.currentTab = tab;
     State.profileSubSection = null;
+    State.sellerSettingsGroup = null;
     State.sellerSettingsSection = null;
     if (tab === 'orders' && !State.myOrders.length) {
       await this.refreshOrders();
@@ -1316,6 +1319,56 @@ const App = {
       this.toast(err.message || 'Failed to update setting', 'error');
       const toggle = document.getElementById('telegramNotifsToggle');
       if (toggle) toggle.checked = !enabled;
+    }
+  },
+
+  // Lightweight store-flag toggles. These optimistically update local state and
+  // attempt to persist; if the backend doesn't yet accept the column it degrades
+  // gracefully (toast + revert) without breaking the flow.
+  _storeToggle(field, enabled, toggleId) {
+    if (!State.currentStoreId) return Promise.resolve();
+    if (State.stores[0]) State.stores[0][field] = enabled;
+    return Api.stores.update(State.currentStoreId, { [field]: enabled })
+      .then(() => this.toast(`${field.replace(/_/g,' ')} ${enabled ? 'enabled' : 'disabled'}`, 'success'))
+      .catch(err => {
+        this.toast(err.message || 'Setting not saved yet', 'info');
+        const t = document.getElementById(toggleId);
+        if (t) t.checked = !enabled;
+      });
+  },
+
+  toggleSelfDelivery(enabled)      { return this._storeToggle('self_delivery_enabled', enabled, 'selfDeliveryToggle'); },
+  toggleCompanyDelivery(enabled)   { return this._storeToggle('company_delivery_enabled', enabled, 'companyDeliveryToggle'); },
+  toggleAutoInvoice(enabled)       { return this._storeToggle('auto_invoice', enabled, 'autoInvoiceToggle'); },
+  toggleLowStock(enabled)          { return this._storeToggle('low_stock_alerts', enabled, 'lowStockToggle'); },
+  toggleNewOrderAlerts(enabled)    { return this._storeToggle('new_order_alerts', enabled, 'newOrderToggle'); },
+  toggleTwoFactor(enabled)         { return this._storeToggle('two_factor_enabled', enabled, 'twoFactorToggle'); },
+
+  async saveDeliveryRules() {
+    try {
+      const addis = document.getElementById('addisFee')?.value;
+      const regional = document.getElementById('regionalFee')?.value;
+      await Api.stores.updatePolicy(State.currentStoreId, {
+        addis_delivery_fee: addis ? Number(addis) : undefined,
+        regional_dispatch_fee: regional ? Number(regional) : undefined
+      });
+      this.toast('Delivery rules saved!', 'success');
+    } catch (err) {
+      this.toast(err.message || 'Failed to save delivery rules', 'error');
+    }
+  },
+
+  async saveTaxConfig() {
+    try {
+      const taxRate = document.getElementById('taxRate')?.value;
+      const taxTin = document.getElementById('taxTin')?.value?.trim();
+      await Api.stores.update(State.currentStoreId, {
+        tax_rate: taxRate ? Number(taxRate) : 0,
+        tax_tin: taxTin || ''
+      });
+      this.toast('Tax & invoice settings saved!', 'success');
+    } catch (err) {
+      this.toast(err.message || 'Tax settings not saved yet', 'info');
     }
   },
 

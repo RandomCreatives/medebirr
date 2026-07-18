@@ -12,7 +12,8 @@ const State = {
   currentTab: 'explore',
   currentStoreId: null,
   profileSubSection: null,  // null = hub, 'profile'|'address'|'payment'|'orders'|'coupons'|'settings'|'help'|'privacy'
-  sellerSettingsSection: null, // null = menu list, else 'identity'|'payout'|'policies'|'automation'|'account'
+  sellerSettingsGroup: null,    // null = category list, else group key
+  sellerSettingsSection: null,  // null = group list, else section key within group
 
   // Language
   language: 'en',

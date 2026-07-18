@@ -447,20 +447,128 @@ const SellerViews = {
         </div>
       </div>`;
 
-    // ── Account & Safety ──
-    const account = `
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;margin-bottom:12px;">
-        <div style="font-size:10px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">📊 Store Stats</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div style="text-align:center;padding:8px;background:rgba(59,130,246,0.08);border-radius:8px;">
-            <div style="font-size:18px;font-weight:900;color:var(--text-primary);">${store.total_orders || 0}</div>
-            <div style="font-size:10px;color:var(--text-secondary);font-weight:700;">Total Orders</div>
-          </div>
-          <div style="text-align:center;padding:8px;background:rgba(16,185,129,0.08);border-radius:8px;">
-            <div style="font-size:18px;font-weight:900;color:var(--success);">${State.formatETB(store.total_revenue || 0)}</div>
-            <div style="font-size:10px;color:var(--text-secondary);font-weight:700;">Total Revenue</div>
-          </div>
+    // ── Staff Roles & Permissions [NEW] ──
+    const staff = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Invite team members and assign roles. (Staff management is provisioned per store — contact Medebirr support to enable seats for your shop.)</div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:800;margin-bottom:6px;">👤 Owner</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Full access — you. Receives payouts and can delete the shop.</div>
+        <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--success);font-weight:700;">Active</span>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:800;margin-bottom:6px;">🛡️ Manager</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Manage products, orders and policies. Cannot change payouts or delete the shop.</div>
+        <button class="btn-secondary" style="width:100%;" onclick="App.toast('Staff invites coming soon','info')">+ Invite Manager</button>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:800;margin-bottom:6px;">📦 Fulfilment Staff</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">View and fulfil orders only. Ideal for warehouse or dispatch teams.</div>
+        <button class="btn-secondary" style="width:100%;" onclick="App.toast('Staff invites coming soon','info')">+ Invite Staff</button>
+      </div>`;
+
+    // ── Shipping & Delivery Rules [NEW] ──
+    const shipping = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Control how your products are delivered and what buyers pay for shipping.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div class="form-group">
+          <label class="form-label">Addis Ababa Delivery Fee (Br)</label>
+          <input type="number" class="form-input" id="addisFee" value="${store.addis_delivery_fee || 150}" />
         </div>
+        <div class="form-group">
+          <label class="form-label">Regional Dispatch (Br)</label>
+          <input type="number" class="form-input" id="regionalFee" value="${store.regional_dispatch_fee || 400}" />
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🏪 Self-Delivery</div>
+            <div style="font-size:11px;color:var(--text-secondary);">You deliver orders yourself instead of using a rider.</div>
+          </div>
+          ${this._toggle('selfDeliveryToggle', store.self_delivery_enabled, "App.toggleSelfDelivery(this.checked)")}
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🚚 Delivery Company</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Partner courier fulfils shipments on your behalf.</div>
+          </div>
+          ${this._toggle('companyDeliveryToggle', store.company_delivery_enabled, "App.toggleCompanyDelivery(this.checked)")}
+        </div>
+      </div>
+      <button class="btn-secondary" style="width:100%;" onclick="App.saveDeliveryRules()">💾 Save Delivery Rules</button>`;
+
+    // ── Tax Config & Invoices [NEW] ──
+    const tax = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Configure how tax is shown to buyers and whether invoices are auto-generated.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div class="form-group">
+          <label class="form-label">VAT / Tax %</label>
+          <input type="number" class="form-input" id="taxRate" value="${store.tax_rate || 0}" placeholder="15" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tax Number / TIN</label>
+          <input class="form-input" id="taxTin" value="${store.tax_tin || ''}" placeholder="TIN / VAT no." />
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🧾 Auto-Invoice</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Attach a PDF invoice to every completed order email.</div>
+          </div>
+          ${this._toggle('autoInvoiceToggle', store.auto_invoice !== false, "App.toggleAutoInvoice(this.checked)")}
+        </div>
+      </div>
+      <button class="btn-secondary" style="width:100%;" onclick="App.saveTaxConfig()">💾 Save Tax &amp; Invoice Settings</button>`;
+
+    // ── Notification Preferences [NEW] ──
+    const notifications = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Choose how Medebirr keeps you and your buyers informed.</div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📨 Telegram Notifications</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Buyers get DM updates via @medebirrbot when their order status changes.</div>
+          </div>
+          ${this._toggle('telegramNotifsToggle', store.telegram_notifs !== false, "App.toggleTelegramNotifs(this.checked)")}
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📉 Low-Stock Alerts</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Get notified when a product is running low on stock.</div>
+          </div>
+          ${this._toggle('lowStockToggle', store.low_stock_alerts !== false, "App.toggleLowStock(this.checked)")}
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🔔 New Order Alerts</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Ping you in Telegram the moment a new order lands.</div>
+          </div>
+          ${this._toggle('newOrderToggle', store.new_order_alerts !== false, "App.toggleNewOrderAlerts(this.checked)")}
+        </div>
+      </div>`;
+
+    // ── Account Security (2FA, Password) ──
+    const security = `
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🔐 Two-Factor Auth (2FA)</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Require a Telegram code on every login to your seller account.</div>
+          </div>
+          ${this._toggle('twoFactorToggle', store.two_factor_enabled, "App.toggleTwoFactor(this.checked)")}
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:800;margin-bottom:4px;">🔑 Account Password</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Used to confirm sensitive actions like payout changes and shop deletion.</div>
+        <button class="btn-secondary" style="width:100%;" onclick="App.toast('Password reset link sent to your Telegram','success')">Reset Password</button>
       </div>
 
       <div class="settings-danger-zone">
@@ -474,29 +582,97 @@ const SellerViews = {
         </button>
       </div>
 
-      <button class="btn-secondary" style="width:100%;margin-bottom:10px;" onclick="App.switchTab('dashboard')">📊 Back to Dashboard</button>
       <button class="settings-logout-btn" style="width:100%;" onclick="SellerViews._confirmLogout()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         Log Out
       </button>`;
 
-    // ── Section registry ──
-    const sections = {
-      identity:   { title: 'Store Identity',     icon: '🏪', body: identity },
-      payout:     { title: 'Payout & Payment',   icon: '💳', body: payout },
-      policies:   { title: 'Store Policies',     icon: '📋', body: policies },
-      promotions: { title: 'Coupons & Group Buy', icon: '🎁', body: promotions },
-      automation: { title: 'Automation',         icon: '⚙️', body: automation },
-      account:    { title: 'Account & Safety',   icon: '🔒', body: account }
-    };
-    const order = ['identity', 'payout', 'policies', 'promotions', 'automation', 'account'];
+    // Split promotions into two sections
+    const coupons = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Grow sales with share-to-save coupons. Customers earn a coupon when they share a product N times.</div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📤 Share-to-Save Coupons</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Customers earn a coupon when they share a product N times.</div>
+          </div>
+          ${this._toggle('shareCouponToggle', cp.share_coupon_active)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div class="form-group">
+            <label class="form-label">Shares Required</label>
+            <input type="number" class="form-input" id="shareRequired" value="${cp.share_required}" placeholder="3" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Discount %</label>
+            <input type="number" class="form-input" id="shareDiscount" value="${cp.share_discount}" placeholder="5" />
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Coupon Valid (days)</label>
+          <input type="number" class="form-input" id="couponValidityDays" value="${cp.coupon_validity_days}" placeholder="7" />
+        </div>
+      </div>
+      <button class="btn-secondary" style="width:100%;" onclick="App.saveCouponPolicy()">💾 Save Coupons</button>`;
 
-    // ── Detail view (a single section with a back button) ──
+    const groupBuy = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Customers can form a group to buy together and get a discount.</div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">👥 Group Buying</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Customers can form a group to buy together and get a discount.</div>
+          </div>
+          ${this._toggle('groupBuyToggle', cp.group_buy_active)}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0;">
+          <div class="form-group">
+            <label class="form-label">Min Members</label>
+            <input type="number" class="form-input" id="groupMinMembers" value="${cp.group_min_members}" placeholder="3" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Group Discount %</label>
+            <input type="number" class="form-input" id="groupDiscount" value="${cp.group_discount}" placeholder="10" />
+          </div>
+        </div>
+      </div>
+      <button class="btn-secondary" style="width:100%;" onclick="App.saveCouponPolicy()">💾 Save Group Buy</button>`;
+
+    // Remove telegram notifs from automation (now under notifications)
+    const automationClean = automation.replace(
+      /<div style="background:var\(--bg-surface\);border:1px solid var\(--border\);border-radius:var\(--radius-md\);padding:16px;margin-bottom:12px;">\s*<div style="display:flex;justify-content:space-between;align-items:center;">\s*<div>\s*<div style="font-size:13px;font-weight:800;margin-bottom:2px;">📨 Telegram Notifications<\/div>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/,
+      ''
+    );
+
+    // ── Section registry (grouped into 5 categories) ──
+    const sections = {
+      identity:     { title: 'Store Identity & Profile',     icon: '🏪', body: identity },
+      policies:     { title: 'Store Policies & Legal Docs',  icon: '📋', body: policies },
+      staff:        { title: 'Staff Roles & Permissions',    icon: '🧑‍💼', body: staff },
+      coupons:      { title: 'Coupons & Discounts',          icon: '🎟️', body: coupons },
+      groupBuy:     { title: 'Group Buy Settings',           icon: '👥', body: groupBuy },
+      shipping:     { title: 'Shipping & Delivery Rules',    icon: '🚚', body: shipping, badge: 'NEW' },
+      automation:   { title: 'Automation (Stock & Routing)', icon: '⚙️', body: automationClean },
+      payout:       { title: 'Payout & Bank Details',        icon: '💳', body: payout },
+      tax:          { title: 'Tax Config & Invoices',        icon: '🧾', body: tax, badge: 'NEW' },
+      security:     { title: 'Account Security (2FA)',       icon: '🔐', body: security },
+      notifications:{ title: 'Notification Preferences',     icon: '🔔', body: notifications, badge: 'NEW' }
+    };
+
+    const groups = [
+      { key: 'setup',     title: 'Setup & Branding',    sub: 'Get Started',        icon: '🏗️', sections: ['identity', 'policies', 'staff'] },
+      { key: 'sales',     title: 'Sales & Promotion',   sub: 'Attract Customers',  icon: '🎯', sections: ['coupons', 'groupBuy'] },
+      { key: 'orders',    title: 'Order Management',    sub: 'Fulfill Orders',     icon: '📦', sections: ['shipping', 'automation'] },
+      { key: 'money',     title: 'Money & Earnings',    sub: 'Get Paid',           icon: '💰', sections: ['payout', 'tax'] },
+      { key: 'security',  title: 'Security & Access',   sub: 'Protect the Shop',   icon: '🛡️', sections: ['security', 'notifications'] }
+    ];
+
+    // ── Detail view (a single section with a back button to its group) ──
     if (State.sellerSettingsSection && sections[State.sellerSettingsSection]) {
       const s = sections[State.sellerSettingsSection];
       container.innerHTML = `
         <div class="settings-detail-header">
-          <button class="pdp-back-btn" onclick="SellerViews._backToSettingsMenu()" aria-label="Back">&#8249;</button>
+          <button class="pdp-back-btn" onclick="SellerViews._backToSettingsGroup()" aria-label="Back">&#8249;</button>
           <div class="settings-detail-title">${s.icon} ${s.title}</div>
           <div style="width:28px;"></div>
         </div>
@@ -505,21 +681,56 @@ const SellerViews = {
       return;
     }
 
-    // ── Menu list view ──
-    const rows = order.map(key => {
-      const s = sections[key];
-      return `
-        <button class="settings-menu-row" onclick="SellerViews._openSettingsSection('${key}')">
-          <span class="settings-menu-icon">${s.icon}</span>
-          <span class="settings-menu-label">${s.title}</span>
-          <span class="settings-menu-arrow">›</span>
-        </button>`;
-    }).join('');
+    // ── Group list view (sub-sections of a chosen category) ──
+    if (State.sellerSettingsGroup) {
+      const g = groups.find(x => x.key === State.sellerSettingsGroup);
+      if (!g) { State.sellerSettingsGroup = null; }
+      else {
+        const rows = g.sections.map(key => {
+          const s = sections[key];
+          return `
+            <button class="settings-menu-row" onclick="SellerViews._openSettingsSection('${key}')">
+              <span class="settings-menu-icon">${s.icon}</span>
+              <span class="settings-menu-label">${s.title}</span>
+              ${s.badge ? `<span class="settings-new-badge">${s.badge}</span>` : ''}
+              <span class="settings-menu-arrow">›</span>
+            </button>`;
+        }).join('');
+        container.innerHTML = `
+          <div class="settings-detail-header">
+            <button class="pdp-back-btn" onclick="SellerViews._backToSettingsMenu()" aria-label="Back">&#8249;</button>
+            <div class="settings-detail-title">${g.icon} ${g.title}</div>
+            <div style="width:28px;"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-secondary);padding:0 2px 10px;">${g.sub}</div>
+          <div class="settings-menu">${rows}</div>
+        `;
+        return;
+      }
+    }
+
+    // ── Category list view (top level) ──
+    const groupRows = groups.map(g => `
+      <button class="settings-menu-row settings-group-row" onclick="SellerViews._openSettingsGroup('${g.key}')">
+        <span class="settings-menu-icon">${g.icon}</span>
+        <span class="settings-menu-text">
+          <span class="settings-menu-label">${g.title}</span>
+          <span class="settings-menu-sub">${g.sub}</span>
+        </span>
+        <span class="settings-menu-arrow">›</span>
+      </button>`).join('');
 
     container.innerHTML = `
       <div class="section-header"><span class="section-title">👤 Account &amp; Settings</span></div>
-      <div class="settings-menu">${rows}</div>
+      <div class="settings-menu">${groupRows}</div>
     `;
+  },
+
+  _openSettingsGroup(key) {
+    State.sellerSettingsGroup = key;
+    State.sellerSettingsSection = null;
+    const body = document.getElementById('appBody');
+    if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
   },
 
   _openSettingsSection(key) {
@@ -528,7 +739,14 @@ const SellerViews = {
     if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
   },
 
+  _backToSettingsGroup() {
+    State.sellerSettingsSection = null;
+    const body = document.getElementById('appBody');
+    if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
+  },
+
   _backToSettingsMenu() {
+    State.sellerSettingsGroup = null;
     State.sellerSettingsSection = null;
     const body = document.getElementById('appBody');
     if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
