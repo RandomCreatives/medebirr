@@ -331,6 +331,16 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
       } catch (_) {}
     }
 
+    // Notify seller of the payout (funds released on settlement)
+    try {
+      const notif = require('../services/notifications');
+      const storeRes = await query('SELECT telebirr_account_name, cbe_account_name FROM stores WHERE store_id = $1', [order.store_id]);
+      const method = storeRes.rows[0]
+        ? (storeRes.rows[0].telebirr_account_name || storeRes.rows[0].cbe_account_name || 'your payout account')
+        : 'your payout account';
+      await notif.notifyPayout(order.store_id, order.total_etb, method);
+    } catch (_) {}
+
     res.json({ message: 'Order settled successfully', order_id: order.order_id });
   } catch (err) {
     next(err);
