@@ -646,26 +646,28 @@ const SellerViews = {
 
     // ── Section registry (grouped into 5 categories) ──
     const sections = {
-      identity:     { title: 'Store Identity & Profile',     icon: '🏪', body: identity },
-      policies:     { title: 'Store Policies & Legal Docs',  icon: '📋', body: policies },
-      staff:        { title: 'Staff Roles & Permissions',    icon: '🧑‍💼', body: staff },
-      coupons:      { title: 'Coupons & Discounts',          icon: '🎟️', body: coupons },
-      groupBuy:     { title: 'Group Buy Settings',           icon: '👥', body: groupBuy },
-      shipping:     { title: 'Shipping & Delivery Rules',    icon: '🚚', body: shipping, badge: 'NEW' },
-      automation:   { title: 'Automation (Stock & Routing)', icon: '⚙️', body: automationClean },
-      payout:       { title: 'Payout & Bank Details',        icon: '💳', body: payout },
-      tax:          { title: 'Tax Config & Invoices',        icon: '🧾', body: tax, badge: 'NEW' },
-      security:     { title: 'Account Security (2FA)',       icon: '🔐', body: security },
-      notifications:{ title: 'Notification Preferences',     icon: '🔔', body: notifications, badge: 'NEW' }
+      identity:     { title: 'Store Identity & Profile',     icon: Icons.store,    desc: 'Name, logo, code & share',     body: identity },
+      policies:     { title: 'Store Policies & Legal Docs',  icon: Icons.file,     desc: 'Returns, payments & fees',     body: policies },
+      staff:        { title: 'Staff Roles & Permissions',    icon: Icons.users,    desc: 'Invite managers & staff',     body: staff },
+      coupons:      { title: 'Coupons & Discounts',          icon: Icons.tag,      desc: 'Share-to-save promotions',     body: coupons },
+      groupBuy:     { title: 'Group Buy Settings',           icon: Icons.users,    desc: 'Bulk-buy discounts',           body: groupBuy },
+      shipping:     { title: 'Shipping & Delivery Rules',    icon: Icons.truck,    desc: 'Fees & delivery options',      body: shipping, badge: 'NEW' },
+      automation:   { title: 'Automation (Stock & Routing)', icon: Icons.zap,      desc: 'Group, auto-detect & alerts',  body: automationClean },
+      payout:       { title: 'Payout & Bank Details',        icon: Icons.wallet,   desc: 'Telebirr & CBE accounts',      body: payout },
+      tax:          { title: 'Tax Config & Invoices',        icon: Icons.receipt,  desc: 'VAT, TIN & auto-invoice',      body: tax, badge: 'NEW' },
+      security:     { title: 'Account Security (2FA)',       icon: Icons.lock,     desc: 'Password & 2FA',               body: security },
+      notifications:{ title: 'Notification Preferences',     icon: Icons.bell,     desc: 'Order & stock alerts',         body: notifications, badge: 'NEW' }
     };
 
     const groups = [
-      { key: 'setup',     title: 'Setup & Branding',    sub: 'Get Started',        icon: '🏗️', sections: ['identity', 'policies', 'staff'] },
-      { key: 'sales',     title: 'Sales & Promotion',   sub: 'Attract Customers',  icon: '🎯', sections: ['coupons', 'groupBuy'] },
-      { key: 'orders',    title: 'Order Management',    sub: 'Fulfill Orders',     icon: '📦', sections: ['shipping', 'automation'] },
-      { key: 'money',     title: 'Money & Earnings',    sub: 'Get Paid',           icon: '💰', sections: ['payout', 'tax'] },
-      { key: 'security',  title: 'Security & Access',   sub: 'Protect the Shop',   icon: '🛡️', sections: ['security', 'notifications'] }
+      { key: 'setup',     title: 'Setup & Branding',    sub: 'Get Started',       icon: Icons.store,  sections: ['identity', 'policies', 'staff'] },
+      { key: 'sales',     title: 'Sales & Promotion',   sub: 'Attract Customers', icon: Icons.target, sections: ['coupons', 'groupBuy'] },
+      { key: 'orders',    title: 'Order Management',    sub: 'Fulfill Orders',    icon: Icons.truck,  sections: ['shipping', 'automation'] },
+      { key: 'money',     title: 'Money & Earnings',    sub: 'Get Paid',          icon: Icons.wallet, sections: ['payout', 'tax'] },
+      { key: 'security',  title: 'Security & Access',   sub: 'Protect the Shop',  icon: Icons.shield, sections: ['security', 'notifications'] }
     ];
+
+    const iconCell = (svg) => `<span class="menu-icon">${svg}</span>`;
 
     // ── Detail view (a single section with a back button to its group) ──
     if (State.sellerSettingsSection && sections[State.sellerSettingsSection]) {
@@ -673,7 +675,7 @@ const SellerViews = {
       container.innerHTML = `
         <div class="settings-detail-header">
           <button class="pdp-back-btn" onclick="SellerViews._backToSettingsGroup()" aria-label="Back">&#8249;</button>
-          <div class="settings-detail-title">${s.icon} ${s.title}</div>
+          <div class="settings-detail-title">${s.icon(18)} ${s.title}</div>
           <div style="width:28px;"></div>
         </div>
         <div style="padding:4px 0 8px;">${s.body}</div>
@@ -690,8 +692,11 @@ const SellerViews = {
           const s = sections[key];
           return `
             <button class="settings-menu-row" onclick="SellerViews._openSettingsSection('${key}')">
-              <span class="settings-menu-icon">${s.icon}</span>
-              <span class="settings-menu-label">${s.title}</span>
+              ${iconCell(s.icon(20))}
+              <span class="settings-menu-text">
+                <span class="settings-menu-label">${s.title}</span>
+                <span class="settings-menu-sub">${s.desc}</span>
+              </span>
               ${s.badge ? `<span class="settings-new-badge">${s.badge}</span>` : ''}
               <span class="settings-menu-arrow">›</span>
             </button>`;
@@ -699,7 +704,7 @@ const SellerViews = {
         container.innerHTML = `
           <div class="settings-detail-header">
             <button class="pdp-back-btn" onclick="SellerViews._backToSettingsMenu()" aria-label="Back">&#8249;</button>
-            <div class="settings-detail-title">${g.icon} ${g.title}</div>
+            <div class="settings-detail-title">${g.icon(18)} ${g.title}</div>
             <div style="width:28px;"></div>
           </div>
           <div style="font-size:11px;color:var(--text-secondary);padding:0 2px 10px;">${g.sub}</div>
@@ -712,7 +717,7 @@ const SellerViews = {
     // ── Category list view (top level) ──
     const groupRows = groups.map(g => `
       <button class="settings-menu-row settings-group-row" onclick="SellerViews._openSettingsGroup('${g.key}')">
-        <span class="settings-menu-icon">${g.icon}</span>
+        ${iconCell(g.icon(22))}
         <span class="settings-menu-text">
           <span class="settings-menu-label">${g.title}</span>
           <span class="settings-menu-sub">${g.sub}</span>
