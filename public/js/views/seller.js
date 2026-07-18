@@ -311,7 +311,11 @@ const SellerViews = {
           <input class="form-input" id="cbeAccountName" value="${store.cbe_account_name || ''}" placeholder="Account holder name"/>
         </div>
       </div>
-      <button class="btn-secondary" style="width:100%;" onclick="App.savePaymentAccounts()">💾 Save Payment Accounts</button>`;
+      <button class="btn-secondary" id="savePayoutBtn" style="width:100%;" onclick="App.savePaymentAccounts()">💾 Save Payment Accounts</button>
+      <div class="progress-wrap" id="payoutProgress" style="display:none;">
+        <div class="progress-bar" id="payoutProgressBar"></div>
+      </div>
+      <div class="progress-status" id="payoutProgressStatus" style="display:none;"></div>`;
 
     // ── Policies ──
     const policies = `

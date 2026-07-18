@@ -179,13 +179,27 @@ router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res
         cbe_account_name = COALESCE($11, cbe_account_name),
         updated_at = NOW()
        WHERE store_id = $12
-       RETURNING store_id, store_name, store_slug, status, updated_at`,
+       RETURNING stores.*,
+         (SELECT return_policy_type FROM seller_policies WHERE store_id = stores.store_id) AS return_policy_type,
+         (SELECT custom_policy_text FROM seller_policies WHERE store_id = stores.store_id) AS custom_policy_text,
+         (SELECT addis_delivery_fee FROM seller_policies WHERE store_id = stores.store_id) AS addis_delivery_fee,
+         (SELECT regional_dispatch_fee FROM seller_policies WHERE store_id = stores.store_id) AS regional_dispatch_fee,
+         (SELECT free_delivery_threshold FROM seller_policies WHERE store_id = stores.store_id) AS free_delivery_threshold,
+         (SELECT zone_fee_matrix FROM seller_policies WHERE store_id = stores.store_id) AS zone_fee_matrix,
+         (SELECT cash_on_delivery FROM seller_policies WHERE store_id = stores.store_id) AS cash_on_delivery,
+         (SELECT telebirr_enabled FROM seller_policies WHERE store_id = stores.store_id) AS telebirr_enabled,
+         (SELECT telegram_notifs FROM seller_policies WHERE store_id = stores.store_id) AS telegram_notifs`,
       [description, location_sub_city, location_woreda, location_detail,
        physical_address, business_phone, tg_channel_username,
        telebirr_merchant_id, cbe_account_number, telebirr_account_name, cbe_account_name,
        req.params.storeId]
     );
-    res.json({ store: result.rows[0] });
+    const store = result.rows[0];
+    // Don't expose sensitive payment keys or password hash (mirrors GET /stores/:id)
+    delete store.cbe_account_number;
+    delete store.telebirr_merchant_id;
+    delete store.seller_password_hash;
+    res.json({ store });
   } catch (err) {
     next(err);
   }

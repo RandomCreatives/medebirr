@@ -1343,6 +1343,42 @@ const App = {
     }
   },
 
+  // Persisted progress so a retry resumes from where it stopped (not 0).
+  _payoutProgress: 0,
+
+  _startProgress() {
+    const wrap = document.getElementById('payoutProgress');
+    const bar = document.getElementById('payoutProgressBar');
+    const status = document.getElementById('payoutProgressStatus');
+    const btn = document.getElementById('savePayoutBtn');
+    if (wrap) wrap.style.display = 'block';
+    if (status) { status.style.display = 'block'; }
+    if (btn) btn.disabled = true;
+    if (!bar) return null;
+    // Resume from the last known percentage (retry continues, not restarts).
+    let pct = this._payoutProgress || 0;
+    bar.style.width = pct + '%';
+    const timer = setInterval(() => {
+      // Creep toward 90% while the request is in flight; never auto-complete.
+      if (pct < 90) { pct += Math.max(1, (90 - pct) / 12); bar.style.width = pct + '%'; }
+    }, 120);
+    return {
+      setStatus: (t) => { if (status) status.textContent = t; },
+      finish: (success) => {
+        clearInterval(timer);
+        if (success) { pct = 100; bar.style.width = '100%'; }
+        this._payoutProgress = success ? 0 : (Math.round(pct));
+        if (status) status.textContent = success ? 'Saved!' : `Stopped at ${Math.round(pct)}% — tap save to resume`;
+        setTimeout(() => {
+          if (wrap) wrap.style.display = 'none';
+          if (status) status.style.display = 'none';
+          if (btn) btn.disabled = false;
+          if (bar) bar.style.width = '0%';
+        }, success ? 700 : 2500);
+      }
+    };
+  },
+
   async savePaymentAccounts() {
     const storeId = State.currentStoreId;
     if (!storeId) return;
@@ -1352,13 +1388,20 @@ const App = {
       cbe_account_number: document.getElementById('cbeAccountNumber')?.value?.trim() || null,
       cbe_account_name: document.getElementById('cbeAccountName')?.value?.trim() || null
     };
+    const ui = this._startProgress();
     try {
-      await Api.stores.update(storeId, data);
-      const storeData = await Api.stores.get(storeId);
-      State.stores[0] = { ...State.stores[0], ...storeData.store };
+      // Single round-trip: PUT now returns the redacted full store, so no
+      // second GET is needed (that extra request was the main slowdown).
+      const result = await Api.stores.update(storeId, data);
+      if (result.store) {
+        State.stores[0] = { ...State.stores[0], ...result.store };
+        if (State.storeDetail) State.storeDetail = { ...State.storeDetail, ...result.store };
+      }
+      if (ui) ui.finish(true);
       this.toast('Payment accounts saved!', 'success');
     } catch (err) {
-      this.toast(err.message || 'Save failed', 'error');
+      if (ui) ui.finish(false);
+      this.toast(err.message || 'Save failed — retry to continue', 'error');
     }
   },
 
