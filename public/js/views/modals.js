@@ -394,7 +394,10 @@ const Modals = {
 
             <div class="pdp-cta-box">
               <div class="pdp-cta-row">
-                <button class="pdp-btn-primary" id="pdpAddToCartBtn" onclick="Modals._pdpAddToCart('${product.product_id}')" ${product.stock_quantity <= 0 ? 'disabled style="opacity:0.4;"' : ''}>
+                <button class="pdp-btn-primary" id="pdpBuyNowBtn" onclick="Modals._pdpBuyNow('${product.product_id}')" ${product.stock_quantity <= 0 ? 'disabled style="opacity:0.4;"' : ''}>
+                  ⚡ Buy Now
+                </button>
+                <button class="pdp-btn-secondary" id="pdpAddToCartBtn" onclick="Modals._pdpAddToCart('${product.product_id}')" ${product.stock_quantity <= 0 ? 'disabled style="opacity:0.4;"' : ''}>
                   🛒 Add to Cart
                 </button>
                 <button class="pdp-save-btn ${inWishlist ? 'saved' : ''}" id="pdpSaveBtn" onclick="Modals._pdpToggleWishlist('${product.product_id}')" aria-label="Save for later" title="Save for later">
@@ -602,6 +605,19 @@ const Modals = {
       btn.classList.remove('added');
       btn.innerHTML = '🛒 Add to Cart';
     }, 2000);
+  },
+
+  // Buy Now: add the product to cart, then jump straight to checkout for its store.
+  _pdpBuyNow(productId) {
+    const btn = document.getElementById('pdpBuyNowBtn');
+    if (!btn || btn.disabled) return;
+    const product = State.products.find(p => p.product_id === productId)
+      || State.wishlistItems?.find(p => p.product_id === productId);
+    if (!product) return;
+    if (product.stock_quantity <= 0) { App.toast('Out of stock', 'error'); return; }
+    App.addToCart(productId);
+    Modals.close();
+    Modals.openCheckout(product.store_id);
   },
 
   _pdpToggleWishlist(productId) {
