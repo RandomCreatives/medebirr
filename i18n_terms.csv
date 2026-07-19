@@ -1,0 +1,928 @@
+Key,English,Category,Context,Amharic,Technical
+auth.login.abebe,Abebe Girma,auth,Demo user name,,No
+auth.login.abebeRole,Seller · Bole Apple & Tech Hub,auth,Demo user role line,,No
+auth.login.buyerBadge,BUYER,auth,Demo user badge,,No
+auth.login.dawit,Dawit Alemu,auth,Demo user name,,No
+auth.login.dawitRole,Seller · Kaffa & Sidama Roastery,auth,Demo user role line,,No
+auth.login.go,Go →,auth,Login go button,,No
+auth.login.idPlaceholder,Telegram ID e.g. 12893412,auth,Login custom id placeholder,,No
+auth.login.invalidId,Enter a valid Telegram User ID,auth,Login invalid id alert,,No
+auth.login.mike,Mike Fikadu,auth,Demo user name,,No
+auth.login.mikeRole,"Buyer · Bole, Addis Ababa",auth,Demo user role line,,No
+auth.login.openBot,Open @medebirrbot in Telegram →,auth,Login open bot link,,No
+auth.login.openTelegram,📱 Open in Telegram for full experience,auth,Login info box title,,No
+auth.login.openTelegramDesc,Real users authenticate via Telegram automatically — no sign up needed. This browser preview is for testing only.,auth,Login info box body,,No
+auth.login.orEnterId,Or enter any Telegram User ID,auth,Login custom id label,,No
+auth.login.sellerBadge,SELLER,auth,Demo user badge,,No
+auth.login.signingIn,Signing in...,auth,Login signing in status,,No
+auth.login.tagline,Ethiopia's Telegram Marketplace,auth,Browser login tagline,,No
+auth.login.testAsDemo,Test as a demo user,auth,Login section label,,No
+auth.login.title,መደብር | Medebirr,auth,Browser login header brand,,No
+auth.logout.confirm,Log Out?,auth,Logout confirm title,,No
+auth.logout.desc,You'll need to sign in again to manage your store.,auth,Logout confirm body,,No
+auth.logout.yes,Log Out,auth,Logout confirm button,,No
+auth.onboarding.welcome,✓ Welcome!,auth,Onboarding completed label,,No
+auth.seller.access,🔑 Seller Studio Access,auth,Seller password modal title,,No
+auth.seller.cancel,Cancel,auth,Modal cancel button,,No
+auth.seller.enterPassword,Enter your seller password to access,auth,Seller password prompt body,,No
+auth.seller.incorrect,Incorrect password,auth,Seller password error,,No
+auth.seller.minLength,Password must be at least 4 characters,auth,Set password validation,,No
+auth.seller.newPasswordLabel,New Password (min 4 characters),auth,New password field label,,No
+auth.seller.newPasswordPlaceholder,Choose a password,auth,New password placeholder,,No
+auth.seller.noPassword,Your store doesn't have a password yet. Set one now to access the Seller Studio.,auth,Set password intro,,No
+auth.seller.passwordLabel,Password,auth,Seller password field label,,No
+auth.seller.passwordPlaceholder,Enter your seller password,auth,Seller password input placeholder,,No
+auth.seller.pleaseEnter,Please enter your password,auth,Seller password empty error,,No
+auth.seller.setAndEnter,✅ Set Password & Enter,auth,Set password button,,No
+auth.seller.setPasswordTitle,🔑 Set Your Password,auth,Set password modal title,,No
+auth.seller.storeName,${store.store_name},auth,Seller password prompt store name,,No
+auth.seller.unlock,🔓 Unlock Seller Studio,auth,Seller password unlock button,,No
+auth.switchAccount,Switch Account,auth,Switch account button,,No
+buyer.address.addNew,Add New Address,buyer,Add address button,,No
+buyer.address.couldNotRemove,Could not remove address,buyer,Address remove error,,No
+buyer.address.couldNotSave,Could not save address,buyer,Address save error,,No
+buyer.address.couldNotUpdate,Could not update address,buyer,Address update error,,No
+buyer.address.default,Default,buyer,Address default tag,,No
+buyer.address.home,Home,buyer,Address label Home,,No
+buyer.address.house,House / Landmark,buyer,Address form label,,No
+buyer.address.housePlaceholder,"e.g. Near Edna Mall, House 412",buyer,Address house placeholder,,No
+buyer.address.label,Label,buyer,Address form label,,No
+buyer.address.manage,Manage Address,buyer,Address section title,,No
+buyer.address.noSaved,No saved addresses,buyer,Address empty title,,No
+buyer.address.noSavedDesc,Add a delivery address for faster checkout.,buyer,Address empty desc,,No
+buyer.address.phone,Phone,buyer,Address form label,,No
+buyer.address.phonePlaceholder,+251 9XX XXX XXX,buyer,Address phone placeholder,,No
+buyer.address.phoneRequired,Phone number is required,buyer,Address phone error,,No
+buyer.address.removed,Address removed,buyer,Address remove toast,,No
+buyer.address.save,Save Address,buyer,Address save button,,No
+buyer.address.saved,Address saved!,buyer,Address save toast,,No
+buyer.address.setDefault,Set as default address,buyer,Address default checkbox,,No
+buyer.address.subCity,Sub-City,buyer,Address form label,,No
+buyer.address.updated,Address updated!,buyer,Address update toast,,No
+buyer.address.woreda,Woreda,buyer,Address form label,,No
+buyer.address.woredaPlaceholder,e.g. Woreda 03,buyer,Address woreda placeholder,,No
+buyer.address.work,Work,buyer,Address label Work,,No
+buyer.cart.agreePolicy,Please agree to the store policy to proceed,buyer,Cart policy toast,,No
+buyer.cart.confirmOrder,Confirm Order,buyer,Modal confirm order button,,No
+buyer.cart.enterPhone,Please enter your phone number,buyer,Cart phone toast,,No
+buyer.cart.invalidProduct,Invalid product,buyer,Open product invalid toast,,No
+buyer.cart.maxReached,Maximum stock reached (${maxStock} units),buyer,Cart max reached toast,,No
+buyer.cart.outOfStock,Out of stock,buyer,Cart out of stock toast,,No
+buyer.cart.productNotFound,Product not found,buyer,Open product not found toast,,No
+buyer.cart.qtyMax,Only ${maxStock} units available in stock for ${product.title}!,buyer,Cart max stock toast,,No
+buyer.cart.selectSubCity,Please select your sub-city,buyer,Cart subcity toast,,No
+buyer.coupons.applied,${result.message},buyer,Coupon applied msg,,No
+buyer.coupons.apply,Apply,buyer,Coupons apply button,,No
+buyer.coupons.available,Available Coupons (${available.length}),buyer,Coupons available header,,No
+buyer.coupons.copied,"Code ""${code}"" copied!",buyer,Coupon copied toast,,No
+buyer.coupons.copy,Copy,buyer,Coupon copy button,,No
+buyer.coupons.copyFailed,Failed to copy,buyer,Coupon copy error,,No
+buyer.coupons.enterCode,Enter code,buyer,Coupons input placeholder,,No
+buyer.coupons.enterFirst,Enter a code first,buyer,Coupon validate empty,,No
+buyer.coupons.expired,Expired,buyer,Coupon expired,,No
+buyer.coupons.expiresIn,Expires in ${daysLeft} days,buyer,Coupon expiry,,No
+buyer.coupons.haveCode,Have a promo code?,buyer,Coupons promo label,,No
+buyer.coupons.invalid,${err.message},buyer,Coupon invalid msg,,No
+buyer.coupons.minOrder,Min. order: ${State.formatETB(c.min_order_etb)},buyer,Coupon min order,,No
+buyer.coupons.myCoupons,My Coupons,buyer,Coupons section title,,No
+buyer.coupons.noCoupons,No coupons yet. Check back soon!,buyer,Coupons empty desc,,No
+buyer.coupons.redeemed,Redeemed (${redeemed.length}),buyer,Coupons redeemed header,,No
+buyer.coupons.used,Used,buyer,Coupon used tag,,No
+buyer.coupons.validating,Validating...,buyer,Coupon validating status,,No
+buyer.explore.featured,⭐ Featured,buyer,Sort option,,No
+buyer.explore.itemsFrom,${filtered.length} items from verified sellers,buyer,Explore header count,,No
+buyer.explore.newest,🆕 Newest,buyer,Sort option,,No
+buyer.explore.noItems,🔍,buyer,Explore empty icon,,No
+buyer.explore.noItemsDesc,Try different keywords or clear filters.,buyer,Explore empty desc,,No
+buyer.explore.noItemsTitle,No items found,buyer,Explore empty title,,No
+buyer.explore.popular,🔥 Popular,buyer,Sort option,,No
+buyer.explore.priceAsc,💰 Price ↑,buyer,Sort option,,No
+buyer.explore.priceDesc,💰 Price ↓,buyer,Sort option,,No
+buyer.filter.all,All,buyer,Filter pill,,No
+buyer.filter.electronics,📱 Electronics,buyer,Filter pill,,No
+buyer.filter.fashion,👗 Fashion,buyer,Filter pill,,No
+buyer.filter.food,☕ Food & Coffee,buyer,Filter pill,,No
+buyer.filter.footwear,👟 Footwear,buyer,Filter pill,,No
+buyer.help.center,Help Center,buyer,Help — placeholder section,,No
+buyer.item.addToCart,Add to cart,buyer,Item cart button aria-label,,No
+buyer.item.addToCartToast,Added to cart!,buyer,Add to cart toast,,No
+buyer.item.saveForLater,Save for later,buyer,Item heart aria-label,,No
+buyer.notifications.emptyDesc,"You'll see order updates, delivery confirmations, and messages here.",buyer,Notifications empty desc,,No
+buyer.notifications.emptyTitle,No notifications yet,buyer,Notifications empty title,,No
+buyer.notifications.title,Notifications,buyer,Notifications title,,No
+buyer.orders.active,Active,buyer,Order filter tab,,No
+buyer.orders.all,All,buyer,Order filter tab,,No
+buyer.orders.cancelled,Cancelled,buyer,Order filter tab,,No
+buyer.orders.cancelledReason,${o.cancel_reason || 'Order was cancelled'},buyer,Order cancel reason,,No
+buyer.orders.completed,Completed,buyer,Order filter tab,,No
+buyer.orders.deliveryCode,"🔑 Delivery code: <strong style=""font-family:monospace;letter-spacing:2px;"">${o.delivery_otp}</strong> — give this to the ${o.delivery_provider === 'self' ? 'seller' : 'rider'} at handover",buyer,Order OTP line,,No
+buyer.orders.myOrders,My Orders,buyer,Orders section title,,No
+buyer.orders.noOrders,No ${filter === 'all' ? '' : filter} orders,buyer,Orders empty title,,No
+buyer.orders.noOrdersDesc,${filter === 'all' ? 'Your purchase history will appear here.' : 'No orders match this filter.'},buyer,Orders empty desc,,No
+buyer.orders.paymentVerified,"✅ Payment verified from screenshot · TX <strong style=""font-family:monospace;"">${o.payment_proof.tx_ref}</strong>",buyer,Order payment proof line,,No
+buyer.orders.promoCoupon,🎟️ Promo Coupon Saved: -${State.formatETB(o.discount_etb)},buyer,Order promo line,,No
+buyer.orders.receipt,📄 Receipt,buyer,Order receipt button,,No
+buyer.orders.scanRider,📷 Scan Rider's QR,buyer,Order scan rider button,,No
+buyer.orders.showMyQR,📱 Show My QR,buyer,Order show QR button,,No
+buyer.orders.trackSoon,Live tracking coming soon!,buyer,Track order toast,,No
+buyer.orders.viewDetails,View Details,buyer,Order view details button,,No
+buyer.orders.writeReview,Write a Review,buyer,Order write review button,,No
+buyer.payment.addCard,Add New Card,buyer,Add card button,,No
+buyer.payment.addSub,Your card details are encrypted. Only the last 4 digits are stored.,buyer,Add card modal sub,,No
+buyer.payment.addTitle,Add Payment Card,buyer,Add card modal title,,No
+buyer.payment.cardAdded,Card added!,buyer,Card added toast,,No
+buyer.payment.cardNumber,Card Number,buyer,Card number label,,No
+buyer.payment.cardNumberPlaceholder,1234 5678 9012 3456,buyer,Card number placeholder,,No
+buyer.payment.cardRemoved,Card removed,buyer,Card remove toast,,No
+buyer.payment.cardholder,Cardholder Name,buyer,Cardholder label,,No
+buyer.payment.cardholderLabel,Cardholder,buyer,Card detail label,,No
+buyer.payment.cardholderPlaceholder,John Doe,buyer,Cardholder placeholder,,No
+buyer.payment.cash,💵 Cash on Delivery,buyer,Payment alt badge,,No
+buyer.payment.cbe,🏦 CBE Birr,buyer,Payment alt badge,,No
+buyer.payment.cvv,CVV,buyer,Card cvv label,,No
+buyer.payment.cvvPlaceholder,•••,buyer,Card cvv placeholder,,No
+buyer.payment.default,Default,buyer,Card default tag,,No
+buyer.payment.defaultUpdated,Default card updated,buyer,Default update toast,,No
+buyer.payment.expires,Expires,buyer,Card detail label,,No
+buyer.payment.expiry,Expiry,buyer,Card expiry label,,No
+buyer.payment.expiryPlaceholder,MM/YY,buyer,Card expiry placeholder,,No
+buyer.payment.failedAdd,Failed to add card,buyer,Card add error,,No
+buyer.payment.failedDefault,Failed to update default,buyer,Default update error,,No
+buyer.payment.failedRemove,Failed to remove card,buyer,Card remove error,,No
+buyer.payment.invalidCvv,Invalid CVV,buyer,Card cvv error,,No
+buyer.payment.invalidExpiry,Invalid expiry date,buyer,Card expiry error,,No
+buyer.payment.invalidNumber,Invalid card number,buyer,Card number error,,No
+buyer.payment.invalidNumber2,Invalid number,buyer,Card brand invalid,,No
+buyer.payment.methods,Payment Methods,buyer,Payment section title,,No
+buyer.payment.noCards,No saved cards,buyer,Payment empty title,,No
+buyer.payment.noCardsDesc,Add a payment method for faster checkout.,buyer,Payment empty desc,,No
+buyer.payment.otherMethods,Other Payment Methods,buyer,Payment alt section,,No
+buyer.payment.remove,Remove,buyer,Card remove button,,No
+buyer.payment.removeConfirm,Remove this payment method?,buyer,Delete payment confirm,,No
+buyer.payment.saveCard,Save Card,buyer,Save card button,,No
+buyer.payment.setDefaultBtn,Set Default,buyer,Card set default button,,No
+buyer.payment.setDefaultCheck,Set as default,buyer,Add card default checkbox,,No
+buyer.payment.telebirr,📱 Telebirr,buyer,Payment alt badge,,No
+buyer.payment.validNumber,Valid number,buyer,Card brand valid,,No
+buyer.privacy.policy,Privacy Policy,buyer,Privacy — placeholder section,,No
+buyer.profile.address,Manage Address,buyer,Profile address menu,,No
+buyer.profile.buyer,Buyer,buyer,Profile buyer badge,,No
+buyer.profile.coupons,My Coupons,buyer,Profile coupons menu,,No
+buyer.profile.email,Email Address,buyer,Profile field label,,No
+buyer.profile.emailPlaceholder,you@example.com,buyer,Profile email placeholder,,No
+buyer.profile.failed,Failed to update profile,buyer,Profile update error,,No
+buyer.profile.fullName,Full Name,buyer,Profile field label,,No
+buyer.profile.fullNamePlaceholder,Your full name,buyer,Profile name placeholder,,No
+buyer.profile.help,Help Center,buyer,Profile help menu,,No
+buyer.profile.helpDesc,"FAQs, chat support & contact",buyer,Help menu desc,,No
+buyer.profile.mfa.disable,MFA disabled,buyer,MFA disable toast,,No
+buyer.profile.mfa.enable,MFA enabled,buyer,MFA enable toast,,No
+buyer.profile.mfa.failed,Failed to update MFA setting,buyer,MFA error toast,,No
+buyer.profile.mfaDesc,Add an extra layer of security to your account,buyer,MFA toggle desc,,No
+buyer.profile.mfaTitle,Multi-Factor Authentication,buyer,MFA toggle label,,No
+buyer.profile.nameRequired,Name is required,buyer,Profile name error,,No
+buyer.profile.notifDesc,"Messages, orders & delivery updates",buyer,Notifications menu desc,,No
+buyer.profile.notifications,Notifications,buyer,Profile notifications menu,,No
+buyer.profile.openShop,Open a Shop on Medebirr — Free,buyer,Open shop CTA,,No
+buyer.profile.orders,My Orders,buyer,Profile orders menu,,No
+buyer.profile.payment,Payment Methods,buyer,Profile payment menu,,No
+buyer.profile.pending,Pending,buyer,Store pending status,,No
+buyer.profile.phone,Phone Number,buyer,Profile field label,,No
+buyer.profile.phonePlaceholder,+251 9XX XXX XXX,buyer,Profile phone placeholder,,No
+buyer.profile.privacy,Privacy Policy,buyer,Profile privacy menu,,No
+buyer.profile.privacyDesc,Data usage & legal terms,buyer,Privacy menu desc,,No
+buyer.profile.saveChanges,Save Changes,buyer,Profile save button,,No
+buyer.profile.security,Security,buyer,Profile security section,,No
+buyer.profile.settings,Settings,buyer,Profile settings menu,,No
+buyer.profile.settingsDesc,"Dark mode, notifications, biometrics",buyer,Settings menu desc,,No
+buyer.profile.studio,Studio →,buyer,Profile studio button,,No
+buyer.profile.telegramUser,Telegram User,buyer,Profile fallback username,,No
+buyer.profile.updated,Profile updated!,buyer,Profile update toast,,No
+buyer.profile.verified,Verified,buyer,Store verified status,,No
+buyer.profile.yourProfile,Your Profile,buyer,Profile section title,,No
+buyer.profile.yourStores,Your Stores,buyer,Profile stores section,,No
+buyer.settings.amharic,አማርኛ,buyer,Language amharic,,No
+buyer.settings.appearance,Appearance,buyer,Settings group title,,No
+buyer.settings.biometric,Biometric Login,buyer,Settings toggle label,,No
+buyer.settings.biometricDesc,FaceID or Fingerprint authentication,buyer,Settings toggle desc,,No
+buyer.settings.chatAlerts,Chat Alerts,buyer,Notif toggle label,,No
+buyer.settings.chatAlertsDesc,Messages from sellers and support,buyer,Notif toggle desc,,No
+buyer.settings.darkHint,Switch to light theme,buyer,Dark mode desc,,No
+buyer.settings.darkMode,🌙 Dark Mode,buyer,Dark mode label,,No
+buyer.settings.english,English,buyer,Language english,,No
+buyer.settings.language,Language,buyer,Settings language label,,No
+buyer.settings.lightHint,Switch to dark theme,buyer,Light mode desc,,No
+buyer.settings.lightMode,☀️ Light Mode,buyer,Light mode label,,No
+buyer.settings.orderUpdates,Order Updates,buyer,Notif toggle label,,No
+buyer.settings.orderUpdatesDesc,"Dispatch, delivery, and status changes",buyer,Notif toggle desc,,No
+buyer.settings.oromia,Afaan Oromoo,buyer,Language oromia,,No
+buyer.settings.promotions,Promotions & Deals,buyer,Notif toggle label,,No
+buyer.settings.promotionsDesc,"Sales, discounts, and new arrivals",buyer,Notif toggle desc,,No
+buyer.settings.pushNotif,Push Notifications,buyer,Settings group title,,No
+buyer.settings.security,Security,buyer,Settings group title,,No
+buyer.settings.title,Settings,buyer,Settings section title,,No
+buyer.shops.allShops,All Shops,buyer,Shops section title,,No
+buyer.shops.backToHub,← Back to Hub,buyer,Store page back button,,No
+buyer.shops.couldNotLoad,Could not load store page,buyer,Store page error toast,,No
+buyer.shops.group,💬 Group,buyer,Shop telegram group button,,No
+buyer.shops.joinTelegram,💬 Join Telegram Group,buyer,Store page join group button,,No
+buyer.shops.loading,Loading shops...,buyer,Shops loading state,,No
+buyer.shops.new,New,buyer,Shop rating fallback,,No
+buyer.shops.noProducts,No products listed yet.,buyer,Store page no products,,No
+buyer.shops.products,Products (${products.length}),buyer,Store products header,,No
+buyer.shops.searchPlaceholder,Search stores by name or location...,buyer,Shops search placeholder,,No
+buyer.shops.stores,${shops.length} stores,buyer,Shops count,,No
+buyer.wishlist.chat,💬 Chat,buyer,Wishlist chat button,,No
+buyer.wishlist.removeSaved,Removed from saved,buyer,Wishlist remove toast,,No
+buyer.wishlist.saved,Saved!,buyer,Wishlist add toast,,No
+buyer.wishlist.share,📤 Share,buyer,Wishlist share button,,No
+checkout.agreePolicy,I agree to <strong>${pkg.shopName}</strong>'s return policy (${State.policyLabel(pkg.returnPolicy)}).,checkout,Review policy agree,,No
+checkout.agreeToComplete,Please agree to the store policy to complete checkout,checkout,Checkout agree toast,,No
+checkout.applyCode,Apply,checkout,Coupon apply button,,No
+checkout.back,← Back,checkout,Checkout back button,,No
+checkout.cancel,Cancel,checkout,Checkout cancel button,,No
+checkout.cartSubtotal,Cart Subtotal,checkout,Review subtotal row,,No
+checkout.cash,💵 Cash on Delivery,checkout,Cash radio title,,No
+checkout.cashDesc,Pay courier or cashier upon inspection,checkout,Cash radio desc,,No
+checkout.cashOnDelivery,"💵 <strong>Cash on Delivery</strong><br/><span style=""font-size:11px;color:var(--text-secondary);"">Pay upon item inspection</span>",checkout,Review cash summary,,No
+checkout.cashReady,Please have exact cash (` + State.formatETB(this._total()) + `) ready for the courier or cashier upon item inspection.,checkout,Cash ready note,,No
+checkout.cashSelected,💵 Cash on Delivery Selected,checkout,Cash details title,,No
+checkout.cbe,🏦 CBE Bank Transfer,checkout,CBE radio title,,No
+checkout.cbeDesc,Direct Account-to-Account Deposit,checkout,CBE radio desc,,No
+checkout.cbePaste,2. Paste your Bank Transaction Code below:,checkout,CBE step2,,No
+checkout.cbeTransfer,1. Transfer <strong>${State.formatETB(this._total())}</strong> via CBE Birr / Mobile Banking to:,checkout,CBE transfer step1,,No
+checkout.cbeTransfer2,"🏦 <strong>CBE Bank Transfer</strong><br/><span style=""font-size:11px;color:var(--text-secondary);"">TX ID: ${this._txCode || 'Pending at handover'}</span>",checkout,Review cbe summary,,No
+checkout.cbeTxPlaceholder,e.g. FT26194204812,checkout,CBE tx placeholder,,No
+checkout.close,Close,checkout,Success close button,,No
+checkout.codePlaceholder,Enter code (e.g. BEKOLLO015),checkout,Coupon placeholder,,No
+checkout.confirmed,Order Confirmed!,checkout,Success title,,No
+checkout.confirming,Confirming payment &amp; generating receipt,checkout,Checkout processing sub,,No
+checkout.contactPhone,📱 Contact Phone Number,checkout,Checkout phone label,,No
+checkout.copied,Account copied!,checkout,Copy toast,,No
+checkout.couponApplied,'🎉 Coupon '${this._couponCode}' Applied!',checkout,Coupon applied banner,,No
+checkout.couponAppliedToast,'Coupon ${this._couponCode} applied!',checkout,Coupon applied toast,,No
+checkout.deliverAddress,🛵 Deliver to My Address,checkout,Delivery radio title,,No
+checkout.deliverDesc,Rider brings it directly to your door,checkout,Delivery radio desc,,No
+checkout.delivery,Delivery,checkout,Checkout summary row,,No
+checkout.deliveryCode2,"🛡️ <strong style=""color:var(--accent);"">Delivery verification code</strong><br/> <div style=""font-family:monospace;font-size:22px;font-weight:900;letter-spacing:6px;color:var(--accent);margin:6px 0;"">${otp}</div> Share this with your rider when they arrive — they enter it to confirm handover.",checkout,Success OTP box,,No
+checkout.deliveryDestination,Delivery Destination,checkout,Checkout address preview label,,No
+checkout.deliveryFee,Delivery Fee,checkout,Review delivery fee row,,No
+checkout.downloadReceipt,📥 Download PDF Receipt,checkout,Download receipt button,,No
+checkout.enterContact,Please enter your contact phone number,checkout,Checkout contact toast,,No
+checkout.enterCoupon,Please enter a coupon code first,checkout,Coupon empty toast,,No
+checkout.finalTotal,Final Total to Pay,checkout,Review final total,,No
+checkout.free,Free,checkout,Delivery free price,,No
+checkout.generatingReceipt,Generating your receipt PDF...,checkout,Success receipt loading,,No
+checkout.homeDelivery,"🛵 <strong>Home Delivery</strong> to ${this._subCity}<br/><span style=""font-size:11px;color:var(--text-secondary);"">${this._landmark || 'Sub-city delivery'}</span>",checkout,Review delivery summary,,No
+checkout.houseLandmark,🏠 House Number / Landmark,checkout,Checkout landmark label,,No
+checkout.invalidCoupon,Invalid or expired coupon code,checkout,Coupon invalid toast,,No
+checkout.items,Items (${pkg.items.length}),checkout,Checkout items count,,No
+checkout.itemsInPackage,Items in Package (${pkg.items.length}),checkout,Review items header,,No
+checkout.landmarkPlaceholder,"e.g. Near Edna Mall, House 412 or behind bakery",checkout,Checkout landmark placeholder,,No
+checkout.nextPayment,Next: Payment →,checkout,Checkout next button,,No
+checkout.nextReview,Next: Review & Confirm →,checkout,Checkout next button,,No
+checkout.orderFailed,Order placement failed — please try again,checkout,Checkout fail toast,,No
+checkout.payViaCbe,🏦 Pay via Commercial Bank of Ethiopia (CBE),checkout,CBE details title,,No
+checkout.payViaTelebirr,📱 Pay via Telebirr,checkout,Telebirr details title,,No
+checkout.paymentMethod,Payment Method,checkout,Review payment label,,No
+checkout.paymentTitle,Step 2 — Select Payment Method,checkout,Checkout step2 heading,,No
+checkout.phoneHint,Rider or seller will call this number for handover coordination.,checkout,Checkout phone hint,,No
+checkout.phonePlaceholder,+251 9XX XXX XXX,checkout,Checkout phone placeholder,,No
+checkout.pickup,🏪 Collect from Store,checkout,Pickup radio title,,No
+checkout.pickupDesc,Visit the seller's shop in person,checkout,Pickup radio desc,,No
+checkout.placeOrder,'🚀 Place &amp; Pay Order — ${State.formatETB(total)}',checkout,Review place order button,,No
+checkout.placedWith,"Your order <strong style=""color:var(--accent);"">${orderRef}</strong><br/> has been placed with <strong style=""color:white;"">${storeName}</strong>",checkout,Success body,,No
+checkout.processing,Processing Your Order...,checkout,Checkout processing title,,No
+checkout.promoCode,🎟️ Promotional Coupon Code,checkout,Coupon section label,,No
+checkout.promoCoupon,Promo Coupon (${this._couponCode}),checkout,Review coupon row,,No
+checkout.promoDiscount,Promo Discount,checkout,Checkout summary row,,No
+checkout.purchaseSuccess,Purchase Successful!,checkout,Success title,,No
+checkout.receiptHistory,Receipt will be available in your order history.,checkout,Receipt fallback note,,No
+checkout.receiptTelegram,📄 Receipt will be sent to you via Telegram.,checkout,Receipt telegram note,,No
+checkout.reviewTitle,Step 3 — Review Your Order,checkout,Review heading,,No
+checkout.selectSubCity,Select sub-city,checkout,Checkout address fallback,,No
+checkout.selectSubCityErr,Please select your sub-city,checkout,Checkout subcity toast,,No
+checkout.step1,Delivery,checkout,Checkout step 1 label,,No
+checkout.step1Title,Step 1 — Delivery & Contact,checkout,Checkout step1 heading,,No
+checkout.step2,Payment,checkout,Checkout step 2 label,,No
+checkout.step3,Confirm,checkout,Checkout step 3 label,,No
+checkout.storePickup,"🏪 <strong>Store Pickup</strong> at ${pkg.shopName}<br/><span style=""font-size:11px;color:var(--text-secondary);"">${pkg.physicalAddress || 'Bole Commercial Center'}</span>",checkout,Review pickup summary,,No
+checkout.subCity,📍 Select Sub-City,checkout,Checkout subcity label,,No
+checkout.subtotalPay,Subtotal to Pay,checkout,Checkout summary row,,No
+checkout.successInfo,💳 Payment confirmed — funds sent directly to seller<br/> 📄 Your PDF receipt is being generated below<br/> 🛵 You'll get a Telegram message when rider is assigned<br/> 🛡️ Purchase protected by the store's return policy,checkout,Success info box,,No
+checkout.telebirr,📱 Telebirr Direct Transfer,checkout,Telebirr radio title,,No
+checkout.telebirrCopy,📋 Copy,checkout,Telebirr copy button,,No
+checkout.telebirrDesc,Pay to Merchant Shortcode / Phone,checkout,Telebirr radio desc,,No
+checkout.telebirrSms,2. Enter your SMS Transaction ID below:,checkout,Telebirr step2,,No
+checkout.telebirrTransfer,1. Open Telebirr App &amp; transfer <strong>${State.formatETB(this._total())}</strong> to:,checkout,Telebirr transfer step1,,No
+checkout.telebirrTransfer2,"📱 <strong>Telebirr Transfer</strong><br/><span style=""font-size:11px;color:var(--text-secondary);"">TX ID: ${this._txCode || 'Pending at handover'}</span>",checkout,Review telebirr summary,,No
+checkout.telebirrTxPlaceholder,e.g. TBX-891204-99218401,checkout,Telebirr tx placeholder,,No
+checkout.title,Checkout: ${pkg.shopName},checkout,Checkout topbar title,,No
+checkout.totalPay,Total to Pay,checkout,Checkout summary total,,No
+checkout.trackOrder,📦 Track My Order,checkout,Track order button,,No
+checkout.uploadReceipt,🤖 Upload Receipt to Verification Bot,checkout,Success upload button,,No
+checkout.verifyPayment,"📤 <strong style=""color:#60A5FA;"">Verify your payment</strong><br/> Send your transaction screenshot to our Verification Bot — it reads the receipt and marks your order paid automatically.",checkout,Success verify box,,No
+checkout.zeroEscrow,Zero escrow holding! You transfer money directly to the store's verified account.,checkout,Checkout payment intro,,No
+delivery.assign.company,🚚<br/>Delivery Co.,delivery,Provider company,,No
+delivery.assign.companyMsg,Delivery partner assigned! Buyer notified.,delivery,Company toast,,No
+delivery.assign.companyName,Delivery Company Name,delivery,Company name label,,No
+delivery.assign.companyNamePlaceholder,e.g. Sendit Express,delivery,Company name placeholder,,No
+delivery.assign.companyNote,Local delivery partner integration coming soon — add the company name now so the buyer is notified.,delivery,Company note,,No
+delivery.assign.companyPhone,Company Phone (optional),delivery,Company phone label,,No
+delivery.assign.companyPhonePlaceholder,+251 911 000 000,delivery,Company phone placeholder,,No
+delivery.assign.companyRequired,Delivery company name is required,delivery,Company required toast,,No
+delivery.assign.confirm,Confirm Delivery Assignment,delivery,Assign confirm button,,No
+delivery.assign.desc,Choose who delivers this order. The buyer gets a delivery code + QR either way.,delivery,Assign delivery desc,,No
+delivery.assign.dispatchNote,Dispatch Note (optional),delivery,Dispatch note label,,No
+delivery.assign.dispatchNotePlaceholder,Picking up now...,delivery,Dispatch note placeholder,,No
+delivery.assign.failed,Dispatch failed,delivery,Dispatch error toast,,No
+delivery.assign.rider,🛵<br/>Assign Rider,delivery,Provider rider,,No
+delivery.assign.riderMsg,Rider assigned! Buyer notified.,delivery,Rider toast,,No
+delivery.assign.riderName,Rider Full Name,delivery,Rider name label,,No
+delivery.assign.riderNamePlaceholder,e.g. Abebe Girma,delivery,Rider name placeholder,,No
+delivery.assign.riderPhone,Rider Phone Number,delivery,Rider phone label,,No
+delivery.assign.riderPhonePlaceholder,+251 922 000 000,delivery,Rider phone placeholder,,No
+delivery.assign.riderRequired,Rider name and phone are required,delivery,Rider required toast,,No
+delivery.assign.self,🏪<br/>I'll Deliver,delivery,Provider self,,No
+delivery.assign.selfMsg,Self-delivery set! Buyer notified.,delivery,Self delivery toast,,No
+delivery.assign.selfNote,You'll deliver this order yourself. The buyer still receives the delivery code &amp; QR for handover.,delivery,Provider self note,,No
+delivery.assign.title,🛵 Assign Delivery,delivery,Assign delivery title,,No
+delivery.callBuyer,📞 Call Buyer,delivery,Call buyer button,,No
+delivery.confirmDelivery,Delivery confirmed! Warranty period started.,delivery,Confirm delivery toast,,No
+delivery.confirmDeliveryErr,${err.message},delivery,Confirm delivery error,,No
+delivery.qr.allow,📷 Allow Camera,delivery,Scan allow button,,No
+delivery.qr.allowCamera,Allow camera access?,delivery,Scan permission title,,No
+delivery.qr.alreadyConfirmed,✅ Delivery Already Confirmed!,delivery,Manual already confirmed,,No
+delivery.qr.attempt,Attempt ${result.attempt || '?'} of 5 · ${result.remaining || '?'} remaining,delivery,Manual attempt info,,No
+delivery.qr.back,← Back,delivery,Scan back button,,No
+delivery.qr.bothConfirmed,✅ Delivery Confirmed by Both Parties!,delivery,QR both confirmed,,No
+delivery.qr.buyer,Buyer,delivery,QR buyer status,,No
+delivery.qr.buyerShow,Show this to the rider for verification.,delivery,QR buyer instruction,,No
+delivery.qr.cameraHint,We couldn't open the camera. You can still verify with the delivery code.,delivery,Scanner camera hint,,No
+delivery.qr.cameraNeeded,e-Merkato needs your camera to scan the delivery QR code. Your camera is used only while this screen is open.,delivery,Scan permission body,,No
+delivery.qr.cameraUnavailable,Camera unavailable,delivery,Scanner camera error,,No
+delivery.qr.cancel,Cancel,delivery,Scan cancel button,,No
+delivery.qr.close,Close,delivery,QR close button,,No
+delivery.qr.complete,🎉 Delivery Complete! Both parties confirmed.,delivery,Manual complete,,No
+delivery.qr.detected,QR Code detected! Verifying...,delivery,Scanner detected,,No
+delivery.qr.enter4digit,Please enter the 4-digit code.,delivery,Manual code empty,,No
+delivery.qr.error,${err.message || 'QR code not yet generated for this order.'},delivery,QR error body,,No
+delivery.qr.failed,❌ ${result.message},delivery,Manual failed msg,,No
+delivery.qr.freeEcommerce,MEDEBIRR · Your Free Ecommerce,delivery,QR footer brand,,No
+delivery.qr.invalid,❌ Invalid QR Code,delivery,Scanner invalid,,No
+delivery.qr.invalidDesc,This doesn't appear to be a valid Medebirr order QR.,delivery,Scanner invalid desc,,No
+delivery.qr.loading,Loading QR code...,delivery,QR loading,,No
+delivery.qr.manual,⌨️ Enter code manually,delivery,Scan manual button,,No
+delivery.qr.manualDesc,Type the 4-digit code shown on the other party's QR screen.,delivery,Manual code desc,,No
+delivery.qr.manualPlaceholder,••••,delivery,Manual code placeholder,,No
+delivery.qr.manualTitle,⌨️ Enter Delivery Code,delivery,Manual code title,,No
+delivery.qr.notAvailable,⚠️ QR Not Available,delivery,QR error title,,No
+delivery.qr.order,"Order: <strong style=""color:white;"">${data.order_ref}</strong>",delivery,QR order ref,,No
+delivery.qr.pending,⏳ Pending,delivery,QR pending status,,No
+delivery.qr.rider,Rider,delivery,QR rider status,,No
+delivery.qr.scanAttempts,Scan attempts: ${data.scan_attempts}/5,delivery,QR scan attempts,,No
+delivery.qr.scanDesc,Verify the handover by scanning the other party's QR code.,delivery,Scan modal desc,,No
+delivery.qr.scanTitle,"📷 Scan ${role === 'rider' ? ""Buyer's"" : ""Rider's""} QR",delivery,Scan modal title,,No
+delivery.qr.sellerShow,Show this to the buyer for verification.,delivery,QR seller instruction,,No
+delivery.qr.shareBuyer,Share with the buyer for the handover handshake.,delivery,QR OTP note,,No
+delivery.qr.somethingWrong,Something went wrong. Try again.,delivery,Manual error,,No
+delivery.qr.title,📱 Your QR Code,delivery,QR modal title,,No
+delivery.qr.verificationCode,Delivery Verification Code,delivery,QR OTP label,,No
+delivery.qr.verified,✓ Verified,delivery,QR verified status,,No
+delivery.qr.verify,Verify Code,delivery,Verify code button,,No
+delivery.qr.waitingRider,Waiting for ${role === 'rider' ? 'buyer' : 'rider'} to confirm...,delivery,Manual waiting,,No
+delivery.receipt.download,📥 Download PDF,delivery,Receipt download button,,No
+delivery.receipt.error,${err.message || 'Receipt not yet generated.'},delivery,Receipt error body,,No
+delivery.receipt.for,"Receipt for order ${orderId.slice(0, 8)}...",delivery,Receipt order line,,No
+delivery.receipt.loading,Loading receipt...,delivery,Receipt loading,,No
+delivery.receipt.notAvailable,⚠️ Receipt Not Available,delivery,Receipt error title,,No
+delivery.receipt.title,📄 Order Receipt,delivery,Receipt modal title,,No
+delivery.settle,Order settled successfully!,delivery,Settle toast,,No
+delivery.settleErr,Failed to settle order,delivery,Settle error,,No
+delivery.settleMsg,${result.message || 'Order settled successfully!'},delivery,Settle message,,No
+notification.arriving24,Arriving within 24 hours,notification,ETA title 24h,,No
+notification.arrivingDays,'Arriving in ~${days} days',notification,ETA title days,,No
+notification.back,Back,notification,Notif back button,,No
+notification.coupon,Coupon,notification,Notif label coupon,,No
+notification.emptyDesc,"New orders, dispatches, payouts and delivery updates will appear here.",notification,Seller notif empty desc,,No
+notification.estimated,estimated,notification,Notif estimated tag,,No
+notification.etaBody,'Order ${o.order_ref} is on its way. Estimated delivery in ${days === 1 ? '1 day' : days + ' days'}.',notification,ETA body,,No
+notification.message,Message,notification,Notif label message,,No
+notification.newOrder,New Order,notification,Notif label new_order,,No
+notification.notification,Notification,notification,Notif fallback label,,No
+notification.orderCancelled,Order Cancelled,notification,Notif label order_cancelled,,No
+notification.orderDelivered,Order Delivered,notification,Notif label order_delivered,,No
+notification.orderDispatched,Order Dispatched,notification,Notif label order_dispatched,,No
+notification.orderPaid,Payment Confirmed,notification,Notif label order_paid,,No
+notification.orderPlaced,Order Placed,notification,Notif label order_placed,,No
+notification.payout,Payout,notification,Notif label payout,,No
+notification.riderAssigned,Rider Assigned,notification,Notif label rider_assigned,,No
+notification.windowEnded,Delivery window ended,notification,ETA ended title,,No
+notification.windowEndedBody,'Order ${o.order_ref} dispatch window passed — confirm delivery with the buyer.',notification,ETA ended body,,No
+seller.addProduct.catBeauty,💄 Beauty,seller,Category option,,No
+seller.addProduct.catElectronics,📱 Electronics,seller,Category option,,No
+seller.addProduct.catFashion,👗 Fashion & Traditional,seller,Category option,,No
+seller.addProduct.catFootwear,👟 Footwear,seller,Category option,,No
+seller.addProduct.catFurniture,🪑 Furniture,seller,Category option,,No
+seller.addProduct.catGroceries,☕ Coffee & Food,seller,Category option,,No
+seller.addProduct.catHome,🏠 Home & Garden,seller,Category option,,No
+seller.addProduct.catOther,📦 Other,seller,Category option,,No
+seller.addProduct.category,Category,seller,Product category label,,No
+seller.addProduct.categoryRequired,Category *,seller,Pending category label,,No
+seller.addProduct.categoryRequiredErr,Please select a category,seller,Complete category error,,No
+seller.addProduct.comparePending,Compare Price (ETB),seller,Pending compare label,,No
+seller.addProduct.comparePlaceholder,Optional original price,seller,Compare price placeholder,,No
+seller.addProduct.comparePrice,Compare Price (ETB),seller,Product compare price label,,No
+seller.addProduct.completeListing,📝 Complete Product Listing,seller,Complete pending title,,No
+seller.addProduct.descPlaceholder,"Describe your product in detail — features, condition, materials, size...",seller,Pending desc placeholder,,No
+seller.addProduct.descRequired,Description *,seller,Pending desc label,,No
+seller.addProduct.descRequiredErr,Description is required,seller,Complete desc error,,No
+seller.addProduct.description,Description,seller,Product description label,,No
+seller.addProduct.detectedFrom,Detected from Telegram · ${pending.auto_detected ? 'Auto-detected' : '/sell command'},seller,Complete pending sub,,No
+seller.addProduct.draftFailed,Save failed,seller,Draft save error,,No
+seller.addProduct.draftSaved,Draft saved. Complete later to publish.,seller,Draft saved toast,,No
+seller.addProduct.duty,Duty / Customs,seller,Product duty label,,No
+seller.addProduct.dutyPlaceholder,"Import duty, customs, or tax notes (optional)",seller,Duty placeholder,,No
+seller.addProduct.editTitle,Edit Item,seller,Edit product title,,No
+seller.addProduct.failedPublish,Failed to publish,seller,Complete publish error,,No
+seller.addProduct.imageNote,"Upload from device or paste direct image URLs (jpg/png/webp). First image is the thumbnail. Max 5 images, 10MB each.",seller,Image note,,No
+seller.addProduct.imageTips,"📸 Image tips: Use natural lighting, clean background, show multiple angles. Min 800×600px.",seller,Pending image tips,,No
+seller.addProduct.imageUrlPending,'Image URL ${i+1} ${i===0?'main image':'optional'}',seller,Pending image placeholder,,No
+seller.addProduct.imageUrlPlaceholder,'Image URL ${i+1} ${i===0?'required':'optional'}',seller,Image url placeholder,,No
+seller.addProduct.images,Product Images,seller,Product images label,,No
+seller.addProduct.imagesCount,'Product Images (${imgs.length}/5)',seller,Complete pending images count,,No
+seller.addProduct.intro,Item will appear in the buyer discovery feed and auto-broadcast to your Telegram group.,seller,Add product intro,,No
+seller.addProduct.itemTitle,Item Title,seller,Product title label,,No
+seller.addProduct.materials,Materials,seller,Product materials label,,No
+seller.addProduct.materialsPlaceholder,"e.g. 100% cotton, genuine leather, aluminum alloy",seller,Materials placeholder,,No
+seller.addProduct.materialsRequired,*,seller,Materials required marker,,No
+seller.addProduct.materialsRequiredErr,Materials are required,seller,Materials error,,No
+seller.addProduct.noImages,⚠️ No images detected. You can add image URLs below.,seller,Complete pending no images,,No
+seller.addProduct.price,Price (ETB),seller,Product price label,,No
+seller.addProduct.pricePending,Price (ETB),seller,Pending price label,,No
+seller.addProduct.pricePlaceholder,0,seller,Pending price placeholder,,No
+seller.addProduct.priceRequired,Valid price required,seller,Product price error,,No
+seller.addProduct.publishBroadcast,🚀 Publish & Broadcast to Group,seller,Complete publish button,,No
+seller.addProduct.publishFailed,Failed to publish item,seller,Publish error,,No
+seller.addProduct.publishHub,🚀 Publish to Medebirr Hub,seller,Publish button,,No
+seller.addProduct.publishNow,Publish immediately (goes live in buyer hub),seller,Publish now checkbox,,No
+seller.addProduct.published,Item published to hub!,seller,Publish toast,,No
+seller.addProduct.publishedToast,'${result.message || 'Product published!'}',seller,Complete publish toast,,No
+seller.addProduct.returns,Returns (per product),seller,Product returns label,,No
+seller.addProduct.returnsPlaceholder,Product-specific return notes (optional — store policy applies if blank),seller,Returns placeholder,,No
+seller.addProduct.saveChanges,Save Changes,seller,Save changes button,,No
+seller.addProduct.saveDraft,💾 Save Draft (publish later),seller,Save draft button,,No
+seller.addProduct.selectCategory,Select category...,seller,Pending category placeholder,,No
+seller.addProduct.shippingInfo,Shipping Info,seller,Product shipping label,,No
+seller.addProduct.shippingPlaceholder,"Lead time, handling notes, dispatch details (optional — store policy applies if blank)",seller,Shipping placeholder,,No
+seller.addProduct.sku,SKU / Item Code (optional),seller,Product sku label,,No
+seller.addProduct.skuPlaceholder,e.g. AAPL-IP15-256-TI,seller,SKU placeholder,,No
+seller.addProduct.specifications,Specifications,seller,Product specs label,,No
+seller.addProduct.specsPlaceholder,"Key specs, dimensions, weight, technical details (one per line)",seller,Specs placeholder,,No
+seller.addProduct.specsRequired,*,seller,Specs required marker,,No
+seller.addProduct.specsRequiredErr,Specifications are required,seller,Specs error,,No
+seller.addProduct.stock,Stock Quantity,seller,Product stock label,,No
+seller.addProduct.stockPending,Stock Quantity,seller,Pending stock label,,No
+seller.addProduct.stockPlaceholder,1,seller,Pending stock placeholder,,No
+seller.addProduct.stockRequired,Valid stock quantity required,seller,Product stock error,,No
+seller.addProduct.subCatPending,Sub-Category,seller,Pending subcategory label,,No
+seller.addProduct.subCatPlaceholder,"e.g. Phones, Chairs...",seller,Pending subcategory placeholder,,No
+seller.addProduct.subCategory,Sub-Category,seller,Product subcategory label,,No
+seller.addProduct.subCategoryPlaceholder,"e.g. Phones, Chairs...",seller,Subcategory placeholder,,No
+seller.addProduct.tags,Tags (comma-separated),seller,Product tags label,,No
+seller.addProduct.tagsPending,Tags (comma-separated),seller,Pending tags label,,No
+seller.addProduct.tagsPlaceholder,"e.g. wireless, bluetooth, premium",seller,Tags placeholder,,No
+seller.addProduct.tagsPlaceholder2,"e.g. wireless, bluetooth, premium",seller,Pending tags placeholder,,No
+seller.addProduct.tapImages,Tap images to select for listing (max 5). Blue border = selected.,seller,Complete pending image note,,No
+seller.addProduct.title,+ Publish New Item,seller,Add product title,,No
+seller.addProduct.titlePending,Product Title,seller,Pending title label,,No
+seller.addProduct.titlePlaceholder,e.g. Apple iPhone 15 Pro Max (256GB),seller,Product title placeholder,,No
+seller.addProduct.titlePlaceholder2,e.g. Wireless Headphones,seller,Pending title placeholder,,No
+seller.addProduct.titleRequired,Title is required,seller,Product title error,,No
+seller.addProduct.updateFailed,Update failed,seller,Update error,,No
+seller.addProduct.updated,Item updated!,seller,Update toast,,No
+seller.addProduct.uploadDevice,📷 Upload from Device,seller,Upload images button,,No
+seller.autoDetect.enabled,'Auto-detect ${enabled ? 'enabled' : 'disabled'}',seller,Auto-detect toast,,No
+seller.autoDetect.failed,Failed to update setting,seller,Auto-detect error,,No
+seller.cancelAsSeller.failed,Cancel failed,seller,Cancel as seller error,,No
+seller.cancelAsSeller.success,Order cancelled. Buyer notified.,seller,Cancel as seller toast,,No
+seller.confirmCancel.body,"'Cancel order <strong style=""color:white;"">${orderRef}</strong>? The buyer will be notified and any payment will be refunded.'",seller,Seller cancel body,,No
+seller.confirmCancel.cancel,Cancel Order,seller,Cancel order button,,No
+seller.confirmCancel.keep,Keep Order,seller,Keep order button,,No
+seller.confirmCancel.reason,Reason for cancellation,seller,Cancel reason label,,No
+seller.confirmCancel.reasonPlaceholder,"e.g. Out of stock, item discontinued...",seller,Cancel reason placeholder,,No
+seller.confirmCancel.title,Cancel Order,seller,Seller cancel order title,,No
+seller.confirmDeleteStore.body,This permanently unpublishes all products and removes your shop from Medebirr. This action cannot be undone.,seller,Confirm delete body,,No
+seller.confirmDeleteStore.cancel,Cancel,seller,Confirm delete cancel,,No
+seller.confirmDeleteStore.delete,Delete Shop,seller,Confirm delete button,,No
+seller.confirmDeleteStore.title,"Delete ""${name}""?",seller,Confirm delete store title,,No
+seller.confirmDeleteStore.warn,"⚠️ You cannot delete while there are active (paid, undelivered) orders.",seller,Confirm delete warn,,No
+seller.coupon.failed,Save failed,seller,Coupon error,,No
+seller.coupon.saved,Coupon settings saved!,seller,Coupon saved toast,,No
+seller.dash.inTransit,In Transit,seller,Stat label,,No
+seller.dash.loading,Loading stats...,seller,Dashboard loading,,No
+seller.dash.orders,Orders (30 Days),seller,Stat label,,No
+seller.dash.pendingOrders,Pending Orders,seller,Stat label,,No
+seller.dash.revenue,Revenue (30 Days),seller,Stat label,,No
+seller.deleteProduct.confirm,"Are you sure you want to delete <strong style=""color:white;"">""${title}""</strong>? This action cannot be undone.",seller,Delete product confirm,,No
+seller.deleteProduct.delete,Delete,seller,Delete product button,,No
+seller.deleteProduct.deleted,Product deleted,seller,Product deleted toast,,No
+seller.deleteProduct.failed,Delete failed,seller,Product delete error,,No
+seller.deleteProduct.title,🗑 Delete Product,seller,Delete product title,,No
+seller.deleteStore.body,"'You are about to permanently delete<br/> <strong style=""color:white;"">${storeName}</strong><br/> This will unpublish all products and disconnect the Telegram group.<br/> <strong style=""color:var(--danger);"">This cannot be undone.</strong>'",seller,Delete store body,,No
+seller.deleteStore.confirm,Delete Store?,seller,Delete store title,,No
+seller.deleteStore.delete,🗑️ Delete Store,seller,Delete store button,,No
+seller.deleteStore.deleted,Store Deleted,seller,Store deleted title,,No
+seller.deleteStore.deletedBody,"'<strong style=""color:white;"">${storeName}</strong> has been deleted.<br/> All products have been unpublished.'",seller,Store deleted body,,No
+seller.deleteStore.deleting,Deleting store...,seller,Deleting toast,,No
+seller.deleteStore.disconnectNote,✗ Telegram group will be disconnected,seller,Delete store note,,No
+seller.deleteStore.done,Done,seller,Store deleted done button,,No
+seller.deleteStore.failed,Failed to delete store,seller,Delete store error,,No
+seller.deleteStore.historyNote,✓ Order history is preserved for reference,seller,Delete store note,,No
+seller.deleteStore.reopenNote,✓ You can open a new store anytime,seller,Delete store note,,No
+seller.deleteStore.unpublishNote,✗ All products will be unpublished,seller,Delete store note,,No
+seller.deleteThisStore,🗑️ Delete this store,seller,Delete this store button,,No
+seller.deliveryRules.failed,Failed to save delivery rules,seller,Delivery rules error,,No
+seller.deliveryRules.saved,Delivery rules saved!,seller,Delivery rules toast,,No
+seller.discardFailed,Discard failed,seller,Discard error,,No
+seller.discardPending,Product discarded,seller,Discard toast,,No
+seller.dispatch.assignDelivery,🛵 Assign Delivery,seller,Dispatch assign button,,No
+seller.dispatch.awaiting,${awaiting} awaiting dispatch,seller,Dispatch awaiting count,,No
+seller.dispatch.callBuyer,📞 Call Buyer,seller,Dispatch call button,,No
+seller.dispatch.cancel,✕ Cancel,seller,Dispatch cancel button,,No
+seller.dispatch.cancelled,✕ Cancelled,seller,Dispatch status cancelled,,No
+seller.dispatch.company,🚚 Delivery Co: ${o.rider_name || ''},seller,Dispatch company badge,,No
+seller.dispatch.confirmed,✅ Confirmed,seller,Dispatch status confirmed,,No
+seller.dispatch.couponApplied,'🎟️ Coupon Discount Applied: -${State.formatETB(o.discount_etb)}',seller,Dispatch coupon line,,No
+seller.dispatch.delivered,📦 Delivered,seller,Dispatch status delivered,,No
+seller.dispatch.deliveryCode,Delivery Code,seller,Dispatch OTP label,,No
+seller.dispatch.dispatched,🚚 Dispatched,seller,Dispatch status dispatched,,No
+seller.dispatch.noOrders,No orders yet,seller,Dispatch empty title,,No
+seller.dispatch.noOrdersDesc,Orders from your store will appear here.,seller,Dispatch empty desc,,No
+seller.dispatch.pending,⏳ Pending,seller,Dispatch status pending,,No
+seller.dispatch.rider,🛵 Rider: ${o.rider_name} · ${o.rider_phone},seller,Dispatch rider badge,,No
+seller.dispatch.scanBuyer,📷 Scan Buyer,seller,Dispatch scan buyer button,,No
+seller.dispatch.selfDelivery,🏪 Self-delivery (you),seller,Dispatch self badge,,No
+seller.dispatch.settled,✅ Settled,seller,Dispatch settled button,,No
+seller.dispatch.showQR,📱 Show QR,seller,Dispatch show QR button,,No
+seller.dispatch.title,📦 Orders,seller,Dispatch header,,No
+seller.groupConnected,Group connected!,seller,Group connected toast,,No
+seller.hub.completeToPublish,Complete to publish,seller,Dashboard pending sub,,No
+seller.hub.fromTelegram,'📋 From Telegram (${pending.length})',seller,Dashboard pending header,,No
+seller.hub.noOrders,No orders yet. List your items to start selling.,seller,Dashboard no orders,,No
+seller.hub.publishNew,+ Publish New Item to Hub,seller,Dashboard publish button,,No
+seller.hub.recentOrders,Recent Orders,seller,Dashboard orders header,,No
+seller.hub.recentReviews,⭐ Recent Reviews,seller,Dashboard reviews header,,No
+seller.hub.title,Sales Hub,seller,Dashboard section title,,No
+seller.hub.viewAll,'View all ${pending.length} pending',seller,Dashboard view all,,No
+seller.hub.viewAllOrders,View All,seller,Dashboard view all orders,,No
+seller.inventory.add,+ Add Item,seller,Inventory add button,,No
+seller.inventory.draft,○ Draft,seller,Inventory draft badge,,No
+seller.inventory.edit,✏️ Edit,seller,Inventory edit button,,No
+seller.inventory.live,● Live,seller,Inventory live badge,,No
+seller.inventory.noItems,No items yet,seller,Inventory empty title,,No
+seller.inventory.noItemsDesc,Add your first product to start selling.,seller,Inventory empty desc,,No
+seller.inventory.publish,Publish,seller,Inventory publish button,,No
+seller.inventory.sku,SKU: ${p.sku || 'N/A'},seller,Inventory sku line,,No
+seller.inventory.stock,Stock: ${p.stock_quantity - (p.reserved_stock || 0)},seller,Inventory stock line,,No
+seller.inventory.title,'My Items (${prods.length})',seller,Inventory header,,No
+seller.inventory.unpublish,Unpublish,seller,Inventory unpublish button,,No
+seller.menu.accountPassword,🔑 Account Password,seller,Account password title,,No
+seller.menu.accountPasswordDesc,Used to confirm sensitive actions like payout changes and shop deletion.,seller,Account password desc,,No
+seller.menu.accountSettings,👤 Account &amp; Settings,seller,Account settings title,,No
+seller.menu.active,Active,seller,Active badge,,No
+seller.menu.addisFee,Addis Ababa Delivery Fee (Br),seller,Addis fee label,,No
+seller.menu.autoDetect,🔍 Auto-Detect Products,seller,Auto-detect title,,No
+seller.menu.autoDetectDesc,"Any photo with a price in your group becomes a pending product. When OFF, only /sell commands create products.",seller,Auto-detect desc,,No
+seller.menu.autoInvoice,🧾 Auto-Invoice,seller,Auto-invoice title,,No
+seller.menu.autoInvoiceDesc,Attach a PDF invoice to every completed order email.,seller,Auto-invoice desc,,No
+seller.menu.cashEnabled,💵 Cash on Delivery,seller,Cash enabled checkbox,,No
+seller.menu.cbeEnabled,🏦 CBE Bank Transfer,seller,CBE enabled checkbox,,No
+seller.menu.cbeName,CBE Account Name,seller,CBE name label,,No
+seller.menu.cbeNamePlaceholder,Account holder name,seller,CBE name placeholder,,No
+seller.menu.cbeNumber,CBE Account Number,seller,CBE number label,,No
+seller.menu.cbeNumberPlaceholder,1000XXXXXXX,seller,CBE number placeholder,,No
+seller.menu.connected,"✅ Connected: <strong style=""color:var(--text-primary);"">@${store.tg_channel_username}</strong> — Products auto-post here when published.",seller,TG connected note,,No
+seller.menu.copyCode,📋 Copy,seller,Copy store code button,,No
+seller.menu.copyLink,🔗 Copy Store Link,seller,Copy store link button,,No
+seller.menu.couponValid,Coupon Valid (days),seller,Coupon valid label,,No
+seller.menu.couponsDesc2,Grow sales with share-to-save coupons. Customers earn a coupon when they share a product N times.,seller,Coupons desc (alt),,No
+seller.menu.dangerZone,⚠️ Danger Zone,seller,Danger zone label,,No
+seller.menu.deleteShop,🗑 Delete My Shop &amp; Medebirr Account,seller,Delete shop button,,No
+seller.menu.deleteWarning,"Deleting your shop permanently unpublishes all its products and removes it from Medebirr. This cannot be undone. You cannot delete the shop while it has active (paid, undelivered) orders.",seller,Delete warning,,No
+seller.menu.deliveryCompany,🚚 Delivery Company,seller,Delivery company title,,No
+seller.menu.deliveryCompanyDesc,Partner courier fulfils shipments on your behalf.,seller,Delivery company desc,,No
+seller.menu.discountPct,Discount %,seller,Discount percent label,,No
+seller.menu.fulfilment,📦 Fulfilment Staff,seller,Fulfilment role,,No
+seller.menu.fulfilmentDesc,View and fulfil orders only. Ideal for warehouse or dispatch teams.,seller,Fulfilment desc,,No
+seller.menu.group.attract,Attract Customers,seller,Settings group sub,,No
+seller.menu.group.fulfill,Fulfill Orders,seller,Settings group sub,,No
+seller.menu.group.getPaid,Get Paid,seller,Settings group sub,,No
+seller.menu.group.getStarted,Get Started,seller,Settings group sub,,No
+seller.menu.group.money,Money & Earnings,seller,Settings group,,No
+seller.menu.group.orders,Order Management,seller,Settings group,,No
+seller.menu.group.protect,Protect the Shop,seller,Settings group sub,,No
+seller.menu.group.sales,Sales & Promotion,seller,Settings group,,No
+seller.menu.group.security,Security & Access,seller,Settings group,,No
+seller.menu.group.setup,Setup & Branding,seller,Settings group,,No
+seller.menu.groupBuyDesc2,Customers can form a group to buy together and get a discount.,seller,Group buy desc (alt),,No
+seller.menu.groupBuying,👥 Group Buying,seller,Group buy title,,No
+seller.menu.groupBuyingDesc,Customers can form a group to buy together and get a discount.,seller,Group buy desc,,No
+seller.menu.groupDiscount,Group Discount %,seller,Group discount label,,No
+seller.menu.inviteManager,+ Invite Manager,seller,Invite manager button,,No
+seller.menu.inviteStaff,+ Invite Staff,seller,Invite staff button,,No
+seller.menu.logout,Log Out,seller,Seller logout button,,No
+seller.menu.lowStock,🔔 Low-Stock Alerts,seller,Low stock title,,No
+seller.menu.lowStockDesc,Get notified when a product is running low on stock.,seller,Low stock desc,,No
+seller.menu.manager,🛡️ Manager,seller,Manager role,,No
+seller.menu.managerDesc,"Manage products, orders and policies. Cannot change payouts or delete the shop.",seller,Manager desc,,No
+seller.menu.minMembers,Min Members,seller,Min members label,,No
+seller.menu.newOrderAlerts,🔔 New Order Alerts,seller,New order alerts title,,No
+seller.menu.newOrderAlertsDesc,Ping you in Telegram the moment a new order lands.,seller,New order alerts desc,,No
+seller.menu.noRatings,No ratings yet,seller,No ratings badge,,No
+seller.menu.noStore,No store registered,seller,Seller menu empty,,No
+seller.menu.notConnected,⚠️ No group connected yet. Connect a group to auto-broadcast your products.,seller,TG not connected note,,No
+seller.menu.notifPrefIntro,Choose how Medebirr keeps you and your buyers informed.,seller,Notif pref intro,,No
+seller.menu.owner,👤 Owner,seller,Owner role,,No
+seller.menu.ownerDesc,Full access — you. Receives payouts and can delete the shop.,seller,Owner desc,,No
+seller.menu.passwordResetSent,Password reset link sent to your Telegram,seller,Password reset toast,,No
+seller.menu.paymentMethodsAccepted,Payment Methods Accepted,seller,Policy payment methods label,,No
+seller.menu.payoutTitle,These details are shown to buyers at checkout so they can pay you. Keep them up to date.,seller,Payout intro,,No
+seller.menu.pendingVerification,⏳ Pending Verification,seller,Pending verification badge,,No
+seller.menu.policyDesc,Policy Description (shown to buyers at checkout),seller,Policy desc label,,No
+seller.menu.policyDescPlaceholder,Describe your return / warranty terms...,seller,Policy desc placeholder,,No
+seller.menu.promotionsIntro,Grow sales with share-to-save coupons and group-buy discounts.,seller,Promotions intro,,No
+seller.menu.regionalFee,Regional Dispatch (Br),seller,Regional fee label,,No
+seller.menu.resetPassword,Reset Password,seller,Reset password button,,No
+seller.menu.returnPolicy,Return Policy,seller,Policy return label,,No
+seller.menu.saveCoupons,💾 Save Coupons,seller,Save coupons button,,No
+seller.menu.saveDelivery,💾 Save Delivery Rules,seller,Save delivery button,,No
+seller.menu.saveGroupBuy,💾 Save Group Buy,seller,Save group buy button,,No
+seller.menu.savePayment,💾 Save Payment Accounts,seller,Save payment button,,No
+seller.menu.savePolicy,💾 Save Store Policy,seller,Save policy button,,No
+seller.menu.savePromotions,💾 Save Promotions,seller,Save promotions button,,No
+seller.menu.saveTax,💾 Save Tax &amp; Invoice Settings,seller,Save tax button,,No
+seller.menu.section.automation,Automation (Stock & Routing),seller,Settings section,,No
+seller.menu.section.coupons,Coupons & Discounts,seller,Settings section,,No
+seller.menu.section.groupBuy,Group Buy Settings,seller,Settings section,,No
+seller.menu.section.identity,Store Identity & Profile,seller,Settings section,,No
+seller.menu.section.notifications,Notification Preferences,seller,Settings section,,No
+seller.menu.section.payout,Payout & Bank Details,seller,Settings section,,No
+seller.menu.section.policies,Store Policies & Legal Docs,seller,Settings section,,No
+seller.menu.section.security,Account Security (2FA),seller,Settings section,,No
+seller.menu.section.shipping,Shipping & Delivery Rules,seller,Settings section,,No
+seller.menu.section.staff,Staff Roles & Permissions,seller,Settings section,,No
+seller.menu.section.tax,Tax Config & Invoices,seller,Settings section,,No
+seller.menu.selfDelivery,🏪 Self-Delivery,seller,Self-delivery title,,No
+seller.menu.selfDeliveryDesc,You deliver orders yourself instead of using a rider.,seller,Self-delivery desc,,No
+seller.menu.shareStore,📲 Share Your Store,seller,Share store label,,No
+seller.menu.shareToSave,📤 Share-to-Save Coupons,seller,Coupons section title,,No
+seller.menu.shareToSaveDesc,Customers earn a coupon when they share a product N times.,seller,Coupons desc,,No
+seller.menu.sharesRequired,Shares Required,seller,Shares required label,,No
+seller.menu.shippingIntro,Control how your products are delivered and what buyers pay for shipping.,seller,Shipping intro,,No
+seller.menu.staffComingSoon,Staff invites coming soon,seller,Staff coming soon toast,,No
+seller.menu.staffIntro,Invite team members and assign roles. (Staff management is provisioned per store — contact Medebirr support to enable seats for your shop.),seller,Staff intro,,No
+seller.menu.storeCode,Store Code,seller,Store code label,,No
+seller.menu.taxIntro,Configure how tax is shown to buyers and whether invoices are auto-generated.,seller,Tax intro,,No
+seller.menu.taxNumber,Tax Number / TIN,seller,TIN label,,No
+seller.menu.taxNumberPlaceholder,TIN / VAT no.,seller,TIN placeholder,,No
+seller.menu.telebirrEnabled,📱 Telebirr (buyer pays to your number),seller,Telebirr enabled checkbox,,No
+seller.menu.telebirrName,Telebirr Account Name,seller,Telebirr name label,,No
+seller.menu.telebirrNamePlaceholder,Account holder name,seller,Telebirr name placeholder,,No
+seller.menu.telebirrNumber,Telebirr Number,seller,Telebirr number label,,No
+seller.menu.telebirrNumberPlaceholder,+251 9XX XXX XXX,seller,Telebirr number placeholder,,No
+seller.menu.telegramConnection,📢 Telegram Group Connection,seller,Automation tg title,,No
+seller.menu.telegramNotifs,📨 Telegram Notifications,seller,TG notifs title,,No
+seller.menu.telegramNotifsDesc,Buyers get DM updates via @medebirrbot when their order status changes.,seller,TG notifs desc,,No
+seller.menu.twoFactor,🔐 Two-Factor Auth (2FA),seller,2FA title,,No
+seller.menu.twoFactorDesc,Require a Telegram code on every login to your seller account.,seller,2FA desc,,No
+seller.menu.vat,VAT / Tax %,seller,VAT label,,No
+seller.menu.verifiedMerchant,✅ Verified Merchant,seller,Verified merchant badge,,No
+seller.menu.verifyAdmin,✅ Verify Admin,seller,Verify admin button,,No
+seller.nav.fromTg,From TG,seller,Seller bottom nav tab,,No
+seller.nav.hub,Hub,seller,Seller bottom nav tab,,No
+seller.nav.items,Items,seller,Seller bottom nav tab,,No
+seller.nav.orders,Orders,seller,Seller bottom nav tab,,No
+seller.notif.emptyDesc,"New orders, dispatches, payouts and delivery updates will appear here.",seller,Seller notif empty desc,,No
+seller.notif.emptyTitle,No notifications yet,seller,Seller notif empty,,No
+seller.notif.title,Store Notifications,seller,Seller notif title,,No
+seller.openStudio,Open Studio →,seller,Open studio button,,No
+seller.payout.failed,Save failed — retry to continue,seller,Payout error,,No
+seller.payout.resume,Stopped at ${Math.round(pct)}% — tap save to resume,seller,Payout resume,,No
+seller.payout.saved,Payment accounts saved!,seller,Payout saved toast,,No
+seller.pending.autoDetected,Auto-detected,seller,Pending auto-detected tag,,No
+seller.pending.complete,📝 Complete,seller,Pending complete button,,No
+seller.pending.desc,Products detected from your Telegram group. Complete the details to publish them to Medebirr and broadcast back to your group.,seller,Pending desc,,No
+seller.pending.discard,✕ Discard,seller,Pending discard button,,No
+seller.pending.imageCount,'${imgs.length} image${imgs.length !== 1 ? 's' : ''}',seller,Pending image count,,No
+seller.pending.noPending,No pending products,seller,Pending empty title,,No
+seller.pending.noPendingDesc,Post a product image in your Telegram group to get started. The bot will detect it automatically.,seller,Pending empty desc,,No
+seller.pending.noPrice,No price set,seller,Pending no price,,No
+seller.pending.publish,🚀 Publish,seller,Pending publish button,,No
+seller.pending.refresh,↻ Refresh,seller,Pending refresh,,No
+seller.pending.sellCommand,/sell command,seller,Pending sell command tag,,No
+seller.pending.title,'📋 From Telegram (${pending.length})',seller,Pending header,,No
+seller.pending.untitled,Untitled Product,seller,Pending untitled,,No
+seller.profileModal.buyer,🛠 Buyer,seller,Profile modal buyer badge,,No
+seller.profileModal.deleteStore,🗑️ Delete this store,seller,Profile modal delete,,No
+seller.profileModal.myOrders,📦 My Orders & Deliveries,seller,Profile modal orders,,No
+seller.profileModal.openShop,🏪 Open a Shop on Medebirr — Free,seller,Profile modal open shop,,No
+seller.profileModal.openStudio,Open Studio →,seller,Profile modal open studio,,No
+seller.profileModal.pendingVerification,⏳ Pending Verification,seller,Profile modal pending,,No
+seller.profileModal.switchAccount,⇄ Switch Account,seller,Profile modal switch,,No
+seller.profileModal.verifiedSeller,🏬 Verified Seller,seller,Profile modal seller badge,,No
+seller.profileModal.yourStores,Your Stores,seller,Profile modal stores label,,No
+seller.refreshPending,Could not load store page,seller,Refresh error toast,,No
+seller.register.accountRequired,Please enter your Telebirr account and seller password,seller,Reg account error,,No
+seller.register.addAdmin,📋 How to add @medebirrbot as admin:,seller,Reg add admin title,,No
+seller.register.addAdminSteps,"1. Open your Telegram group or channel → <strong>Administrators</strong><br/> 2. Tap <strong>Add Administrator</strong> &amp; search <strong style=""color:var(--accent);"">@medebirrbot</strong><br/> 3. Enable <strong>Post Messages</strong> &amp; save!",seller,Reg add admin steps,,No
+seller.register.addBotAdmin,"Add @medebirrbot as admin in your group, then re-verify from settings.",seller,Reg warn note,,No
+seller.register.autoPost,"📢 When connected, products published in your Seller Studio automatically post to your Telegram channel/group with an interactive <strong>Buy Now</strong> button!",seller,Reg autopost note,,No
+seller.register.back,← Back,seller,Reg back button,,No
+seller.register.briefDesc,Brief Description (optional),seller,Reg desc label,,No
+seller.register.briefPlaceholder,What makes your shop special?,seller,Reg desc placeholder,,No
+seller.register.businessPhone,Business Phone,seller,Reg phone label,,No
+seller.register.catBeauty,💄 Beauty & Personal Care,seller,Reg category option,,No
+seller.register.catElectronics,📱 Electronics & Phones,seller,Reg category option,,No
+seller.register.catFashion,👗 Fashion & Traditional Clothing,seller,Reg category option,,No
+seller.register.catFootwear,👟 Footwear,seller,Reg category option,,No
+seller.register.catFurniture,🪑 Furniture & Home,seller,Reg category option,,No
+seller.register.catGroceries,"☕ Coffee, Food & Groceries",seller,Reg category option,,No
+seller.register.catOther,📦 Other,seller,Reg category option,,No
+seller.register.directCheckout,💡 <strong>Direct Seller Checkout:</strong> Buyers transfer money directly to your Telebirr shortcode or account during checkout. Zero platform commission or escrow delay!,seller,Reg direct checkout note,,No
+seller.register.enterStudio,Enter Seller Studio →,seller,Reg enter studio,,No
+seller.register.failed,Registration failed,seller,Reg fail toast,,No
+seller.register.groupNote,Must be a public channel or group where the bot is added as admin.,seller,Reg group note,,No
+seller.register.groupPlaceholder,e.g. BoleAppleDeals,seller,Reg group placeholder,,No
+seller.register.groupUsername,Telegram Group / Channel Username,seller,Reg group label,,No
+seller.register.intro,"List your products, reach buyers across Ethiopia. Zero commission. Payments land directly in your account.",seller,Register intro,,No
+seller.register.launchFree,🚀 Launch My Store Free!,seller,Reg launch button,,No
+seller.register.live,Your Medeb is now live!,seller,Reg success sub,,No
+seller.register.nameRequired,Please enter your store / shop name to proceed,seller,Reg name error,,No
+seller.register.nextFinancials,Next: Financials &amp; Password →,seller,Reg next button,,No
+seller.register.nextTelegram,Next: Connect Telegram →,seller,Reg next button,,No
+seller.register.outsideAddis,Outside Addis,seller,Reg subcity option,,No
+seller.register.password,🔑 Seller Studio Password,seller,Reg password label,,No
+seller.register.passwordLength,Seller password must be at least 4 characters long,seller,Reg password error,,No
+seller.register.passwordNote,Required to unlock and manage your Seller Studio dashboard.,seller,Reg password note,,No
+seller.register.passwordPlaceholder,Minimum 4 characters,seller,Reg password placeholder,,No
+seller.register.paymentsStep,Step 2 — Payments &amp; Security,seller,Reg step2 heading,,No
+seller.register.phonePlaceholder,+251 9XX XXX XXX,seller,Reg phone placeholder,,No
+seller.register.phoneRequired,Business phone is required,seller,Reg phone error,,No
+seller.register.profileCreated,Store profile created & verified,seller,Reg success item,,No
+seller.register.profileStep,Step 1 — Store Profile Details,seller,Reg step1 heading,,No
+seller.register.readyProducts,Ready to add products,seller,Reg success item,,No
+seller.register.registerFirst,"Register your store first, then verify the group.",seller,Reg verify first,,No
+seller.register.registering,Registering your store...,seller,Reg registering toast,,No
+seller.register.step1,1. Profile,seller,Reg step 1 badge,,No
+seller.register.step2,2. Security,seller,Reg step 2 badge,,No
+seller.register.step3,3. Telegram Group,seller,Reg step 3 badge,,No
+seller.register.storeName,Store / Shop Name,seller,Reg store name label,,No
+seller.register.storeNamePlaceholder,e.g. Bole Fashion House,seller,Reg store name placeholder,,No
+seller.register.storeRequired,Store name is required,seller,Reg store name error,,No
+seller.register.subCity,Sub-City,seller,Reg subcity label,,No
+seller.register.telebirrLinked,Telebirr payment linked,seller,Reg success item,,No
+seller.register.telebirrNote,Displayed to buyers upon order placement.,seller,Reg telebirr note,,No
+seller.register.telebirrPlaceholder,e.g. 891204 or +251 9XX XXX XXX,seller,Reg telebirr placeholder,,No
+seller.register.telebirrShortcode,Your Telebirr Shortcode / Phone,seller,Reg telebirr label,,No
+seller.register.telegramStep,Step 3 — Connect Your Telegram Group,seller,Reg step3 heading,,No
+seller.register.title,🏪 Open Your Shop on Medebirr,seller,Register title,,No
+seller.register.tryAgain,🔄 Try Again,seller,Reg verify retry,,No
+seller.register.verified,"✅ <strong>Verified!</strong> @medebirrbot is admin of <strong style=""color:white;"">${result.chatTitle}</strong><br/> <span style=""color:var(--text-secondary);"">Products will now auto-post to this group when published.</span>",seller,Reg verify success,,No
+seller.register.verifyAdmin,✅ Verify @medebirrbot is Admin,seller,Reg verify button,,No
+seller.register.whatSell,What do you sell?,seller,Reg category label,,No
+seller.savePolicy.failed,Save failed,seller,Save policy error,,No
+seller.savePolicy.success,Store settings saved!,seller,Save policy toast,,No
+seller.settingNotSaved,Setting not saved yet,seller,Store toggle info,,No
+seller.tax.notSaved,Tax settings not saved yet,seller,Tax error,,No
+seller.tax.saved,Tax & invoice settings saved!,seller,Tax saved toast,,No
+seller.telegramNotifs.enabled,'Telegram notifications ${enabled ? 'enabled' : 'disabled'}',seller,TG notifs toast,,No
+seller.telegramNotifs.failed,Failed to update setting,seller,TG notifs error,,No
+seller.terms.agree,"I have read and agree to Medebirr's <strong style=""color:white;"">Terms &amp; Conditions</strong> and understand my responsibilities as a seller.",seller,Terms agree text,,No
+seller.terms.dataPrivacy,6. Data &amp; Privacy,seller,Terms section,,No
+seller.terms.goBack,Go Back,seller,Terms back button,,No
+seller.terms.launch,Launch My Medeb,seller,Terms launch button,,No
+seller.terms.liability,7. Limitation of Liability,seller,Terms section,,No
+seller.terms.listings,4. Product Listings,seller,Terms section,,No
+seller.terms.payments,2. Payments,seller,Terms section,,No
+seller.terms.sellerResponsibilities,1. Seller Responsibilities,seller,Terms section,,No
+seller.terms.sub,Please review before launching your Medeb,seller,Terms sub,,No
+seller.terms.suspension,5. Store Suspension,seller,Terms section,,No
+seller.terms.title,Terms &amp; Conditions,seller,Terms title,,No
+seller.terms.zeroCommission,3. Zero Commission,seller,Terms section,,No
+seller.verifyGroup.checking,🔍 Checking...,seller,Verify group checking,,No
+seller.verifyGroup.enterFirst,Enter a group username first,seller,Verify group empty,,No
+seller.verifyGroup.failed,Verification failed,seller,Verify group error,,No
+seller.verifyGroup.verified,'✅ Verified! @medebirrbot is admin of <strong>${result.chatTitle}</strong>. Products will now auto-post here.',seller,Verify group success,,No
+seller.welcome.autoBroadcast,Auto-Broadcast,seller,Welcome benefit title,,No
+seller.welcome.autoBroadcastDesc,Post in Telegram. Bot lists it. Buyers purchase.,seller,Welcome benefit desc,,No
+seller.welcome.keepBirr,Keep Every Birr,seller,Welcome benefit title,,No
+seller.welcome.keepBirrDesc,"Buyers pay you directly. No middleman, no delay.",seller,Welcome benefit desc,,No
+seller.welcome.launch,Launch Your Medeb,seller,Seller welcome title,,No
+seller.welcome.launching,✓ Launching...,seller,Seller slide launching,,No
+seller.welcome.live60,Live in 60 Seconds,seller,Welcome benefit title,,No
+seller.welcome.live60Desc,"Name, payment, Telegram link — done.",seller,Welcome benefit desc,,No
+seller.welcome.slide,Slide to launch your medeb →,seller,Seller slide label,,No
+seller.welcome.sub,Zero commission. Direct payments. Ethiopia's marketplace.,seller,Seller welcome sub,,No
+shared.addToCart,+ Add to Cart,shared,Add to cart button,,No
+shared.badgeSeller,Seller Studio,shared,Badge seller,,No
+shared.badgeShops,Verified Shops,shared,Badge shops,,No
+shared.btn.apply,Apply,shared,Shared apply button,,No
+shared.btn.back,Back,shared,Shared back button,,No
+shared.btn.cancel,Cancel,shared,Shared cancel button,,No
+shared.btn.close,Close,shared,Shared close button,,No
+shared.btn.confirm,Confirm,shared,Shared confirm button,,No
+shared.btn.delete,Delete,shared,Shared delete button,,No
+shared.btn.edit,Edit,shared,Shared edit button,,No
+shared.btn.next,Next,shared,Shared next button,,No
+shared.btn.ok,OK,shared,Shared ok button,,No
+shared.btn.save,Save,shared,Shared save button,,No
+shared.cancelOrder,✕ Cancel Order,shared,Cancel order button,,No
+shared.chat,💬 Chat,shared,Chat title,,No
+shared.chatNew,${c.unread_count} new,shared,Unread badge,,No
+shared.chatPlaceholder,Type a message...,shared,Chat input placeholder,,No
+shared.checkStatus,Check Status,shared,Check status button,,No
+shared.checkout,Checkout,shared,Checkout label,,No
+shared.confirmCancel,Are you sure you want to cancel this order?,shared,Cancel order confirm,,No
+shared.connectionError,Connection Error,shared,Connection error title,,No
+shared.copyLink,Copy Link,shared,Copy link button,,No
+shared.copyNote,Copy,shared,Copy note button,,No
+shared.couldNotCheck,Could not check order status,shared,Check status error,,No
+shared.couldNotLoadDetail,Could not load order detail,shared,Order detail error,,No
+shared.couponCodeCopied,Coupon code copied!,shared,Coupon code copied toast,,No
+shared.couponIssued,🎉 Coupon issued for sharing!,shared,Coupon issued toast,,No
+shared.deliveryAddress,📍 Delivery Address,shared,Delivery address card title,,No
+shared.downloadPdf,📥 Download PDF,shared,Download PDF button,,No
+shared.emptyCart,Your cart is empty,shared,Cart empty title,,No
+shared.emptyCartDesc,Browse products and add your favorites.,shared,Cart empty desc,,No
+shared.emptyWishlist,No items saved yet,shared,Wishlist empty title,,No
+shared.emptyWishlistDesc,Tap the heart on any product to save it here.,shared,Wishlist empty desc,,No
+shared.failedCopyLink,Failed to copy link,shared,Copy link error,,No
+shared.failedLoadCoupons,Failed to load coupons,shared,Coupons load error,,No
+shared.failedLoadMessages,Failed to load messages,shared,Chat load error,,No
+shared.failedSend,Failed to send message,shared,Chat send error,,No
+shared.failedStartChat,Failed to start conversation,shared,Chat start error,,No
+shared.featuredItems,Featured Items,shared,Featured section,,No
+shared.groupBuying,👥 Group Buying,shared,Group buying title,,No
+shared.imageTips,"Use natural lighting, clean background, show multiple angles. Min 800×600px.",shared,Image tips (shared),,No
+shared.imageUploaded,'${data.count} image${data.count > 1 ? 's' : ''} uploaded!',shared,Image uploaded toast,,No
+shared.invalidProduct,Invalid product,shared,Invalid product toast,,No
+shared.language,Language: ${State.language.toUpperCase()},shared,Language toast,,No
+shared.linkCopied,Link copied!,shared,Link copied toast,,No
+shared.loading,Loading...,shared,Generic loading,,No
+shared.maxImages,"Max 5 images, 10MB each.",shared,Image max note,,No
+shared.noConversations,No conversations yet. Tap Chat on any product to start one.,shared,No conversations note,,No
+shared.noCoupons,No coupons yet,shared,Coupons empty title,,No
+shared.noGroupBuys,No active group buys,shared,Group buys empty title,,No
+shared.noPendingOrder,No pending order,shared,No pending toast,,No
+shared.noStoreSelected,No store selected,shared,No store toast,,No
+shared.notifEmpty,No notifications yet,shared,Notif empty,,No
+shared.notifTitle,Notifications,shared,Notif title,,No
+shared.orderCancelled,Order cancelled.,shared,Order cancelled toast,,No
+shared.orderFailed,Order failed — please try again,shared,Order failed toast,,No
+shared.orderItems,Order Items,shared,Order items card title,,No
+shared.orderPlaced,Order Placed!,shared,Order placed label,,No
+shared.paymentPending,Payment still pending — please complete the payment,shared,Payment pending toast,,No
+shared.paymentTimedOut,"Payment confirmation timed out — tap ""Check Status"" to retry",shared,Payment timeout toast,,No
+shared.pendingNotFound,Pending product not found. Refreshing...,shared,Pending not found toast,,No
+shared.placingOrder,Placing order...,shared,Placing order toast,,No
+shared.productLink,Product Link,shared,Share product link label,,No
+shared.productNotFound,Product not found,shared,Product not found toast,,No
+shared.productUnavailable,Product unavailable,shared,Product unavailable toast,,No
+shared.ratePurchase,⭐ Rate Your Purchase,shared,Review form title,,No
+shared.retry,Retry,shared,Retry button,,No
+shared.reviewExperience,"How was your experience with <strong style=""color:white;"">${storeName}</strong>?",shared,Review form body,,No
+shared.reviewFailed,Failed to submit review,shared,Review error toast,,No
+shared.reviewPlaceholder,Share your thoughts about this product (optional),shared,Review placeholder,,No
+shared.reviewSubmitted,Review submitted! Thank you ⭐,shared,Review submitted toast,,No
+shared.riderDetails,🛵 Rider Details,shared,Rider details card title,,No
+shared.searchFailed,Search failed,shared,Search failed toast,,No
+shared.searchPlaceholder,"Search shops, items, or locations...",shared,Search placeholder,,No
+shared.send,Send,shared,Chat send button,,No
+shared.shareProduct,📤 Share this Product,shared,Share product title,,No
+shared.shareTelegram,Share to Telegram,shared,Share telegram button,,No
+shared.shareToEarn,Share products to earn coupons!,shared,Coupons empty desc,,No
+shared.shareWhatsApp,Share via WhatsApp,shared,Share whatsapp button,,No
+shared.signingIn,Signing in...,shared,Signing in status,,No
+shared.submitReview,Submit Review,shared,Submit review button,,No
+shared.tabCart,Cart,shared,Bottom nav tab,,No
+shared.tabExplore,Explore,shared,Bottom nav tab,,No
+shared.tabProfile,Profile,shared,Bottom nav tab,,No
+shared.tabWishlist,Wishlist,shared,Bottom nav tab,,No
+shared.totalPaid,Total Paid,shared,Total paid label,,No
+shared.trackOrder,📦 Track My Order,shared,Track order button,,No
+shared.uploadFailed,Upload failed,shared,Upload error toast,,No
+shared.validUntil,Valid until ${new Date(c.valid_until || c.expires_at).toLocaleDateString()},shared,Coupon valid until,,No
+shared.viewAll,View All,shared,View all button,,No
+shared.writeReview,⭐ Write a Review,shared,Write review button,,No
+general.afaanOromoo,Afaan Oromoo,general,Language name,,Yes
+general.br,Br,general,Currency symbol,,Yes
+general.cbe,CBE,general,Bank name,,Yes
+general.cbeBirr,CBE Birr,general,Payment method,,Yes
+general.emerkato,e-Merkato,general,Platform name,,Yes
+general.etb,ETB,general,Currency code,,Yes
+general.medebirr,Medebirr,general,App brand name,,Yes
+general.qr,QR,general,Technical token,,Yes
+general.telebirr,Telebirr,general,Payment method,,Yes
+general.telegram,Telegram,general,Platform name,,Yes
+general.whatsapp,WhatsApp,general,Platform name,,Yes

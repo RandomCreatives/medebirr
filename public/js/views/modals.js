@@ -1267,7 +1267,7 @@ const Modals = {
 
   // ── QR Code Display ──────────────────────────────
   async openShowQR(orderId, role) {
-    this.open('<div style="text-align:center;padding:20px;"><div class="loading-spinner"></div><p style="font-size:13px;color:var(--text-secondary);">Loading QR code...</p></div>');
+    this.open('<div style="text-align:center;padding:20px;"><div class="loading-spinner"></div><p style="font-size:13px;color:var(--text-secondary);">' + State.t('delivery.qr.loading') + '</p></div>');
     try {
       const data = await Api.delivery.qr(orderId);
       const bothDone = data.verified_by_rider && data.verified_by_buyer;
@@ -1275,8 +1275,8 @@ const Modals = {
       const otp = localOrder && localOrder.delivery_otp;
       this.open(`
         <div class="modal-handle"></div>
-        <div class="modal-title">📱 Your QR Code</div>
-        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">Order: <strong style="color:white;">${data.order_ref}</strong></p>
+        <div class="modal-title">${State.t('delivery.qr.title')}</div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">${State.t('delivery.qr.order', { data })}</p>
         <p style="font-size:11px;color:var(--text-secondary);margin-bottom:16px;">
           ${role === 'buyer' ? 'Show this to the rider for verification.' : 'Show this to the buyer for verification.'}
         </p>
@@ -1285,29 +1285,29 @@ const Modals = {
         </div>
         ${otp ? `
         <div style="background:rgba(252,205,4,0.08);border:1px solid rgba(252,205,4,0.3);border-radius:8px;padding:10px;margin-bottom:16px;text-align:center;">
-          <div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;font-weight:800;letter-spacing:0.5px;">Delivery Verification Code</div>
+          <div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;font-weight:800;letter-spacing:0.5px;">${State.t('delivery.qr.verificationCode')}</div>
           <div style="font-family:monospace;font-size:22px;font-weight:900;color:var(--accent);letter-spacing:4px;">${otp}</div>
-          <div style="font-size:10px;color:var(--text-secondary);">Share with the buyer for the handover handshake.</div>
+          <div style="font-size:10px;color:var(--text-secondary);">${State.t('delivery.qr.shareBuyer')}</div>
         </div>` : ''}
         <div style="display:flex;justify-content:center;gap:16px;margin-bottom:16px;">
           <div style="text-align:center;">
-            <div style="font-size:11px;color:var(--text-secondary);">Rider</div>
-            <div style="font-size:14px;font-weight:800;color:${data.verified_by_rider ? 'var(--success)' : 'var(--warning)'};">${data.verified_by_rider ? '✓ Verified' : '⏳ Pending'}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${State.t('delivery.qr.rider')}</div>
+            <div style="font-size:14px;font-weight:800;color:${data.verified_by_rider ? 'var(--success)' : 'var(--warning)'};">${data.verified_by_rider ? State.t('delivery.qr.verified') : State.t('delivery.qr.pending')}</div>
           </div>
           <div style="width:1px;background:var(--border);"></div>
           <div style="text-align:center;">
-            <div style="font-size:11px;color:var(--text-secondary);">Buyer</div>
-            <div style="font-size:14px;font-weight:800;color:${data.verified_by_buyer ? 'var(--success)' : 'var(--warning)'};">${data.verified_by_buyer ? '✓ Verified' : '⏳ Pending'}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${State.t('delivery.qr.buyer')}</div>
+            <div style="font-size:14px;font-weight:800;color:${data.verified_by_buyer ? 'var(--success)' : 'var(--warning)'};">${data.verified_by_buyer ? State.t('delivery.qr.verified') : State.t('delivery.qr.pending')}</div>
           </div>
         </div>
-        ${bothDone ? '<div style="text-align:center;font-size:14px;font-weight:800;color:var(--success);">✅ Delivery Confirmed by Both Parties!</div>' : ''}
-        ${data.scan_attempts > 0 ? `<div style="text-align:center;font-size:11px;color:var(--text-secondary);">Scan attempts: ${data.scan_attempts}/5</div>` : ''}
-        <button class="btn-secondary" style="width:100%;margin-top:12px;" onclick="Modals.close()">Close</button>
+        ${bothDone ? '<div style="text-align:center;font-size:14px;font-weight:800;color:var(--success);">' + State.t('delivery.qr.bothConfirmed') + '</div>' : ''}
+        ${data.scan_attempts > 0 ? `<div style="text-align:center;font-size:11px;color:var(--text-secondary);">${State.t('delivery.qr.scanAttempts', { data })}</div>` : ''}
+        <button class="btn-secondary" style="width:100%;margin-top:12px;" onclick="Modals.close()">${State.t('delivery.qr.close')}</button>
       `);
     } catch (err) {
       this.open(`
         <div class="modal-handle"></div>
-        <div class="modal-title">⚠️ QR Not Available</div>
+        <div class="modal-title">${State.t('delivery.qr.notAvailable')}</div>
         <p style="font-size:13px;color:var(--text-secondary);">${err.message || 'QR code not yet generated for this order.'}</p>
         <button class="btn-secondary" style="width:100%;margin-top:12px;" onclick="Modals.close()">Close</button>
       `);
@@ -1321,18 +1321,18 @@ const Modals = {
     this.open(`
       <div class="modal-handle"></div>
       <div class="modal-title">📷 Scan ${role === 'rider' ? "Buyer's" : "Rider's"} QR</div>
-      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Verify the handover by scanning the other party's QR code.</p>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">${State.t('delivery.qr.verify')}</p>
       <div id="qr-permission" style="text-align:center;padding:24px 16px;background:var(--bg-surface);border-radius:12px;margin-bottom:16px;">
         <div style="font-size:32px;margin-bottom:10px;">📸</div>
-        <div style="font-size:14px;font-weight:800;color:white;margin-bottom:6px;">Allow camera access?</div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.5;">e-Merkato needs your camera to scan the delivery QR code. Your camera is used only while this screen is open.</div>
-        <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="Modals._requestCamera()">📷 Allow Camera</button>
-        <button class="btn-secondary" style="width:100%" onclick="Modals._openManualCode()">⌨️ Enter code manually</button>
+        <div style="font-size:14px;font-weight:800;color:white;margin-bottom:6px;">${State.t('delivery.qr.allowCamera')}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.5;">${State.t('delivery.qr.cameraNeeded')}</div>
+        <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="Modals._requestCamera()">${State.t('delivery.qr.allow')}</button>
+        <button class="btn-secondary" style="width:100%" onclick="Modals._openManualCode()">${State.t('delivery.qr.manual')}</button>
       </div>
       <div id="qr-reader" style="display:none;width:100%;border-radius:12px;overflow:hidden;margin-bottom:12px;"></div>
       <div id="qr-result" style="margin-bottom:12px;"></div>
-      <button id="qr-cancel" class="btn-secondary" style="width:100%;display:none;" onclick="Modals._stopScanner();Modals.close()">Cancel</button>
-      <button id="qr-back" class="btn-secondary" style="width:100%;" onclick="Modals._backToScanIntro()">Cancel</button>
+      <button id="qr-cancel" class="btn-secondary" style="width:100%;display:none;" onclick="Modals._stopScanner();Modals.close()">${State.t('delivery.qr.cancel')}</button>
+      <button id="qr-back" class="btn-secondary" style="width:100%;" onclick="Modals._backToScanIntro()">${State.t('delivery.qr.cancel')}</button>
     `);
   },
 
@@ -1359,13 +1359,13 @@ const Modals = {
     const orderId = this._scanOrderId;
     this.open(`
       <div class="modal-handle"></div>
-      <div class="modal-title">⌨️ Enter Delivery Code</div>
-      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Type the 4-digit code shown on the other party's QR screen.</p>
+      <div class="modal-title">${State.t('delivery.qr.manualTitle')}</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">${State.t('delivery.qr.manualDesc')}</p>
       <input id="manual-code" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off"
         style="width:100%;text-align:center;font-size:28px;font-weight:900;letter-spacing:8px;padding:14px;border-radius:12px;border:2px solid var(--border);background:var(--bg-surface);color:white;margin-bottom:12px;" />
       <div id="manual-result" style="margin-bottom:12px;"></div>
-      <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="Modals._submitManualCode()">Verify Code</button>
-      <button class="btn-secondary" style="width:100%" onclick="Modals.openScanQR('${orderId}','${role}')">← Back</button>
+      <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="Modals._submitManualCode()">${State.t('delivery.qr.verify')}</button>
+      <button class="btn-secondary" style="width:100%" onclick="Modals.openScanQR('${orderId}','${role}')">${State.t('delivery.qr.back')}</button>
     `);
     setTimeout(() => document.getElementById('manual-code')?.focus(), 80);
   },
@@ -1374,21 +1374,21 @@ const Modals = {
     const input = document.getElementById('manual-code');
     const out = document.getElementById('manual-result');
     const code = (input?.value || '').trim();
-    if (!code) { if (out) out.innerHTML = '<div style="color:var(--danger);font-size:12px;">Please enter the 4-digit code.</div>'; return; }
+    if (!code) { if (out) out.innerHTML = '<div style="color:var(--danger);font-size:12px;">' + State.t('delivery.qr.enter4digit') + '</div>'; return; }
     const role = this._scanRole;
     const orderId = this._scanOrderId;
     try {
       const result = await Api.delivery.verifyCode(orderId, { code, scanner_role: role });
       if (result.already_confirmed) {
-        if (out) out.innerHTML = '<div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;text-align:center;font-size:14px;font-weight:800;color:var(--success);">✅ Delivery Already Confirmed!</div>';
+        if (out) out.innerHTML = '<div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;text-align:center;font-size:14px;font-weight:800;color:var(--success);">' + State.t('delivery.qr.alreadyConfirmed') + '</div>';
         return;
       }
       if (result.success) {
         if (out) out.innerHTML = `
           <div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;">
-            <div style="font-size:14px;font-weight:800;color:var(--success);margin-bottom:4px;">✅ Code Verified!</div>
-            <div style="font-size:11px;color:var(--text-secondary);">MEDEBIRR · Your Free Ecommerce</div>
-            ${result.delivery_complete ? '<div style="font-size:13px;font-weight:800;color:var(--success);margin-top:8px;">🎉 Delivery Complete! Both parties confirmed.</div>' : `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Waiting for ${role === 'rider' ? 'buyer' : 'rider'} to confirm...</div>`}
+            <div style="font-size:14px;font-weight:800;color:var(--success);margin-bottom:4px;">${State.t('delivery.qr.verified')}</div>
+            <div style="font-size:11px;font-weight:800;color:var(--accent);margin-bottom:8px;">${State.t('delivery.qr.freeEcommerce')}</div>
+            ${result.delivery_complete ? '<div style="font-size:13px;font-weight:800;color:var(--success);margin-top:8px;">' + State.t('delivery.qr.complete') + '</div>' : `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Waiting for ${role === 'rider' ? 'buyer' : 'rider'} to confirm...</div>`}
           </div>`;
       } else {
         if (out) out.innerHTML = `
@@ -1398,7 +1398,7 @@ const Modals = {
           </div>`;
       }
     } catch (e) {
-      if (out) out.innerHTML = '<div style="color:var(--danger);font-size:12px;">Something went wrong. Try again.</div>';
+      if (out) out.innerHTML = '<div style="color:var(--danger);font-size:12px;">' + State.t('delivery.qr.somethingWrong') + '</div>';
     }
   },
 
@@ -1428,7 +1428,7 @@ const Modals = {
           scanner.stop().catch(() => {});
           document.getElementById('qr-result').innerHTML = `
             <div style="text-align:center;padding:12px;background:var(--bg-surface);border-radius:8px;">
-              <div style="font-size:12px;color:var(--accent);margin-bottom:4px;">QR Code detected! Verifying...</div>
+              <div style="font-size:12px;color:var(--accent);margin-bottom:4px;">${State.t('delivery.qr.detected')}</div>
             </div>
           `;
 
@@ -1442,7 +1442,7 @@ const Modals = {
             if (result.already_confirmed) {
               document.getElementById('qr-result').innerHTML = `
                 <div style="text-align:center;padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;">
-                  <div style="font-size:14px;font-weight:800;color:var(--success);">✅ Delivery Already Confirmed!</div>
+                   <div style="font-size:14px;font-weight:800;color:var(--success);">${State.t('delivery.qr.alreadyConfirmed')}</div>
                 </div>
               `;
               return;
@@ -1458,8 +1458,8 @@ const Modals = {
               const phone = d.buyer_phone ? ` · ${d.buyer_phone}` : '';
               document.getElementById('qr-result').innerHTML = `
                 <div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;">
-                  <div style="font-size:14px;font-weight:800;color:var(--success);margin-bottom:4px;">✅ QR Verified!</div>
-                  <div style="font-size:11px;font-weight:800;color:var(--accent);margin-bottom:8px;">MEDEBIRR · Your Free Ecommerce</div>
+                   <div style="font-size:14px;font-weight:800;color:var(--success);margin-bottom:4px;">${State.t('delivery.qr.verified')}</div>
+                   <div style="font-size:11px;font-weight:800;color:var(--accent);margin-bottom:8px;">${State.t('delivery.qr.freeEcommerce')}</div>
                   <div style="font-size:12px;color:var(--text-secondary);text-align:left;line-height:1.6;">
                     🛍️ Shop: <strong style="color:white;">${sellerName}</strong><br>
                     👤 Buyer: <strong style="color:white;">${buyerName}${phone}</strong><br>
@@ -1474,9 +1474,9 @@ const Modals = {
             } else {
               document.getElementById('qr-result').innerHTML = `
                 <div style="padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;">
-                  <div style="font-size:14px;font-weight:800;color:var(--danger);margin-bottom:4px;">❌ ${result.message}</div>
+            <div style="font-size:14px;font-weight:800;color:var(--danger);margin-bottom:4px;">❌ ${State.t('delivery.qr.failed', { result })}</div>
                   <div style="font-size:11px;color:var(--text-secondary);">Attempt ${result.attempt || '?'} of 5 · ${result.remaining || '?'} remaining</div>
-                  ${(result.remaining || 0) <= 2 ? '<div style="font-size:11px;color:var(--warning);margin-top:4px;">⚠️ Warning: Too many failed attempts will trigger automatic return.</div>' : ''}
+                   ${(result.remaining || 0) <= 2 ? '<div style="font-size:11px;color:var(--warning);margin-top:4px;">⚠️ Warning: Too many failed attempts will trigger automatic return.</div>' : ''}
                 </div>
               `;
               // Restart scanner for another attempt
@@ -1493,8 +1493,8 @@ const Modals = {
           } catch (e) {
             document.getElementById('qr-result').innerHTML = `
               <div style="padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;">
-                <div style="font-size:13px;font-weight:800;color:var(--danger);">❌ Invalid QR Code</div>
-                <div style="font-size:11px;color:var(--text-secondary);">This doesn't appear to be a valid Medebirr order QR.</div>
+                 <div style="font-size:13px;font-weight:800;color:var(--danger);">${State.t('delivery.qr.invalid')}</div>
+                 <div style="font-size:11px;color:var(--text-secondary);">${State.t('delivery.qr.invalidDesc')}</div>
               </div>
             `;
           }
@@ -1505,9 +1505,9 @@ const Modals = {
       const reader = document.getElementById('qr-reader');
       if (reader) reader.innerHTML = `
         <div style="text-align:center;padding:20px;color:var(--danger);">
-          <div style="font-size:13px;font-weight:700;">Camera unavailable</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;margin-bottom:14px;">We couldn't open the camera. You can still verify with the delivery code.</div>
-          <button class="btn-secondary" style="width:100%" onclick="Modals._openManualCode()">⌨️ Enter code manually</button>
+          <div style="font-size:13px;font-weight:700;">${State.t('delivery.qr.cameraUnavailable')}</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;margin-bottom:14px;">${State.t('delivery.qr.cameraHint')}</div>
+          <button class="btn-secondary" style="width:100%" onclick="Modals._openManualCode()">${State.t('delivery.qr.manual')}</button>
         </div>
       `;
     }
@@ -1523,17 +1523,17 @@ const Modals = {
 
   // ── Order Receipt ────────────────────────────────
   async openOrderReceipt(orderId) {
-    this.open('<div style="text-align:center;padding:20px;"><div class="loading-spinner"></div><p style="font-size:13px;color:var(--text-secondary);">Loading receipt...</p></div>');
+    this.open('<div style="text-align:center;padding:20px;"><div class="loading-spinner"></div><p style="font-size:13px;color:var(--text-secondary);">' + State.t('delivery.receipt.loading') + '</p></div>');
     try {
       const data = await Api.delivery.receipt(orderId);
       this.open(`
         <div class="modal-handle"></div>
-        <div class="modal-title">📄 Order Receipt</div>
-        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Receipt for order ${orderId.slice(0, 8)}...</p>
+        <div class="modal-title">${State.t('delivery.receipt.title')}</div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${State.t('delivery.receipt.for', { orderId: orderId.slice(0, 8) })}</p>
         <iframe src="${data.receipt_url}" style="width:100%;height:400px;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;"></iframe>
         <div style="display:flex;gap:8px;">
-          <a href="${data.receipt_url}" target="_blank" download class="btn-primary" style="flex:1;text-align:center;text-decoration:none;">📥 Download PDF</a>
-          <button class="btn-secondary" style="flex:1;" onclick="Modals.close()">Close</button>
+          <a href="${data.receipt_url}" target="_blank" download class="btn-primary" style="flex:1;text-align:center;text-decoration:none;">${State.t('delivery.receipt.download')}</a>
+          <button class="btn-secondary" style="flex:1;" onclick="Modals.close()">${State.t('delivery.qr.close')}</button>
         </div>
       `);
     } catch (err) {

@@ -1,0 +1,281 @@
+Key,English,Category,Context,Amharic,Technical
+auth.logout.confirm,Log Out?,auth,auto-detected from code,,No
+auth.logout.desc,You\,auth,auto-detected from code,,No
+auth.logout.yes,Log Out,auth,auto-detected from code,,No
+auth.switchAccount,Switch Account,auth,auto-detected from code,,No
+buyer.address.addNew,Add New Address,buyer,auto-detected from code,,No
+buyer.address.couldNotSave,Could not save address,buyer,auto-detected from code,,No
+buyer.address.couldNotUpdate,Could not update address,buyer,auto-detected from code,,No
+buyer.address.default,Default,buyer,auto-detected from code,,No
+buyer.address.home,Home,buyer,auto-detected from code,,No
+buyer.address.manage,Manage Address,buyer,auto-detected from code,,No
+buyer.address.noSaved,No saved addresses,buyer,auto-detected from code,,No
+buyer.address.noSavedDesc,Add a delivery address for faster checkout.,buyer,auto-detected from code,,No
+buyer.address.saved,Address saved!,buyer,auto-detected from code,,No
+buyer.address.updated,Address updated!,buyer,auto-detected from code,,No
+buyer.address.work,Work,buyer,auto-detected from code,,No
+buyer.coupons.applied,${result.message},buyer,auto-detected from code,,No
+buyer.coupons.available,Available Coupons (${available.length}),buyer,auto-detected from code,,No
+buyer.coupons.copied,"Code ""${code}"" copied!",buyer,auto-detected from code,,No
+buyer.coupons.copy,Copy,buyer,auto-detected from code,,No
+buyer.coupons.copyFailed,Failed to copy,buyer,auto-detected from code,,No
+buyer.coupons.enterCode,Enter code,buyer,auto-detected from code,,No
+buyer.coupons.enterFirst,Enter a code first,buyer,auto-detected from code,,No
+buyer.coupons.expired,Expired,buyer,auto-detected from code,,No
+buyer.coupons.expiresIn,Expires in ${daysLeft} days,buyer,auto-detected from code,,No
+buyer.coupons.haveCode,Have a promo code?,buyer,auto-detected from code,,No
+buyer.coupons.invalid,${err.message},buyer,auto-detected from code,,No
+buyer.coupons.minOrder,Min. order: ${State.formatETB(c.min_order_etb)},buyer,auto-detected from code,,No
+buyer.coupons.myCoupons,My Coupons,buyer,auto-detected from code,,No
+buyer.coupons.noCoupons,No coupons yet. Check back soon!,buyer,auto-detected from code,,No
+buyer.coupons.redeemed,Redeemed (${redeemed.length}),buyer,auto-detected from code,,No
+buyer.coupons.used,Used,buyer,auto-detected from code,,No
+buyer.coupons.validating,Validating...,buyer,auto-detected from code,,No
+buyer.explore.featured,⭐ Featured,buyer,auto-detected from code,,No
+buyer.explore.itemsFrom,${filtered.length} items from verified sellers,buyer,auto-detected from code,,No
+buyer.explore.newest,🆕 Newest,buyer,auto-detected from code,,No
+buyer.explore.noItemsDesc,Try different keywords or clear filters.,buyer,auto-detected from code,,No
+buyer.explore.noItemsTitle,No items found,buyer,auto-detected from code,,No
+buyer.explore.popular,🔥 Popular,buyer,auto-detected from code,,No
+buyer.explore.priceAsc,💰 Price ↑,buyer,auto-detected from code,,No
+buyer.explore.priceDesc,💰 Price ↓,buyer,auto-detected from code,,No
+buyer.filter.all,All,buyer,auto-detected from code,,No
+buyer.filter.electronics,📱 Electronics,buyer,auto-detected from code,,No
+buyer.filter.fashion,👗 Fashion,buyer,auto-detected from code,,No
+buyer.filter.food,☕ Food & Coffee,buyer,auto-detected from code,,No
+buyer.filter.footwear,👟 Footwear,buyer,auto-detected from code,,No
+buyer.help.center,Help Center,buyer,auto-detected from code,,No
+buyer.notifications.emptyDesc,You\,buyer,auto-detected from code,,No
+buyer.notifications.emptyTitle,No notifications yet,buyer,auto-detected from code,,No
+buyer.notifications.title,Notifications,buyer,auto-detected from code,,No
+buyer.orders.active,Active,buyer,auto-detected from code,,No
+buyer.orders.all,All,buyer,auto-detected from code,,No
+buyer.orders.cancelled,Cancelled,buyer,auto-detected from code,,No
+buyer.orders.cancelledReason,${o.cancel_reason || \,buyer,auto-detected from code,,No
+buyer.orders.completed,Completed,buyer,auto-detected from code,,No
+buyer.orders.myOrders,My Orders,buyer,auto-detected from code,,No
+buyer.orders.noOrders,No ${filter === \,buyer,auto-detected from code,,No
+buyer.orders.noOrdersDesc,${filter === \,buyer,auto-detected from code,,No
+buyer.orders.paymentVerified,"✅ Payment verified from screenshot · TX <strong style=""font-family:monospace;"">${o.payment_proof.tx_ref}</strong>",buyer,auto-detected from code,,No
+buyer.orders.receipt,📄 Receipt,buyer,auto-detected from code,,No
+buyer.orders.scanRider,📷 Scan Rider\,buyer,auto-detected from code,,No
+buyer.orders.showMyQR,📱 Show My QR,buyer,auto-detected from code,,No
+buyer.orders.trackSoon,Live tracking coming soon!,buyer,auto-detected from code,,No
+buyer.orders.viewDetails,View Details,buyer,auto-detected from code,,No
+buyer.orders.writeReview,Write a Review,buyer,auto-detected from code,,No
+buyer.payment.addCard,Add New Card,buyer,auto-detected from code,,No
+buyer.payment.addSub,Your card details are encrypted. Only the last 4 digits are stored.,buyer,auto-detected from code,,No
+buyer.payment.addTitle,Add Payment Card,buyer,auto-detected from code,,No
+buyer.payment.cardAdded,Card added!,buyer,auto-detected from code,,No
+buyer.payment.cardNumber,Card Number,buyer,auto-detected from code,,No
+buyer.payment.cardNumberPlaceholder,1234 5678 9012 3456,buyer,auto-detected from code,,No
+buyer.payment.cardRemoved,Card removed,buyer,auto-detected from code,,No
+buyer.payment.cardholder,Cardholder Name,buyer,auto-detected from code,,No
+buyer.payment.cardholderLabel,Cardholder,buyer,auto-detected from code,,No
+buyer.payment.cardholderPlaceholder,John Doe,buyer,auto-detected from code,,No
+buyer.payment.cash,💵 Cash on Delivery,buyer,auto-detected from code,,No
+buyer.payment.cbe,🏦 CBE Birr,buyer,auto-detected from code,,No
+buyer.payment.cvv,CVV,buyer,auto-detected from code,,No
+buyer.payment.cvvPlaceholder,•••,buyer,auto-detected from code,,No
+buyer.payment.default,Default,buyer,auto-detected from code,,No
+buyer.payment.defaultUpdated,Default card updated,buyer,auto-detected from code,,No
+buyer.payment.expires,Expires,buyer,auto-detected from code,,No
+buyer.payment.expiry,Expiry,buyer,auto-detected from code,,No
+buyer.payment.expiryPlaceholder,MM/YY,buyer,auto-detected from code,,No
+buyer.payment.failedAdd,Failed to add card,buyer,auto-detected from code,,No
+buyer.payment.failedDefault,Failed to update default,buyer,auto-detected from code,,No
+buyer.payment.failedRemove,Failed to remove card,buyer,auto-detected from code,,No
+buyer.payment.invalidCvv,Invalid CVV,buyer,auto-detected from code,,No
+buyer.payment.invalidExpiry,Invalid expiry date,buyer,auto-detected from code,,No
+buyer.payment.invalidNumber,Invalid card number,buyer,auto-detected from code,,No
+buyer.payment.invalidNumber2,Invalid number,buyer,auto-detected from code,,No
+buyer.payment.methods,Payment Methods,buyer,auto-detected from code,,No
+buyer.payment.noCards,No saved cards,buyer,auto-detected from code,,No
+buyer.payment.noCardsDesc,Add a payment method for faster checkout.,buyer,auto-detected from code,,No
+buyer.payment.otherMethods,Other Payment Methods,buyer,auto-detected from code,,No
+buyer.payment.remove,Remove,buyer,auto-detected from code,,No
+buyer.payment.saveCard,Save Card,buyer,auto-detected from code,,No
+buyer.payment.setDefaultBtn,Set Default,buyer,auto-detected from code,,No
+buyer.payment.setDefaultCheck,Set as default,buyer,auto-detected from code,,No
+buyer.payment.telebirr,📱 Telebirr,buyer,auto-detected from code,,No
+buyer.payment.validNumber,Valid number,buyer,auto-detected from code,,No
+buyer.privacy.policy,Privacy Policy,buyer,auto-detected from code,,No
+buyer.profile.address,Manage Address,buyer,auto-detected from code,,No
+buyer.profile.buyer,Buyer,buyer,auto-detected from code,,No
+buyer.profile.coupons,My Coupons,buyer,auto-detected from code,,No
+buyer.profile.email,Email Address,buyer,auto-detected from code,,No
+buyer.profile.emailPlaceholder,you@example.com,buyer,auto-detected from code,,No
+buyer.profile.failed,Failed to update profile,buyer,auto-detected from code,,No
+buyer.profile.fullName,Full Name,buyer,auto-detected from code,,No
+buyer.profile.fullNamePlaceholder,Your full name,buyer,auto-detected from code,,No
+buyer.profile.help,Help Center,buyer,auto-detected from code,,No
+buyer.profile.mfa.disable,MFA disabled,buyer,auto-detected from code,,No
+buyer.profile.mfa.enable,MFA enabled,buyer,auto-detected from code,,No
+buyer.profile.mfa.failed,Failed to update MFA setting,buyer,auto-detected from code,,No
+buyer.profile.mfaDesc,Add an extra layer of security to your account,buyer,auto-detected from code,,No
+buyer.profile.mfaTitle,Multi-Factor Authentication,buyer,auto-detected from code,,No
+buyer.profile.nameRequired,Name is required,buyer,auto-detected from code,,No
+buyer.profile.openShop,Open a Shop on Medebirr — Free,buyer,auto-detected from code,,No
+buyer.profile.orders,My Orders,buyer,auto-detected from code,,No
+buyer.profile.payment,Payment Methods,buyer,auto-detected from code,,No
+buyer.profile.pending,Pending,buyer,auto-detected from code,,No
+buyer.profile.phone,Phone Number,buyer,auto-detected from code,,No
+buyer.profile.phonePlaceholder,+251 9XX XXX XXX,buyer,auto-detected from code,,No
+buyer.profile.privacy,Privacy Policy,buyer,auto-detected from code,,No
+buyer.profile.saveChanges,Save Changes,buyer,auto-detected from code,,No
+buyer.profile.security,Security,buyer,auto-detected from code,,No
+buyer.profile.settings,Settings,buyer,auto-detected from code,,No
+buyer.profile.studio,Studio →,buyer,auto-detected from code,,No
+buyer.profile.updated,Profile updated!,buyer,auto-detected from code,,No
+buyer.profile.verified,Verified,buyer,auto-detected from code,,No
+buyer.profile.yourProfile,Your Profile,buyer,auto-detected from code,,No
+buyer.profile.yourStores,Your Stores,buyer,auto-detected from code,,No
+buyer.settings.amharic,አማርኛ,buyer,auto-detected from code,,No
+buyer.settings.appearance,Appearance,buyer,auto-detected from code,,No
+buyer.settings.biometric,Biometric Login,buyer,auto-detected from code,,No
+buyer.settings.biometricDesc,FaceID or Fingerprint authentication,buyer,auto-detected from code,,No
+buyer.settings.chatAlerts,Chat Alerts,buyer,auto-detected from code,,No
+buyer.settings.chatAlertsDesc,Messages from sellers and support,buyer,auto-detected from code,,No
+buyer.settings.darkHint,Switch to light theme,buyer,auto-detected from code,,No
+buyer.settings.darkMode,🌙 Dark Mode,buyer,auto-detected from code,,No
+buyer.settings.english,English,buyer,auto-detected from code,,No
+buyer.settings.language,Language,buyer,auto-detected from code,,No
+buyer.settings.lightHint,Switch to dark theme,buyer,auto-detected from code,,No
+buyer.settings.lightMode,☀️ Light Mode,buyer,auto-detected from code,,No
+buyer.settings.orderUpdates,Order Updates,buyer,auto-detected from code,,No
+buyer.settings.orderUpdatesDesc,"Dispatch, delivery, and status changes",buyer,auto-detected from code,,No
+buyer.settings.oromia,Afaan Oromoo,buyer,auto-detected from code,,No
+buyer.settings.promotions,Promotions & Deals,buyer,auto-detected from code,,No
+buyer.settings.promotionsDesc,"Sales, discounts, and new arrivals",buyer,auto-detected from code,,No
+buyer.settings.pushNotif,Push Notifications,buyer,auto-detected from code,,No
+buyer.settings.security,Security,buyer,auto-detected from code,,No
+buyer.settings.title,Settings,buyer,auto-detected from code,,No
+buyer.shops.allShops,All Shops,buyer,auto-detected from code,,No
+buyer.shops.group,💬 Group,buyer,auto-detected from code,,No
+buyer.shops.loading,Loading shops...,buyer,auto-detected from code,,No
+buyer.shops.new,New,buyer,auto-detected from code,,No
+buyer.shops.searchPlaceholder,Search stores by name or location...,buyer,auto-detected from code,,No
+buyer.shops.stores,${shops.length} stores,buyer,auto-detected from code,,No
+checkout.agreeToComplete,Please agree to the store policy to complete checkout,checkout,auto-detected from code,,No
+checkout.applyCode,Apply,checkout,auto-detected from code,,No
+checkout.back,← Back,checkout,auto-detected from code,,No
+checkout.cancel,Cancel,checkout,auto-detected from code,,No
+checkout.cartSubtotal,Cart Subtotal,checkout,auto-detected from code,,No
+checkout.cash,💵 Cash on Delivery,checkout,auto-detected from code,,No
+checkout.cashDesc,Pay courier or cashier upon inspection,checkout,auto-detected from code,,No
+checkout.cashSelected,💵 Cash on Delivery Selected,checkout,auto-detected from code,,No
+checkout.cbe,🏦 CBE Bank Transfer,checkout,auto-detected from code,,No
+checkout.cbeDesc,Direct Account-to-Account Deposit,checkout,auto-detected from code,,No
+checkout.cbePaste,2. Paste your Bank Transaction Code below:,checkout,auto-detected from code,,No
+checkout.close,Close,checkout,auto-detected from code,,No
+checkout.codePlaceholder,Enter code (e.g. BEKOLLO015),checkout,auto-detected from code,,No
+checkout.confirmed,Order Confirmed!,checkout,auto-detected from code,,No
+checkout.confirming,Confirming payment &amp; generating receipt,checkout,auto-detected from code,,No
+checkout.contactPhone,📱 Contact Phone Number,checkout,auto-detected from code,,No
+checkout.copied,Account copied!,checkout,auto-detected from code,,No
+checkout.couponApplied,\,checkout,auto-detected from code,,No
+checkout.couponAppliedToast,\,checkout,auto-detected from code,,No
+checkout.deliverAddress,🛵 Deliver to My Address,checkout,auto-detected from code,,No
+checkout.deliverDesc,Rider brings it directly to your door,checkout,auto-detected from code,,No
+checkout.delivery,Delivery,checkout,auto-detected from code,,No
+checkout.deliveryCode2,"🛡️ <strong style=""color:var(--accent);"">Delivery verification code</strong><br/> <div style=""font-family:monospace;font-size:22px;font-weight:900;letter-spacing:6px;color:var(--accent);margin:6px 0;"">${otp}</div> Share this with your rider when they arrive — they enter it to confirm handover.",checkout,auto-detected from code,,No
+checkout.deliveryDestination,Delivery Destination,checkout,auto-detected from code,,No
+checkout.deliveryFee,Delivery Fee,checkout,auto-detected from code,,No
+checkout.downloadReceipt,📥 Download PDF Receipt,checkout,auto-detected from code,,No
+checkout.enterContact,Please enter your contact phone number,checkout,auto-detected from code,,No
+checkout.enterCoupon,Please enter a coupon code first,checkout,auto-detected from code,,No
+checkout.finalTotal,Final Total to Pay,checkout,auto-detected from code,,No
+checkout.free,Free,checkout,auto-detected from code,,No
+checkout.generatingReceipt,Generating your receipt PDF...,checkout,auto-detected from code,,No
+checkout.houseLandmark,🏠 House Number / Landmark,checkout,auto-detected from code,,No
+checkout.invalidCoupon,Invalid or expired coupon code,checkout,auto-detected from code,,No
+checkout.items,Items (${pkg.items.length}),checkout,auto-detected from code,,No
+checkout.itemsInPackage,Items in Package (${pkg.items.length}),checkout,auto-detected from code,,No
+checkout.landmarkPlaceholder,"e.g. Near Edna Mall, House 412 or behind bakery",checkout,auto-detected from code,,No
+checkout.nextPayment,Next: Payment →,checkout,auto-detected from code,,No
+checkout.nextReview,Next: Review & Confirm →,checkout,auto-detected from code,,No
+checkout.orderFailed,Order placement failed — please try again,checkout,auto-detected from code,,No
+checkout.payViaCbe,🏦 Pay via Commercial Bank of Ethiopia (CBE),checkout,auto-detected from code,,No
+checkout.paymentMethod,Payment Method,checkout,auto-detected from code,,No
+checkout.paymentTitle,Step 2 — Select Payment Method,checkout,auto-detected from code,,No
+checkout.phoneHint,Rider or seller will call this number for handover coordination.,checkout,auto-detected from code,,No
+checkout.phonePlaceholder,+251 9XX XXX XXX,checkout,auto-detected from code,,No
+checkout.pickup,🏪 Collect from Store,checkout,auto-detected from code,,No
+checkout.pickupDesc,Visit the seller\,checkout,auto-detected from code,,No
+checkout.placedWith,"Your order <strong style=""color:var(--accent);"">${orderRef}</strong><br/> has been placed with <strong style=""color:white;"">${storeName}</strong>",checkout,auto-detected from code,,No
+checkout.processing,Processing Your Order...,checkout,auto-detected from code,,No
+checkout.promoCode,🎟️ Promotional Coupon Code,checkout,auto-detected from code,,No
+checkout.promoDiscount,Promo Discount,checkout,auto-detected from code,,No
+checkout.purchaseSuccess,Purchase Successful!,checkout,auto-detected from code,,No
+checkout.receiptHistory,Receipt will be available in your order history.,checkout,auto-detected from code,,No
+checkout.receiptTelegram,📄 Receipt will be sent to you via Telegram.,checkout,auto-detected from code,,No
+checkout.reviewTitle,Step 3 — Review Your Order,checkout,auto-detected from code,,No
+checkout.selectSubCity,Select sub-city,checkout,auto-detected from code,,No
+checkout.selectSubCityErr,Please select your sub-city,checkout,auto-detected from code,,No
+checkout.step1,Delivery,checkout,auto-detected from code,,No
+checkout.step1Title,Step 1 — Delivery & Contact,checkout,auto-detected from code,,No
+checkout.step2,Payment,checkout,auto-detected from code,,No
+checkout.step3,Confirm,checkout,auto-detected from code,,No
+checkout.subCity,📍 Select Sub-City,checkout,auto-detected from code,,No
+checkout.subtotalPay,Subtotal to Pay,checkout,auto-detected from code,,No
+checkout.successInfo,💳 Payment confirmed — funds sent directly to seller<br/> 📄 Your PDF receipt is being generated below<br/> 🛵 You\,checkout,auto-detected from code,,No
+checkout.telebirr,📱 Telebirr Direct Transfer,checkout,auto-detected from code,,No
+checkout.telebirrCopy,📋 Copy,checkout,auto-detected from code,,No
+checkout.telebirrDesc,Pay to Merchant Shortcode / Phone,checkout,auto-detected from code,,No
+checkout.title,Checkout: ${pkg.shopName},checkout,auto-detected from code,,No
+checkout.totalPay,Total to Pay,checkout,auto-detected from code,,No
+checkout.trackOrder,📦 Track My Order,checkout,auto-detected from code,,No
+checkout.uploadReceipt,🤖 Upload Receipt to Verification Bot,checkout,auto-detected from code,,No
+checkout.verifyPayment,"📤 <strong style=""color:#60A5FA;"">Verify your payment</strong><br/> Send your transaction screenshot to our Verification Bot — it reads the receipt and marks your order paid automatically.",checkout,auto-detected from code,,No
+checkout.zeroEscrow,Zero escrow holding! You transfer money directly to the store\,checkout,auto-detected from code,,No
+delivery.qr.allow,📷 Allow Camera,delivery,auto-detected from code,,No
+delivery.qr.allowCamera,Allow camera access?,delivery,auto-detected from code,,No
+delivery.qr.alreadyConfirmed,✅ Delivery Already Confirmed!,delivery,auto-detected from code,,No
+delivery.qr.back,← Back,delivery,auto-detected from code,,No
+delivery.qr.bothConfirmed,✅ Delivery Confirmed by Both Parties!,delivery,auto-detected from code,,No
+delivery.qr.buyer,Buyer,delivery,auto-detected from code,,No
+delivery.qr.cameraHint,We couldn\,delivery,auto-detected from code,,No
+delivery.qr.cameraNeeded,e-Merkato needs your camera to scan the delivery QR code. Your camera is used only while this screen is open.,delivery,auto-detected from code,,No
+delivery.qr.cameraUnavailable,Camera unavailable,delivery,auto-detected from code,,No
+delivery.qr.cancel,Cancel,delivery,auto-detected from code,,No
+delivery.qr.close,Close,delivery,auto-detected from code,,No
+delivery.qr.complete,🎉 Delivery Complete! Both parties confirmed.,delivery,auto-detected from code,,No
+delivery.qr.detected,QR Code detected! Verifying...,delivery,auto-detected from code,,No
+delivery.qr.enter4digit,Please enter the 4-digit code.,delivery,auto-detected from code,,No
+delivery.qr.failed,❌ ${result.message},delivery,auto-detected from code,,No
+delivery.qr.freeEcommerce,MEDEBIRR · Your Free Ecommerce,delivery,auto-detected from code,,No
+delivery.qr.invalid,❌ Invalid QR Code,delivery,auto-detected from code,,No
+delivery.qr.invalidDesc,This doesn\,delivery,auto-detected from code,,No
+delivery.qr.loading,Loading QR code...,delivery,auto-detected from code,,No
+delivery.qr.manual,⌨️ Enter code manually,delivery,auto-detected from code,,No
+delivery.qr.manualDesc,Type the 4-digit code shown on the other party\,delivery,auto-detected from code,,No
+delivery.qr.manualTitle,⌨️ Enter Delivery Code,delivery,auto-detected from code,,No
+delivery.qr.notAvailable,⚠️ QR Not Available,delivery,auto-detected from code,,No
+delivery.qr.order,"Order: <strong style=""color:white;"">${data.order_ref}</strong>",delivery,auto-detected from code,,No
+delivery.qr.pending,⏳ Pending,delivery,auto-detected from code,,No
+delivery.qr.rider,Rider,delivery,auto-detected from code,,No
+delivery.qr.scanAttempts,Scan attempts: ${data.scan_attempts}/5,delivery,auto-detected from code,,No
+delivery.qr.shareBuyer,Share with the buyer for the handover handshake.,delivery,auto-detected from code,,No
+delivery.qr.somethingWrong,Something went wrong. Try again.,delivery,auto-detected from code,,No
+delivery.qr.title,📱 Your QR Code,delivery,auto-detected from code,,No
+delivery.qr.verificationCode,Delivery Verification Code,delivery,auto-detected from code,,No
+delivery.qr.verified,✓ Verified,delivery,auto-detected from code,,No
+delivery.qr.verify,Verify Code,delivery,auto-detected from code,,No
+delivery.receipt.download,📥 Download PDF,delivery,auto-detected from code,,No
+delivery.receipt.for,"Receipt for order ${orderId.slice(0, 8)}...",delivery,auto-detected from code,,No
+delivery.receipt.loading,Loading receipt...,delivery,auto-detected from code,,No
+delivery.receipt.title,📄 Order Receipt,delivery,auto-detected from code,,No
+seller.nav.fromTg,From TG,seller,auto-detected from code,,No
+seller.nav.hub,Hub,seller,auto-detected from code,,No
+seller.nav.items,Items,seller,auto-detected from code,,No
+seller.nav.orders,Orders,seller,auto-detected from code,,No
+shared.badgeSeller,Seller Studio,shared,auto-detected from code,,No
+shared.btn.cancel,Cancel,shared,auto-detected from code,,No
+shared.emptyCart,Your cart is empty,shared,auto-detected from code,,No
+shared.emptyCartDesc,Browse products and add your favorites.,shared,auto-detected from code,,No
+shared.emptyWishlist,No items saved yet,shared,auto-detected from code,,No
+shared.emptyWishlistDesc,Tap the heart on any product to save it here.,shared,auto-detected from code,,No
+shared.tabCart,Cart,shared,auto-detected from code,,No
+shared.tabExplore,Explore,shared,auto-detected from code,,No
+shared.tabProfile,Profile,shared,auto-detected from code,,No
+shared.tabWishlist,Wishlist,shared,auto-detected from code,,No

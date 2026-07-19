@@ -472,7 +472,7 @@ const App = {
       if (menuBtn) menuBtn.style.display = 'none';
 
       if (isSeller) {
-        btn.innerHTML = `🏬 ${State.t('badgeSeller')} →`;
+        btn.innerHTML = `🏬 ${State.t('shared.badgeSeller')} →`;
         btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.5);color:#FCCD04;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:800;cursor:pointer;';
         btn.onclick = () => App.toggleRole();
       } else {
@@ -491,7 +491,7 @@ const App = {
       }
       if (menuBtn) menuBtn.style.display = '';
 
-      btn.innerHTML = `🛒 ${State.t('tabExplore')} Hub →`;
+      btn.innerHTML = `🛒 ${State.t('shared.tabExplore')} Hub →`;
       btn.style.cssText = 'display:flex;align-items:center;gap:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#60A5FA;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;';
       btn.onclick = () => App.toggleRole();
     }
@@ -533,7 +533,7 @@ const App = {
               ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="rgba(252,205,4,0.15)"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor" opacity="0.3"/><circle cx="12" cy="12" r="4"/></svg>'
               : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>'}
           </div>
-          <span class="nav-label">${State.t('tabExplore')}</span>
+          <span class="nav-label">${State.t('shared.tabExplore')}</span>
         </button>
         <button class="nav-item ${isActive('wishlist')?'active':''}" onclick="App.switchTab('wishlist')">
           <div class="nav-icon-wrap">
@@ -541,7 +541,7 @@ const App = {
               ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'
               : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'}
           </div>
-          <span class="nav-label">${State.t('tabWishlist')}</span>
+          <span class="nav-label">${State.t('shared.tabWishlist')}</span>
         </button>
         <button class="nav-item ${isActive('cart')?'active':''}" onclick="App.switchTab('cart')">
           <div class="nav-icon-wrap">
@@ -550,7 +550,7 @@ const App = {
               ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 1 2 2h14a2 2 0 0 1 2-2V6l-3-4z" fill="rgba(252,205,4,0.15)"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'
               : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 1 2 2h14a2 2 0 0 1 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>'}
           </div>
-          <span class="nav-label">${State.t('tabCart')}</span>
+          <span class="nav-label">${State.t('shared.tabCart')}</span>
         </button>
         <button class="nav-item ${isActive('profile')?'active':''}" onclick="App.switchTab('profile')">
           ${State.unreadCount > 0 ? `<span class="nav-badge" style="top:2px;right:2px;">${State.unreadCount}</span>` : ''}
@@ -559,7 +559,7 @@ const App = {
               ? `<img src="${u.photo_url}" class="nav-avatar-img ${isActive('profile')?'active':''}" />`
               : `<div class="nav-avatar-placeholder ${isActive('profile')?'active':''}" style="background:${grad};">${initial}</div>`}
           </div>
-          <span class="nav-label">${State.t('tabProfile')}</span>
+          <span class="nav-label">${State.t('shared.tabProfile')}</span>
         </button>
       `;
     } else {
@@ -568,21 +568,21 @@ const App = {
       nav.innerHTML = `
         <button class="nav-item ${State.currentTab==='dashboard'?'active':''}" onclick="App.switchTab('dashboard')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          Hub
+          ${State.t('seller.nav.hub')}
         </button>
         <button class="nav-item ${State.currentTab==='pending'?'active':''}" onclick="App.switchTab('pending')">
           ${pendingProductsCount > 0 ? `<span class="nav-badge">${pendingProductsCount}</span>` : ''}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          From TG
+          ${State.t('seller.nav.fromTg')}
         </button>
         <button class="nav-item ${State.currentTab==='inventory'?'active':''}" onclick="App.switchTab('inventory')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
-          Items
+          ${State.t('seller.nav.items')}
         </button>
         <button class="nav-item ${State.currentTab==='dispatch'?'active':''}" onclick="App.switchTab('dispatch')">
           ${pendingCount > 0 ? `<span class="nav-badge">${pendingCount}</span>` : ''}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          Orders
+          ${State.t('seller.nav.orders')}
         </button>
       `;
     }

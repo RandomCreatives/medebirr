@@ -13,18 +13,18 @@ const BuyerViews = {
       </div>
       <div class="section-header">
         <span style="font-size:12px;color:var(--text-secondary);">
-          <strong style="color:white;">${filtered.length}</strong> items from verified sellers
+          ${State.t('buyer.explore.itemsFrom', { filtered })}
         </span>
         <select style="background:var(--bg-surface);border:1px solid var(--border);color:white;padding:5px 8px;border-radius:8px;font-size:11px;cursor:pointer;" onchange="App.handleSort(this.value)">
-          <option value="featured" ${State.sortBy==='featured'?'selected':''}>⭐ Featured</option>
-          <option value="newest" ${State.sortBy==='newest'?'selected':''}>🆕 Newest</option>
-          <option value="price_asc" ${State.sortBy==='price_asc'?'selected':''}>💰 Price ↑</option>
-          <option value="price_desc" ${State.sortBy==='price_desc'?'selected':''}>💰 Price ↓</option>
-          <option value="popular" ${State.sortBy==='popular'?'selected':''}>🔥 Popular</option>
+          <option value="featured" ${State.sortBy==='featured'?'selected':''}>${State.t('buyer.explore.featured')}</option>
+          <option value="newest" ${State.sortBy==='newest'?'selected':''}>${State.t('buyer.explore.newest')}</option>
+          <option value="price_asc" ${State.sortBy==='price_asc'?'selected':''}>${State.t('buyer.explore.priceAsc')}</option>
+          <option value="price_desc" ${State.sortBy==='price_desc'?'selected':''}>${State.t('buyer.explore.priceDesc')}</option>
+          <option value="popular" ${State.sortBy==='popular'?'selected':''}>${State.t('buyer.explore.popular')}</option>
         </select>
       </div>
       <div class="item-grid" id="itemGrid">
-        ${filtered.length ? filtered.map(p => this._itemCard(p)).join('') : this._emptyState('🔍','No items found','Try different keywords or clear filters.')}
+        ${filtered.length ? filtered.map(p => this._itemCard(p)).join('') : this._emptyState('🔍', State.t('buyer.explore.noItemsTitle'), State.t('buyer.explore.noItemsDesc'))}
       </div>
       <div id="scrollSentinel" style="height:1px;"></div>
     `;
@@ -43,11 +43,11 @@ const BuyerViews = {
 
   _filterPills() {
     const filters = [
-      { key: 'all',         label: State.t('filterAll') },
-      { key: 'electronics', label: State.t('filterElectronics') },
-      { key: 'fashion',     label: State.t('filterFashion') },
-      { key: 'groceries',   label: State.t('filterFood') },
-      { key: 'footwear',    label: State.t('filterFootwear') },
+      { key: 'all',         label: State.t('buyer.filter.all') },
+      { key: 'electronics', label: State.t('buyer.filter.electronics') },
+      { key: 'fashion',     label: State.t('buyer.filter.fashion') },
+      { key: 'groceries',   label: State.t('buyer.filter.food') },
+      { key: 'footwear',    label: State.t('buyer.filter.footwear') },
     ];
     return filters.map(f => `
       <button class="filter-pill ${State.activeFilter === f.key ? 'active' : ''}" onclick="App.handleFilter('${f.key}')">${f.label}</button>
@@ -146,15 +146,15 @@ const BuyerViews = {
       <div class="search-wrap">
         <span class="search-icon">🏪</span>
         <input type="text" class="search-input" id="shopSearchInput"
-               placeholder="Search stores by name or location..."
+                placeholder="${State.t('buyer.shops.searchPlaceholder')}"
                oninput="App.handleShopSearch(this.value)" />
       </div>
       <div class="section-header">
-        <span class="section-title">All Shops</span>
-        <span style="font-size:11px;color:var(--text-secondary);">${shops.length} stores</span>
+        <span class="section-title">${State.t('buyer.shops.allShops')}</span>
+        <span style="font-size:11px;color:var(--text-secondary);">${State.t('buyer.shops.stores', { shops })}</span>
       </div>
       ${!shops.length
-        ? `<div class="empty-state"><div class="empty-icon">🏪</div><div class="empty-title">Loading shops...</div></div>`
+        ? `<div class="empty-state"><div class="empty-icon">🏪</div><div class="empty-title">${State.t('buyer.shops.loading')}</div></div>`
         : shops.map(s => this._shopCard(s)).join('')}
     `;
   },
@@ -173,14 +173,14 @@ const BuyerViews = {
               <div style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.store_name}</div>
               ${s.verified_badge ? '<span style="font-size:10px;color:var(--success);">✓</span>' : ''}
             </div>
-            <div style="font-size:11px;color:var(--text-secondary);">📍 ${s.location_sub_city || 'Addis Ababa'} · ${s.rating ? `⭐ ${Number(s.rating).toFixed(1)}` : 'New'}</div>
+             <div style="font-size:11px;color:var(--text-secondary);">📍 ${s.location_sub_city || 'Addis Ababa'} · ${s.rating ? `⭐ ${Number(s.rating).toFixed(1)}` : State.t('buyer.shops.new')}</div>
             ${s.return_policy_type ? `<div style="font-size:10px;color:var(--success);margin-top:2px;">🛡️ ${policyLabel[s.return_policy_type]||''}</div>` : ''}
           </div>
           <div style="text-align:right;flex-shrink:0;">
             ${s.tg_channel_username
               ? `<a href="https://t.me/${s.tg_channel_username}" target="_blank" onclick="event.stopPropagation();"
                    style="display:flex;align-items:center;gap:4px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60A5FA;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap;">
-                   💬 Group
+                   💬 ${State.t('buyer.shops.group')}
                  </a>`
               : ''}
           </div>
@@ -214,15 +214,15 @@ const BuyerViews = {
     const couponCount = (State.userCoupons || []).filter(c => !c.is_redeemed).length;
 
     const menuItems = [
-      { icon: Icons.user(20),    label: State.t('profile'),     desc: 'Name, email, phone & security', section: 'profile' },
-      { icon: Icons.pin(20),     label: State.t('address'),     desc: 'Delivery locations & map', section: 'address' },
-      { icon: Icons.credit(20),  label: State.t('payment'),     desc: 'Cards & digital wallet', section: 'payment' },
-      { icon: Icons.box(20),     label: State.t('orders'),      desc: orderCount ? `${orderCount} orders` : 'Track purchases & deliveries', section: 'orders', badge: orderCount || null },
-      { icon: Icons.tag(20),     label: State.t('coupons'),     desc: couponCount ? `${couponCount} available` : 'Discounts & promo codes', section: 'coupons', badge: couponCount || null },
+      { icon: Icons.user(20),    label: State.t('buyer.profile.yourProfile'),     desc: 'Name, email, phone & security', section: 'profile' },
+      { icon: Icons.pin(20),     label: State.t('buyer.profile.address'),     desc: 'Delivery locations & map', section: 'address' },
+      { icon: Icons.credit(20),  label: State.t('buyer.profile.payment'),     desc: 'Cards & digital wallet', section: 'payment' },
+      { icon: Icons.box(20),     label: State.t('buyer.profile.orders'),      desc: orderCount ? `${orderCount} orders` : 'Track purchases & deliveries', section: 'orders', badge: orderCount || null },
+      { icon: Icons.tag(20),     label: State.t('buyer.profile.coupons'),     desc: couponCount ? `${couponCount} available` : 'Discounts & promo codes', section: 'coupons', badge: couponCount || null },
       { icon: Icons.bell(20),    label: 'Notifications', desc: 'Messages, orders & delivery updates', section: 'notifications', badge: State.notifUnread || null },
-      { icon: Icons.settings(20),label: State.t('settings'),    desc: 'Dark mode, notifications, biometrics', section: 'settings' },
-      { icon: Icons.help(20),    label: State.t('help'),        desc: 'FAQs, chat support & contact', section: 'help' },
-      { icon: Icons.shield(20),  label: State.t('privacy'),     desc: 'Data usage & legal terms', section: 'privacy' },
+      { icon: Icons.settings(20),label: State.t('buyer.profile.settings'),    desc: 'Dark mode, notifications, biometrics', section: 'settings' },
+      { icon: Icons.help(20),    label: State.t('buyer.profile.help'),        desc: 'FAQs, chat support & contact', section: 'help' },
+      { icon: Icons.shield(20),  label: State.t('buyer.profile.privacy'),     desc: 'Data usage & legal terms', section: 'privacy' },
     ];
 
     container.innerHTML = `
@@ -246,7 +246,7 @@ const BuyerViews = {
       ${!isSeller ? `
       <button class="profile-open-shop-btn" onclick="App.openRegisterStoreModal()" style="margin:12px 0 4px;width:100%;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-        Open a Shop on Medebirr — Free
+         ${State.t('buyer.profile.openShop')}
       </button>` : ''}
 
       <!-- Menu Grid -->
@@ -267,14 +267,14 @@ const BuyerViews = {
       <!-- Store Section -->
       ${isSeller ? `
       <div class="profile-store-section">
-        <div class="profile-section-label">Your Stores</div>
+        <div class="profile-section-label">${State.t('buyer.profile.yourStores')}</div>
         ${State.stores.map(s => `
           <div class="profile-store-card">
             <div>
               <div style="font-size:13px;font-weight:800;">${s.store_name}</div>
-              <div style="font-size:11px;color:${s.status==='verified'?'var(--success)':'var(--warning)'};">${s.status==='verified'?'Verified':'Pending'}</div>
+              <div style="font-size:11px;color:${s.status==='verified'?'var(--success)':'var(--warning)'};">${s.status==='verified'?State.t('buyer.profile.verified'):State.t('buyer.profile.pending')}</div>
             </div>
-            <button onclick="App.toggleRole();App.switchTab('dashboard');" class="profile-store-btn">Studio →</button>
+            <button onclick="App.toggleRole();App.switchTab('dashboard');" class="profile-store-btn">${State.t('buyer.profile.studio')}</button>
           </div>`).join('')}
       </div>` : ''}
 
@@ -282,7 +282,7 @@ const BuyerViews = {
       ${!window.Telegram?.WebApp?.initData ? `
       <button class="profile-switch-btn" onclick="App._switchUser()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-        Switch Account
+        ${State.t('auth.switchAccount')}
       </button>` : ''}
     `;
   },
@@ -299,7 +299,7 @@ const BuyerViews = {
         <button class="subsection-back-btn" onclick="App.backToProfileHub()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span class="subsection-title">Your Profile</span>
+        <span class="subsection-title">${State.t('buyer.profile.yourProfile')}</span>
       </div>
 
       <!-- Avatar Card -->
@@ -310,35 +310,35 @@ const BuyerViews = {
         <div class="profile-detail-name">${u.firstName} ${u.lastName||''}</div>
         <div class="profile-detail-meta">
           ${u.username ? `<span>@${u.username}</span>` : ''}
-          <span class="profile-badge badge-buyer">Buyer</span>
+          <span class="profile-badge badge-buyer">${State.t('buyer.profile.buyer')}</span>
         </div>
       </div>
 
       <!-- Editable Fields -->
       <div class="profile-detail-fields">
         <div class="form-group">
-          <label class="form-label">Full Name</label>
-          <input class="form-input" id="profileEditName" type="text" value="${u.firstName||''} ${u.lastName||''}" placeholder="Your full name"/>
+          <label class="form-label">${State.t('buyer.profile.fullName')}</label>
+          <input class="form-input" id="profileEditName" type="text" value="${u.firstName||''} ${u.lastName||''}" placeholder="${State.t('buyer.profile.fullNamePlaceholder')}"/>
         </div>
         <div class="form-group">
-          <label class="form-label">Email Address</label>
-          <input class="form-input" id="profileEditEmail" type="email" value="${u.email||''}" placeholder="you@example.com"/>
+          <label class="form-label">${State.t('buyer.profile.email')}</label>
+          <input class="form-input" id="profileEditEmail" type="email" value="${u.email||''}" placeholder="${State.t('buyer.profile.emailPlaceholder')}"/>
         </div>
         <div class="form-group">
-          <label class="form-label">Phone Number</label>
-          <input class="form-input" id="profileEditPhone" type="tel" value="${u.phone||''}" placeholder="+251 9XX XXX XXX"/>
+          <label class="form-label">${State.t('buyer.profile.phone')}</label>
+          <input class="form-input" id="profileEditPhone" type="tel" value="${u.phone||''}" placeholder="${State.t('buyer.profile.phonePlaceholder')}"/>
         </div>
       </div>
 
-      <button class="btn-primary" onclick="BuyerViews._saveProfileDetail()" style="margin-bottom:16px;">Save Changes</button>
+      <button class="btn-primary" onclick="BuyerViews._saveProfileDetail()" style="margin-bottom:16px;">${State.t('buyer.profile.saveChanges')}</button>
 
       <!-- MFA Section -->
       <div class="profile-detail-section">
-        <div class="profile-detail-section-title">Security</div>
+        <div class="profile-detail-section-title">${State.t('buyer.profile.security')}</div>
         <div class="profile-toggle-row">
           <div>
-            <div class="profile-toggle-label">Multi-Factor Authentication</div>
-            <div class="profile-toggle-desc">Add an extra layer of security to your account</div>
+            <div class="profile-toggle-label">${State.t('buyer.profile.mfaTitle')}</div>
+            <div class="profile-toggle-desc">${State.t('buyer.profile.mfaDesc')}</div>
           </div>
           <button class="toggle-switch ${u.mfa_enabled ? 'active' : ''}" onclick="BuyerViews._toggleMFA()">
             <div class="toggle-thumb"></div>
@@ -352,7 +352,7 @@ const BuyerViews = {
     const fullName = document.getElementById('profileEditName')?.value?.trim();
     const email = document.getElementById('profileEditEmail')?.value?.trim();
     const phone = document.getElementById('profileEditPhone')?.value?.trim();
-    if (!fullName) { App.toast('Name is required', 'error'); return; }
+    if (!fullName) { App.toast(State.t('buyer.profile.nameRequired'), 'error'); return; }
 
     const parts = fullName.split(' ');
     const first_name = parts.shift();
@@ -361,10 +361,10 @@ const BuyerViews = {
     try {
       const data = await Api.users.updateMe({ first_name, last_name, email, phone });
       State.user = { ...State.user, ...data.user };
-      App.toast('Profile updated!', 'success');
+      App.toast(State.t('buyer.profile.updated'), 'success');
       App.backToProfileHub();
     } catch (err) {
-      App.toast(err.message || 'Failed to update profile', 'error');
+      App.toast(err.message || State.t('buyer.profile.failed'), 'error');
     }
   },
 
@@ -373,10 +373,10 @@ const BuyerViews = {
     try {
       await Api.users.updateMe({ mfa_enabled: newVal });
       State.user.mfa_enabled = newVal;
-      App.toast(newVal ? 'MFA enabled' : 'MFA disabled', 'success');
+      App.toast(newVal ? State.t('buyer.profile.mfa.enable') : State.t('buyer.profile.mfa.disable'), 'success');
       this._renderProfileDetail(document.getElementById('appBody'));
     } catch (err) {
-      App.toast('Failed to update MFA setting', 'error');
+      App.toast(State.t('buyer.profile.mfa.failed'), 'error');
     }
   },
 
@@ -388,7 +388,7 @@ const BuyerViews = {
         <button class="subsection-back-btn" onclick="App.backToProfileHub()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span class="subsection-title">Manage Address</span>
+        <span class="subsection-title">${State.t('buyer.address.manage')}</span>
       </div>
 
       <!-- Map Container -->
@@ -401,8 +401,8 @@ const BuyerViews = {
             <div class="address-card-icon">${a.label === 'Home' ? '🏠' : a.label === 'Work' ? '🏢' : '📍'}</div>
             <div class="address-card-info">
               <div class="address-card-label">
-                ${a.label}
-                ${a.is_default ? '<span class="address-default-tag">Default</span>' : ''}
+                ${a.label === 'Home' ? State.t('buyer.address.home') : a.label === 'Work' ? State.t('buyer.address.work') : a.label}
+                ${a.is_default ? `<span class="address-default-tag">${State.t('buyer.address.default')}</span>` : ''}
               </div>
               <div class="address-card-detail">${a.sub_city}${a.woreda ? ', '+a.woreda : ''} ${a.house_number ? '· '+a.house_number : ''}</div>
               <div class="address-card-phone">📞 ${a.phone}</div>
@@ -419,8 +419,8 @@ const BuyerViews = {
         `).join('') : `
           <div class="empty-state" style="padding:30px 20px;">
             <div class="empty-icon">📍</div>
-            <div class="empty-title">No saved addresses</div>
-            <div class="empty-desc">Add a delivery address for faster checkout.</div>
+            <div class="empty-title">${State.t('buyer.address.noSaved')}</div>
+            <div class="empty-desc">${State.t('buyer.address.noSavedDesc')}</div>
           </div>
         `}
       </div>
@@ -428,7 +428,7 @@ const BuyerViews = {
       <button class="btn-primary" onclick="BuyerViews._openAddAddressModal()" style="margin-top:12px;">
         <span style="display:flex;align-items:center;justify-content:center;gap:8px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add New Address
+          ${State.t('buyer.address.addNew')}
         </span>
       </button>
     `;
@@ -468,7 +468,7 @@ const BuyerViews = {
   _openAddAddressModal() {
     const subCities = ['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio'];
     App._openAddressModal({
-      title: 'Add New Address',
+      title: State.t('buyer.address.addNew'),
       label: 'Home',
       sub_city: subCities[0],
       woreda: '',
@@ -482,9 +482,9 @@ const BuyerViews = {
           State.addresses.push(result.address);
           App.closeModalOnBg({ target: document.getElementById('modalBackdrop') });
           App.renderContent();
-          App.toast('Address saved!', 'success');
-        } catch (err) {
-          App.toast('Could not save address', 'error');
+          App.toast(State.t('buyer.address.saved'), 'success');
+         } catch (err) {
+           App.toast(State.t('buyer.address.couldNotSave'), 'error');
         }
       }
     });
@@ -510,9 +510,9 @@ const BuyerViews = {
           if (idx >= 0) State.addresses[idx] = result.address;
           Modals.close();
           App.renderContent();
-          App.toast('Address updated!', 'success');
-        } catch (err) {
-          App.toast('Could not update address', 'error');
+          App.toast(State.t('buyer.address.updated'), 'success');
+         } catch (err) {
+           App.toast(State.t('buyer.address.couldNotUpdate'), 'error');
         }
       }
     });
@@ -533,7 +533,7 @@ const BuyerViews = {
         <button class="subsection-back-btn" onclick="App.backToProfileHub()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span class="subsection-title">Payment Methods</span>
+        <span class="subsection-title">${State.t('buyer.payment.methods')}</span>
       </div>
 
       <!-- Saved Cards -->
@@ -542,47 +542,47 @@ const BuyerViews = {
           <div class="payment-card" style="background:${brandGradients[m.card_brand] || brandGradients.visa};">
             <div class="payment-card-top">
               <span class="payment-card-brand">${m.card_brand.toUpperCase()}</span>
-              ${m.is_default ? '<span class="payment-card-default">Default</span>' : ''}
+              ${m.is_default ? `<span class="payment-card-default">${State.t('buyer.payment.default')}</span>` : ''}
             </div>
             <div class="payment-card-number">•••• •••• •••• ${m.last_four}</div>
             <div class="payment-card-bottom">
               <div>
-                <div class="payment-card-label">Cardholder</div>
+                <div class="payment-card-label">${State.t('buyer.payment.cardholderLabel')}</div>
                 <div class="payment-card-value">${m.cardholder_name || 'N/A'}</div>
               </div>
               <div>
-                <div class="payment-card-label">Expires</div>
+                <div class="payment-card-label">${State.t('buyer.payment.expires')}</div>
                 <div class="payment-card-value">${String(m.exp_month).padStart(2,'0')}/${String(m.exp_year).slice(-2)}</div>
               </div>
               <div class="payment-card-actions">
-                ${!m.is_default ? `<button class="payment-card-action" onclick="BuyerViews._setDefaultPayment('${m.method_id}')">Set Default</button>` : ''}
-                <button class="payment-card-action danger" onclick="BuyerViews._deletePayment('${m.method_id}')">Remove</button>
+                 ${!m.is_default ? `<button class="payment-card-action" onclick="BuyerViews._setDefaultPayment('${m.method_id}')">${State.t('buyer.payment.setDefaultBtn')}</button>` : ''}
+                 <button class="payment-card-action danger" onclick="BuyerViews._deletePayment('${m.method_id}')">${State.t('buyer.payment.remove')}</button>
               </div>
             </div>
           </div>
         `).join('') : `
           <div class="empty-state" style="padding:30px 20px;">
             <div class="empty-icon">💳</div>
-            <div class="empty-title">No saved cards</div>
-            <div class="empty-desc">Add a payment method for faster checkout.</div>
+            <div class="empty-title">${State.t('buyer.payment.noCards')}</div>
+            <div class="empty-desc">${State.t('buyer.payment.noCardsDesc')}</div>
           </div>
         `}
       </div>
 
       <!-- Alternative Methods -->
       <div class="payment-alt-section">
-        <div class="profile-detail-section-title">Other Payment Methods</div>
+        <div class="profile-detail-section-title">${State.t('buyer.payment.otherMethods')}</div>
         <div class="payment-alt-grid">
-          <div class="payment-alt-badge"><span style="font-size:20px;">📱</span> Telebirr</div>
-          <div class="payment-alt-badge"><span style="font-size:20px;">🏦</span> CBE Birr</div>
-          <div class="payment-alt-badge"><span style="font-size:20px;">💵</span> Cash on Delivery</div>
+          <div class="payment-alt-badge"><span style="font-size:20px;">📱</span> ${State.t('buyer.payment.telebirr')}</div>
+          <div class="payment-alt-badge"><span style="font-size:20px;">🏦</span> ${State.t('buyer.payment.cbe')}</div>
+          <div class="payment-alt-badge"><span style="font-size:20px;">💵</span> ${State.t('buyer.payment.cash')}</div>
         </div>
       </div>
 
       <button class="btn-primary" onclick="BuyerViews._openAddCardModal()" style="margin-top:12px;">
         <span style="display:flex;align-items:center;justify-content:center;gap:8px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add New Card
+          ${State.t('buyer.payment.addCard')}
         </span>
       </button>
     `;
@@ -613,38 +613,38 @@ const BuyerViews = {
   _openAddCardModal() {
     Modals.open(`
       <div class="modal-handle"></div>
-      <div class="modal-title">Add Payment Card</div>
-      <div class="modal-sub" style="color:var(--text-secondary);">Your card details are encrypted. Only the last 4 digits are stored.</div>
+      <div class="modal-title">${State.t('buyer.payment.addTitle')}</div>
+      <div class="modal-sub" style="color:var(--text-secondary);">${State.t('buyer.payment.addSub')}</div>
 
       <div class="form-group">
-        <label class="form-label">Card Number</label>
-        <input class="form-input" id="addCardNumber" type="text" maxlength="19" placeholder="1234 5678 9012 3456"
+        <label class="form-label">${State.t('buyer.payment.cardNumber')}</label>
+        <input class="form-input" id="addCardNumber" type="text" maxlength="19" placeholder="${State.t('buyer.payment.cardNumberPlaceholder')}"
                oninput="BuyerViews._formatCardNumber(this)" />
         <div id="cardBrandDisplay" style="font-size:11px;margin-top:4px;color:var(--text-secondary);"></div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group">
-          <label class="form-label">Expiry</label>
-          <input class="form-input" id="addCardExpiry" type="text" maxlength="5" placeholder="MM/YY"
+          <label class="form-label">${State.t('buyer.payment.expiry')}</label>
+          <input class="form-input" id="addCardExpiry" type="text" maxlength="5" placeholder="${State.t('buyer.payment.expiryPlaceholder')}"
                  oninput="BuyerViews._formatExpiry(this)" />
         </div>
         <div class="form-group">
-          <label class="form-label">CVV</label>
-          <input class="form-input" id="addCardCVV" type="password" maxlength="4" placeholder="•••"/>
+          <label class="form-label">${State.t('buyer.payment.cvv')}</label>
+          <input class="form-input" id="addCardCVV" type="password" maxlength="4" placeholder="${State.t('buyer.payment.cvvPlaceholder')}"/>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Cardholder Name</label>
-        <input class="form-input" id="addCardName" type="text" placeholder="John Doe"/>
+        <label class="form-label">${State.t('buyer.payment.cardholder')}</label>
+        <input class="form-input" id="addCardName" type="text" placeholder="${State.t('buyer.payment.cardholderPlaceholder')}"/>
       </div>
 
       <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:16px;cursor:pointer;">
-        <input type="checkbox" id="addCardDefault" style="accent-color:var(--accent);"> Set as default
+        <input type="checkbox" id="addCardDefault" style="accent-color:var(--accent);"> ${State.t('buyer.payment.setDefaultCheck')}
       </label>
 
-      <button class="btn-primary" onclick="BuyerViews._saveNewCard()">Save Card</button>
+      <button class="btn-primary" onclick="BuyerViews._saveNewCard()">${State.t('buyer.payment.saveCard')}</button>
     `);
   },
 
@@ -656,7 +656,7 @@ const BuyerViews = {
     const brandEl = document.getElementById('cardBrandDisplay');
     if (brandEl && v.length >= 4) {
       const valid = this._luhnCheck(v);
-      brandEl.innerHTML = `<span style="text-transform:uppercase;font-weight:700;">${brand}</span> · ${valid ? '<span style="color:var(--success);">Valid number</span>' : '<span style="color:var(--danger);">Invalid number</span>'}`;
+      brandEl.innerHTML = `<span style="text-transform:uppercase;font-weight:700;">${brand}</span> · ${valid ? `<span style="color:var(--success);">${State.t('buyer.payment.validNumber')}</span>` : `<span style="color:var(--danger);">${State.t('buyer.payment.invalidNumber2')}</span>`}`;
     } else if (brandEl) {
       brandEl.textContent = '';
     }
@@ -675,9 +675,9 @@ const BuyerViews = {
     const name = document.getElementById('addCardName')?.value?.trim();
     const isDefault = document.getElementById('addCardDefault')?.checked;
 
-    if (!number || !this._luhnCheck(number)) { App.toast('Invalid card number', 'error'); return; }
-    if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) { App.toast('Invalid expiry date', 'error'); return; }
-    if (!cvv || cvv.length < 3) { App.toast('Invalid CVV', 'error'); return; }
+    if (!number || !this._luhnCheck(number)) { App.toast(State.t('buyer.payment.invalidNumber'), 'error'); return; }
+    if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) { App.toast(State.t('buyer.payment.invalidExpiry'), 'error'); return; }
+    if (!cvv || cvv.length < 3) { App.toast(State.t('buyer.payment.invalidCvv'), 'error'); return; }
 
     const [expMonth, expYear] = expiry.split('/').map(Number);
     const brand = this._detectCardBrand(number);
@@ -695,45 +695,45 @@ const BuyerViews = {
       await App._loadPaymentMethods();
       Modals.close();
       this._renderPaymentMethods(document.getElementById('appBody'));
-      App.toast('Card added!', 'success');
-    } catch (err) {
-      App.toast(err.message || 'Failed to add card', 'error');
-    }
-  },
+      App.toast(State.t('buyer.payment.cardAdded'), 'success');
+     } catch (err) {
+       App.toast(err.message || State.t('buyer.payment.failedAdd'), 'error');
+     }
+   },
 
-  async _deletePayment(methodId) {
-    if (!confirm('Remove this payment method?')) return;
-    try {
-      await Api.users.deletePaymentMethod(methodId);
-      State.paymentMethods = (State.paymentMethods || []).filter(m => m.method_id !== methodId);
-      this._renderPaymentMethods(document.getElementById('appBody'));
-      App.toast('Card removed', 'info');
-    } catch (err) {
-      App.toast('Failed to remove card', 'error');
-    }
-  },
+   async _deletePayment(methodId) {
+     if (!confirm('Remove this payment method?')) return;
+     try {
+       await Api.users.deletePaymentMethod(methodId);
+       State.paymentMethods = (State.paymentMethods || []).filter(m => m.method_id !== methodId);
+       this._renderPaymentMethods(document.getElementById('appBody'));
+       App.toast(State.t('buyer.payment.cardRemoved'), 'info');
+     } catch (err) {
+       App.toast(State.t('buyer.payment.failedRemove'), 'error');
+     }
+   },
 
-  async _setDefaultPayment(methodId) {
-    try {
-      await Api.users.setDefaultPayment(methodId);
-      await App._loadPaymentMethods();
-      this._renderPaymentMethods(document.getElementById('appBody'));
-      App.toast('Default card updated', 'success');
-    } catch (err) {
-      App.toast('Failed to update default', 'error');
-    }
-  },
+   async _setDefaultPayment(methodId) {
+     try {
+       await Api.users.setDefaultPayment(methodId);
+       await App._loadPaymentMethods();
+       this._renderPaymentMethods(document.getElementById('appBody'));
+       App.toast(State.t('buyer.payment.defaultUpdated'), 'success');
+     } catch (err) {
+       App.toast(State.t('buyer.payment.failedDefault'), 'error');
+     }
+   },
 
   // ── Sub-Section: My Orders (Detailed) ──────────────
   _renderOrdersDetail(container) {
     const orders = State.myOrders || [];
     const filter = State.ordersFilter || 'all';
-    const filters = [
-      { key: 'all', label: 'All' },
-      { key: 'active', label: 'Active' },
-      { key: 'completed', label: 'Completed' },
-      { key: 'cancelled', label: 'Cancelled' },
-    ];
+     const filters = [
+       { key: 'all', label: State.t('buyer.orders.all') },
+       { key: 'active', label: State.t('buyer.orders.active') },
+       { key: 'completed', label: State.t('buyer.orders.completed') },
+       { key: 'cancelled', label: State.t('buyer.orders.cancelled') },
+     ];
 
     const filtered = orders.filter(o => {
       if (filter === 'active') return ['pending','confirmed','dispatched'].includes(o.order_status);
@@ -747,7 +747,7 @@ const BuyerViews = {
         <button class="subsection-back-btn" onclick="App.backToProfileHub()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span class="subsection-title">My Orders</span>
+        <span class="subsection-title">${State.t('buyer.orders.myOrders')}</span>
       </div>
 
       <!-- Filter Tabs -->
@@ -761,9 +761,9 @@ const BuyerViews = {
       <div class="orders-list">
         ${filtered.length ? filtered.map(o => this._orderCardDetailed(o)).join('') : `
           <div class="empty-state" style="padding:30px 20px;">
-            <div class="empty-icon">📦</div>
-            <div class="empty-title">No ${filter === 'all' ? '' : filter} orders</div>
-            <div class="empty-desc">${filter === 'all' ? 'Your purchase history will appear here.' : 'No orders match this filter.'}</div>
+           <div class="empty-icon">📦</div>
+           <div class="empty-title">${State.t('buyer.orders.noOrders', { filter })}</div>
+           <div class="empty-desc">${State.t('buyer.orders.noOrdersDesc', { filter })}</div>
           </div>
         `}
       </div>
@@ -789,39 +789,39 @@ const BuyerViews = {
           </div>
         </div>
         <div style="font-size:11px;color:var(--text-secondary);margin:4px 0 2px 0;">💳 ${o.payment_method.toUpperCase()}: <span style="font-family:monospace;color:white;">${o.transaction_code || o.payment_tx_ref || 'Cash on Delivery'}</span></div>
-        ${Number(o.discount_etb) > 0 ? `<div style="font-size:11px;color:var(--success);font-weight:700;margin-bottom:4px;">🎟️ Promo Coupon Saved: -${State.formatETB(o.discount_etb)}</div>` : ''}
-        ${o.rider_name ? `<div class="order-detail-rider">🛵 ${o.rider_name} · ${o.rider_phone}</div>` : ''}
-        ${o.delivery_otp && ['confirmed','dispatched'].includes(o.order_status) ? `
-          <div class="order-detail-rider" style="border-color:rgba(252,205,4,0.4);color:var(--accent);">
-            🔑 Delivery code: <strong style="font-family:monospace;letter-spacing:2px;">${o.delivery_otp}</strong> — give this to the ${o.delivery_provider === 'self' ? 'seller' : 'rider'} at handover
-          </div>` : ''}
-        ${o.payment_proof && o.payment_proof.tx_ref ? `
-          <div class="order-detail-rider" style="border-color:rgba(16,185,129,0.4);color:var(--success);">
-            ✅ Payment verified from screenshot · TX <strong style="font-family:monospace;">${o.payment_proof.tx_ref}</strong>
-          </div>` : ''}
-        <div class="order-detail-actions">
-          ${isActive && o.order_status === 'dispatched' ? `
-            <button class="order-action-btn primary" onclick="event.stopPropagation();Modals.openShowQR('${o.order_id}','buyer')">📱 Show My QR</button>
-            <button class="order-action-btn" onclick="event.stopPropagation();Modals.openScanQR('${o.order_id}','buyer')">📷 Scan Rider's QR</button>
-            <button class="order-action-btn" onclick="event.stopPropagation();Modals.openOrderReceipt('${o.order_id}')">📄 Receipt</button>
-          ` : ''}
-          ${isActive && o.order_status !== 'dispatched' && o.order_status !== 'delivered' ? `
-            <button class="order-action-btn" onclick="event.stopPropagation();App.openOrderDetail('${o.order_id}')">View Details</button>
-          ` : ''}
-          ${isCompleted ? `
-            <button class="order-action-btn primary" onclick="event.stopPropagation();App.openOrderDetail('${o.order_id}')">Write a Review</button>
-            <button class="order-action-btn" onclick="event.stopPropagation();Modals.openOrderReceipt('${o.order_id}')">📄 Receipt</button>
-          ` : ''}
-          ${o.order_status === 'cancelled' ? `
-            <span style="font-size:11px;color:var(--danger);">${o.cancel_reason || 'Order was cancelled'}</span>
-          ` : ''}
+         ${Number(o.discount_etb) > 0 ? `<div style="font-size:11px;color:var(--success);font-weight:700;margin-bottom:4px;">🎟️ Promo Coupon Saved: -${State.formatETB(o.discount_etb)}</div>` : ''}
+         ${o.rider_name ? `<div class="order-detail-rider">🛵 ${o.rider_name} · ${o.rider_phone}</div>` : ''}
+         ${o.delivery_otp && ['confirmed','dispatched'].includes(o.order_status) ? `
+           <div class="order-detail-rider" style="border-color:rgba(252,205,4,0.4);color:var(--accent);">
+             🔑 Delivery code: <strong style="font-family:monospace;letter-spacing:2px;">${o.delivery_otp}</strong> — give this to the ${o.delivery_provider === 'self' ? 'seller' : 'rider'} at handover
+           </div>` : ''}
+         ${o.payment_proof && o.payment_proof.tx_ref ? `
+           <div class="order-detail-rider" style="border-color:rgba(16,185,129,0.4);color:var(--success);">
+             ${State.t('buyer.orders.paymentVerified', { o })}
+           </div>` : ''}
+         <div class="order-detail-actions">
+           ${isActive && o.order_status === 'dispatched' ? `
+             <button class="order-action-btn primary" onclick="event.stopPropagation();Modals.openShowQR('${o.order_id}','buyer')">${State.t('buyer.orders.showMyQR')}</button>
+             <button class="order-action-btn" onclick="event.stopPropagation();Modals.openScanQR('${o.order_id}','buyer')">${State.t('buyer.orders.scanRider')}</button>
+             <button class="order-action-btn" onclick="event.stopPropagation();Modals.openOrderReceipt('${o.order_id}')">${State.t('buyer.orders.receipt')}</button>
+           ` : ''}
+           ${isActive && o.order_status !== 'dispatched' && o.order_status !== 'delivered' ? `
+             <button class="order-action-btn" onclick="event.stopPropagation();App.openOrderDetail('${o.order_id}')">${State.t('buyer.orders.viewDetails')}</button>
+           ` : ''}
+           ${isCompleted ? `
+             <button class="order-action-btn primary" onclick="event.stopPropagation();App.openOrderDetail('${o.order_id}')">${State.t('buyer.orders.writeReview')}</button>
+             <button class="order-action-btn" onclick="event.stopPropagation();Modals.openOrderReceipt('${o.order_id}')">${State.t('buyer.orders.receipt')}</button>
+           ` : ''}
+           ${o.order_status === 'cancelled' ? `
+             <span style="font-size:11px;color:var(--danger);">${State.t('buyer.orders.cancelledReason', { o })}</span>
+           ` : ''}
         </div>
       </div>
     `;
   },
 
   _trackOrder(orderId) {
-    App.toast('Live tracking coming soon!', 'info');
+     App.toast(State.t('buyer.orders.trackSoon'), 'info');
   },
 
   // ── Sub-Section: My Coupons ────────────────────────
@@ -835,14 +835,14 @@ const BuyerViews = {
         <button class="subsection-back-btn" onclick="App.backToProfileHub()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span class="subsection-title">My Coupons</span>
+        <span class="subsection-title">${State.t('buyer.coupons.myCoupons')}</span>
       </div>
 
       <!-- Promo Code Input -->
       <div class="coupon-input-section">
-        <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">Have a promo code?</div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">${State.t('buyer.coupons.haveCode')}</div>
         <div class="coupon-input-row">
-          <input class="form-input" id="couponInput" type="text" placeholder="Enter code" style="text-transform:uppercase;"/>
+          <input class="form-input" id="couponInput" type="text" placeholder="${State.t('buyer.coupons.enterCode')}" style="text-transform:uppercase;"/>
           <button class="btn-primary" style="width:auto;padding:10px 20px;" onclick="BuyerViews._validateCouponCode()">Apply</button>
         </div>
         <div id="couponValidationMsg" style="margin-top:6px;font-size:12px;"></div>
@@ -850,18 +850,18 @@ const BuyerViews = {
 
       <!-- Available Coupons -->
       <div class="coupon-section">
-        <div class="profile-detail-section-title">Available Coupons (${available.length})</div>
+        <div class="profile-detail-section-title">${State.t('buyer.coupons.available', { available })}</div>
         ${available.length ? available.map(c => this._couponCard(c)).join('') : `
           <div class="empty-state" style="padding:20px;">
             <div class="empty-icon">🎟️</div>
-            <div class="empty-desc">No coupons yet. Check back soon!</div>
+            <div class="empty-desc">${State.t('buyer.coupons.noCoupons')}</div>
           </div>
         `}
       </div>
 
       ${redeemed.length ? `
       <div class="coupon-section">
-        <div class="profile-detail-section-title">Redeemed (${redeemed.length})</div>
+        <div class="profile-detail-section-title">${State.t('buyer.coupons.redeemed', { redeemed })}</div>
         ${redeemed.map(c => this._couponCard(c, true)).join('')}
       </div>` : ''}
     `;
@@ -877,16 +877,16 @@ const BuyerViews = {
       <div class="coupon-card ${redeemed ? 'redeemed' : ''}">
         <div class="coupon-card-left">
           <div class="coupon-discount">${discount}</div>
-          ${c.min_order_etb > 0 ? `<div class="coupon-min-order">Min. order: ${State.formatETB(c.min_order_etb)}</div>` : ''}
-          ${daysLeft !== null ? `<div class="coupon-expiry ${daysLeft <= 3 ? 'urgent' : ''}">${daysLeft > 0 ? `Expires in ${daysLeft} days` : 'Expired'}</div>` : ''}
+          ${c.min_order_etb > 0 ? `<div class="coupon-min-order">${State.t('buyer.coupons.minOrder', { c })}</div>` : ''}
+          ${daysLeft !== null ? `<div class="coupon-expiry ${daysLeft <= 3 ? 'urgent' : ''}">${daysLeft > 0 ? State.t('buyer.coupons.expiresIn', { daysLeft }) : State.t('buyer.coupons.expired')}</div>` : ''}
         </div>
         <div class="coupon-card-right">
           ${!redeemed ? `
             <button class="coupon-copy-btn" onclick="BuyerViews._copyCoupon('${c.code}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              Copy
-            </button>
-          ` : '<span style="font-size:11px;color:var(--text-muted);">Used</span>'}
+               ${State.t('buyer.coupons.copy')}
+             </button>
+           ` : `<span style="font-size:11px;color:var(--text-muted);">${State.t('buyer.coupons.used')}</span>`}
         </div>
       </div>
     `;
@@ -894,36 +894,36 @@ const BuyerViews = {
 
   _copyCoupon(code) {
     navigator.clipboard.writeText(code).then(() => {
-      App.toast(`Code "${code}" copied!`, 'success');
-    }).catch(() => {
-      App.toast('Failed to copy', 'error');
-    });
+      App.toast(State.t('buyer.coupons.copied', { code }), 'success');
+     }).catch(() => {
+       App.toast(State.t('buyer.coupons.copyFailed'), 'error');
+     });
   },
 
   async _validateCouponCode() {
     const input = document.getElementById('couponInput');
     const msgEl = document.getElementById('couponValidationMsg');
     const code = input?.value?.trim();
-    if (!code) { msgEl.innerHTML = '<span style="color:var(--danger);">Enter a code first</span>'; return; }
+     if (!code) { msgEl.innerHTML = `<span style="color:var(--danger);">${State.t('buyer.coupons.enterFirst')}</span>`; return; }
 
-    msgEl.innerHTML = '<span style="color:var(--text-secondary);">Validating...</span>';
-    try {
-      const result = await Api.users.validateCoupon(code);
-      msgEl.innerHTML = `<span style="color:var(--success);">✓ ${result.message}</span>`;
-      await App._loadUserCoupons();
-      setTimeout(() => this._renderCoupons(document.getElementById('appBody')), 1000);
-    } catch (err) {
-      msgEl.innerHTML = `<span style="color:var(--danger);">✕ ${err.message}</span>`;
-    }
+     msgEl.innerHTML = `<span style="color:var(--text-secondary);">${State.t('buyer.coupons.validating')}</span>`;
+     try {
+       const result = await Api.users.validateCoupon(code);
+       msgEl.innerHTML = `<span style="color:var(--success);">✓ ${State.t('buyer.coupons.applied', { result })}</span>`;
+       await App._loadUserCoupons();
+       setTimeout(() => this._renderCoupons(document.getElementById('appBody')), 1000);
+     } catch (err) {
+       msgEl.innerHTML = `<span style="color:var(--danger);">✕ ${State.t('buyer.coupons.invalid', { err })}</span>`;
+     }
   },
 
   // ── Sub-Section: Notifications ──────────────────────
   _renderNotifications(container) {
     NotificationFeed.render(container, State.notifications || [], {
       onBack: 'App.backToProfileHub()',
-      title: 'Notifications',
-      emptyTitle: 'No notifications yet',
-      emptyDesc: "You'll see order updates, delivery confirmations, and messages here."
+      title: State.t('buyer.notifications.title'),
+      emptyTitle: State.t('buyer.notifications.emptyTitle'),
+      emptyDesc: State.t('buyer.notifications.emptyDesc')
     });
   },
 
@@ -936,16 +936,16 @@ const BuyerViews = {
         <button class="subsection-back-btn" onclick="App.backToProfileHub()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span class="subsection-title">Settings</span>
+        <span class="subsection-title">${State.t('buyer.settings.title')}</span>
       </div>
 
       <!-- Appearance -->
       <div class="settings-group">
-        <div class="settings-group-title">Appearance</div>
+        <div class="settings-group-title">${State.t('buyer.settings.appearance')}</div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-info">
-            <div class="settings-toggle-label">${s.dark_mode ? '🌙 Dark Mode' : '☀️ Light Mode'}</div>
-            <div class="settings-toggle-desc">${s.dark_mode ? 'Switch to light theme' : 'Switch to dark theme'}</div>
+            <div class="settings-toggle-label">${s.dark_mode ? State.t('buyer.settings.darkMode') : State.t('buyer.settings.lightMode')}</div>
+            <div class="settings-toggle-desc">${s.dark_mode ? State.t('buyer.settings.darkHint') : State.t('buyer.settings.lightHint')}</div>
           </div>
           <button class="toggle-switch ${s.dark_mode ? 'active' : ''}" onclick="BuyerViews._updateSetting('dark_mode', !${s.dark_mode})">
             <div class="toggle-thumb"></div>
@@ -953,8 +953,8 @@ const BuyerViews = {
         </div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-info">
-            <div class="settings-toggle-label">Language</div>
-            <div class="settings-toggle-desc">${State.language === 'en' ? 'English' : State.language === 'am' ? 'አማርኛ' : 'Afaan Oromoo'}</div>
+            <div class="settings-toggle-label">${State.t('buyer.settings.language')}</div>
+            <div class="settings-toggle-desc">${State.language === 'en' ? State.t('buyer.settings.english') : State.language === 'am' ? State.t('buyer.settings.amharic') : State.t('buyer.settings.oromia')}</div>
           </div>
           <button class="settings-action-pill" onclick="App.cycleLanguage()">
             ${State.language === 'en' ? 'EN' : State.language === 'am' ? 'አማ' : 'OR'} →
@@ -964,11 +964,11 @@ const BuyerViews = {
 
       <!-- Notifications -->
       <div class="settings-group">
-        <div class="settings-group-title">Push Notifications</div>
+        <div class="settings-group-title">${State.t('buyer.settings.pushNotif')}</div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-info">
-            <div class="settings-toggle-label">Order Updates</div>
-            <div class="settings-toggle-desc">Dispatch, delivery, and status changes</div>
+            <div class="settings-toggle-label">${State.t('buyer.settings.orderUpdates')}</div>
+            <div class="settings-toggle-desc">${State.t('buyer.settings.orderUpdatesDesc')}</div>
           </div>
           <button class="toggle-switch ${s.notif_orders ? 'active' : ''}" onclick="BuyerViews._updateSetting('notif_orders', !${s.notif_orders})">
             <div class="toggle-thumb"></div>
@@ -976,8 +976,8 @@ const BuyerViews = {
         </div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-info">
-            <div class="settings-toggle-label">Promotions & Deals</div>
-            <div class="settings-toggle-desc">Sales, discounts, and new arrivals</div>
+            <div class="settings-toggle-label">${State.t('buyer.settings.promotions')}</div>
+            <div class="settings-toggle-desc">${State.t('buyer.settings.promotionsDesc')}</div>
           </div>
           <button class="toggle-switch ${s.notif_promos ? 'active' : ''}" onclick="BuyerViews._updateSetting('notif_promos', !${s.notif_promos})">
             <div class="toggle-thumb"></div>
@@ -985,8 +985,8 @@ const BuyerViews = {
         </div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-info">
-            <div class="settings-toggle-label">Chat Alerts</div>
-            <div class="settings-toggle-desc">Messages from sellers and support</div>
+            <div class="settings-toggle-label">${State.t('buyer.settings.chatAlerts')}</div>
+            <div class="settings-toggle-desc">${State.t('buyer.settings.chatAlertsDesc')}</div>
           </div>
           <button class="toggle-switch ${s.notif_chat ? 'active' : ''}" onclick="BuyerViews._updateSetting('notif_chat', !${s.notif_chat})">
             <div class="toggle-thumb"></div>
@@ -996,11 +996,11 @@ const BuyerViews = {
 
       <!-- Security -->
       <div class="settings-group">
-        <div class="settings-group-title">Security</div>
+        <div class="settings-group-title">${State.t('buyer.settings.security')}</div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-info">
-            <div class="settings-toggle-label">Biometric Login</div>
-            <div class="settings-toggle-desc">FaceID or Fingerprint authentication</div>
+            <div class="settings-toggle-label">${State.t('buyer.settings.biometric')}</div>
+            <div class="settings-toggle-desc">${State.t('buyer.settings.biometricDesc')}</div>
           </div>
           <button class="toggle-switch ${s.biometric_login ? 'active' : ''}" onclick="BuyerViews._updateSetting('biometric_login', !${s.biometric_login})">
             <div class="toggle-thumb"></div>
@@ -1058,11 +1058,11 @@ const BuyerViews = {
       <div class="modal-handle"></div>
       <div style="text-align:center;padding:16px 0;">
         <div style="font-size:40px;margin-bottom:14px;">👋</div>
-        <div style="font-size:17px;font-weight:900;margin-bottom:8px;">Log Out?</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">You'll need to sign in again to access your account.</div>
+        <div style="font-size:17px;font-weight:900;margin-bottom:8px;">${State.t('auth.logout.confirm')}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">${State.t('auth.logout.desc')}</div>
         <div style="display:flex;gap:10px;">
-          <button class="btn-secondary" onclick="Modals.close();" style="flex:1;">Cancel</button>
-          <button onclick="App.clearToken();location.reload();" style="flex:1;background:var(--danger);color:white;border:none;padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:800;cursor:pointer;">Log Out</button>
+          <button class="btn-secondary" onclick="Modals.close();" style="flex:1;">${State.t('shared.btn.cancel')}</button>
+          <button onclick="App.clearToken();location.reload();" style="flex:1;background:var(--danger);color:white;border:none;padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:800;cursor:pointer;">${State.t('auth.logout.yes')}</button>
         </div>
       </div>
     `);
@@ -1084,7 +1084,7 @@ const BuyerViews = {
         <button class="subsection-back-btn" onclick="App.backToProfileHub()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span class="subsection-title">Help Center</span>
+        <span class="subsection-title">${State.t('buyer.help.center')}</span>
       </div>
 
       <!-- FAQ Section -->
@@ -1134,7 +1134,7 @@ const BuyerViews = {
         <button class="subsection-back-btn" onclick="App.backToProfileHub()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <span class="subsection-title">Privacy Policy</span>
+        <span class="subsection-title">${State.t('buyer.privacy.policy')}</span>
       </div>
 
       <div class="privacy-viewport">
@@ -1234,8 +1234,8 @@ const BuyerViews = {
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">🛍️</div>
-          <div class="empty-title">${State.t('emptyCart')}</div>
-          <div class="empty-desc">${State.t('emptyCartDesc')}</div>
+          <div class="empty-title">${State.t('shared.emptyCart')}</div>
+          <div class="empty-desc">${State.t('shared.emptyCartDesc')}</div>
           <button class="btn-primary" style="margin-top:20px;" onclick="App.switchTab('explore')">Browse Shops</button>
         </div>`;
       return;
@@ -1300,8 +1300,8 @@ const BuyerViews = {
       container.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">❤️</div>
-          <div class="empty-title">${State.t('emptyWishlist')}</div>
-          <div class="empty-desc">${State.t('emptyWishlistDesc')}</div>
+          <div class="empty-title">${State.t('shared.emptyWishlist')}</div>
+          <div class="empty-desc">${State.t('shared.emptyWishlistDesc')}</div>
           <button class="btn-primary" style="margin-top:20px;" onclick="App.switchTab('explore')">Start Exploring</button>
         </div>`;
       return;

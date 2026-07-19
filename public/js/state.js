@@ -22,55 +22,13 @@ const State = {
   // Language
   language: 'en',
   languages: ['en', 'am', 'or'],
-  _i18n: {
-    en: {
-      appTitle: 'Medebirr', appTagline: "Ethiopia's Marketplace",
-      tabExplore: 'Explore', tabWishlist: 'Wishlist', tabCart: 'Cart', tabProfile: 'Profile',
-      searchPlaceholder: 'Search shops, items, or locations...',
-      filterAll: 'All', filterElectronics: '📱 Electronics', filterFashion: '👗 Fashion', filterFood: '☕ Food & Coffee', filterFootwear: '👟 Footwear',
-      addToCart: '+ Add to Cart', viewAll: 'View All', featuredItems: 'Featured Items',
-      profile: 'Your Profile', address: 'Manage Address', payment: 'Payment Methods', orders: 'My Orders',
-      coupons: 'My Coupons', settings: 'Settings', help: 'Help Center', privacy: 'Privacy Policy',
-      badgeShops: 'Verified Shops', badgeSeller: 'Seller Studio',
-      emptyWishlist: 'No items saved yet', emptyWishlistDesc: 'Tap the heart on any product to save it here.',
-      emptyCart: 'Your cart is empty', emptyCartDesc: 'Browse products and add your favorites.',
-      checkout: 'Checkout', orderPlaced: 'Order Placed!',
-      save: 'Save', cancel: 'Cancel', delete: 'Delete', edit: 'Edit', apply: 'Apply', confirm: 'Confirm',
-      notifTitle: 'Notifications', notifEmpty: 'No notifications yet',
-    },
-    am: {
-      appTitle: 'መደብር', appTagline: 'የኢትዮጵያ ገበያ',
-      tabExplore: 'መፈለግ', tabWishlist: 'ተወዳጅ', tabCart: 'ጋረድ', tabProfile: 'መገለጫ',
-      searchPlaceholder: 'ሱቆችን፣ ምርቶችን ወይም ቦታዎችን ይፈልጉ...',
-      filterAll: 'ሁሉም', filterElectronics: '📱 ኤሌክትሮኒክስ', filterFashion: '👗 ፋሽን', filterFood: '☕ ምግብ እና ቡና', filterFootwear: '👟 ጉም茠ክ',
-      addToCart: '+ ወደ ጋረድ ጨምር', viewAll: 'ሁሉንም ይመልከቱ', featuredItems: 'ተወዳጅ ምርቶች',
-      profile: 'የእርስዎ መገለጫ', address: 'አድራሻ ያስተካክሉ', payment: 'የክፍያ ዘዴዎች', orders: 'ፍርዎቼ',
-      coupons: 'ኩፖኖቼ', settings: 'ማስተካከያ', help: 'የእገዛ ማዕከል', privacy: 'የግላዊነት ፖሊሲ',
-      badgeShops: 'የተረጋገጡ ሱቆች', badgeSeller: 'የሸጋ归来 ስ튜ዲዮ',
-      emptyWishlist: 'ተስፋፋ ያልተመዘገቡ ምርቶች የሉም', emptyWishlistDesc: 'ማንኛውንም ምርት ላይ ልብ ጠቅ በማድረግ እዚህ ያስቀምጡ።',
-      emptyCart: 'ጋረድዎ ባዶ ነው', emptyCartDesc: 'ምርቶችን ያስሱ ሻጮችንም ያክሉ።',
-      checkout: 'ክፍል', orderPlaced: 'ትዕዛዙ ቀርቧል!',
-      save: 'አስቀምጥ', cancel: 'ሰርዝ', delete: 'አጥፋ', edit: 'ተካክል', apply: 'ተግብር', confirm: 'ያረጋግጡ',
-      notifTitle: 'ማሳወቂያዎች', notifEmpty: 'ማሳወቂያ የለም',
-    },
-    or: {
-      appTitle: 'Medebirr', appTagline: "Balka Itoophiyaa",
-      tabExplore: 'Ilaali', tabWishlist: 'Jaalalaa', tabCart: 'Kabaja', tabProfile: 'Babajii',
-      searchPlaceholder: 'Makaa, nafaallee fi naanna qoradhu...',
-      filterAll: 'Hunda', filterElectronics: '📱 Elektrooniksii', filterFashion: 'ashion', filterFood: '☕ Nanni fi Bunaa', filterFootwear: '👟 Foonii',
-      addToCart: '+ Kabaja irratti geessi', viewAll: 'Hunda ilaali', featuredItems: 'Nafaallee',
-      profile: 'Babajii Keessan', address: 'Teessoo Jijjiiraa', payment: 'Kaffaltii', orders: 'Ajajoota Koo',
-      coupons: 'Kuuponii Koo', settings: 'Qindaawii', help: 'Gargaarsa', privacy: 'Dhuunfaa',
-      badgeShops: 'Makaa Dhugaa', badgeSeller: 'Gabaa Iyyuu',
-      emptyWishlist: 'Nafaallee hin qabamu', emptyWishlistDesc: 'Madda irratti qabduu dhiisuun kana keessa qabnaa.',
-      emptyCart: 'Kabaja keessan duwwaa dha', emptyCartDesc: 'Nafaallee ilaaliin geessi.',
-      checkout: 'Isa Gurgurtaa', orderPlaced: 'Ajajni Ta\'e!',
-      save: 'Qabnaa', cancel: 'Haquu', delete: 'Haqi', edit: 'Jijjiiraa', apply: 'Fayyadami', confirm: 'Mirkaneessaa',
-      notifTitle: 'Beeksiisee', notifEmpty: 'Beeksiisee hin jiru',
-    }
-  },
 
-  t(key) { return this._i18n[this.language]?.[key] || this._i18n.en[key] || key; },
+  // Translation lookup. Delegates to the generated locale files loaded in
+  // index.html (window.I18n.t). Falls back to English, then the key itself.
+  t(key, vars) {
+    if (window.I18n && window.I18n.t) return window.I18n.t(key, vars);
+    return key;
+  },
 
   // Buyer state
   products: [],
