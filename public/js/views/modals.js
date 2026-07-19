@@ -350,7 +350,7 @@ const Modals = {
     this.open(`
       <div class="pdp-full">
         <div class="pdp-close">
-          <button class="pdp-back-btn" onclick="Modals.close()" aria-label="Back">&#8249;</button>
+          <button class="pdp-back-btn" onclick="Modals.close()" aria-label="Back">${Icons.chevron(22)}</button>
           <div class="pdp-close-title">Product Details</div>
           <div style="width:28px;"></div>
         </div>

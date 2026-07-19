@@ -680,7 +680,7 @@ const SellerViews = {
       const s = sections[State.sellerSettingsSection];
       container.innerHTML = `
         <div class="settings-detail-header">
-          <button class="pdp-back-btn" onclick="SellerViews._backToSettingsGroup()" aria-label="Back">&#8249;</button>
+          <button class="pdp-back-btn" onclick="SellerViews._backToSettingsGroup()" aria-label="Back">${Icons.chevron(22)}</button>
           <div class="settings-detail-title">${s.icon(18)} ${s.title}</div>
           <div style="width:28px;"></div>
         </div>
@@ -709,7 +709,7 @@ const SellerViews = {
         }).join('');
         container.innerHTML = `
           <div class="settings-detail-header">
-            <button class="pdp-back-btn" onclick="SellerViews._backToSettingsMenu()" aria-label="Back">&#8249;</button>
+            <button class="pdp-back-btn" onclick="SellerViews._backToSettingsMenu()" aria-label="Back">${Icons.chevron(22)}</button>
             <div class="settings-detail-title">${g.icon(18)} ${g.title}</div>
             <div style="width:28px;"></div>
           </div>
