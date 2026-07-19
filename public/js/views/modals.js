@@ -1316,17 +1316,90 @@ const Modals = {
 
   // ── QR Scanner ───────────────────────────────────
   openScanQR(orderId, role) {
+    this._scanOrderId = orderId;
+    this._scanRole = role;
     this.open(`
       <div class="modal-handle"></div>
       <div class="modal-title">📷 Scan ${role === 'rider' ? "Buyer's" : "Rider's"} QR</div>
-      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">Point your camera at the other party's QR code.</p>
-      <div id="qr-reader" style="width:100%;border-radius:12px;overflow:hidden;margin-bottom:12px;"></div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Verify the handover by scanning the other party's QR code.</p>
+      <div id="qr-permission" style="text-align:center;padding:24px 16px;background:var(--bg-surface);border-radius:12px;margin-bottom:16px;">
+        <div style="font-size:32px;margin-bottom:10px;">📸</div>
+        <div style="font-size:14px;font-weight:800;color:white;margin-bottom:6px;">Allow camera access?</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.5;">e-Merkato needs your camera to scan the delivery QR code. Your camera is used only while this screen is open.</div>
+        <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="Modals._requestCamera()">📷 Allow Camera</button>
+        <button class="btn-secondary" style="width:100%" onclick="Modals._openManualCode()">⌨️ Enter code manually</button>
+      </div>
+      <div id="qr-reader" style="display:none;width:100%;border-radius:12px;overflow:hidden;margin-bottom:12px;"></div>
       <div id="qr-result" style="margin-bottom:12px;"></div>
-      <button class="btn-secondary" style="width:100%;" onclick="Modals._stopScanner();Modals.close()">Cancel</button>
+      <button id="qr-cancel" class="btn-secondary" style="width:100%;display:none;" onclick="Modals._stopScanner();Modals.close()">Cancel</button>
+      <button id="qr-back" class="btn-secondary" style="width:100%;" onclick="Modals._backToScanIntro()">Cancel</button>
     `);
+  },
 
-    // Start camera scanner
-    setTimeout(() => this._startScanner(orderId, role), 100);
+  _requestCamera() {
+    const perm = document.getElementById('qr-permission');
+    const reader = document.getElementById('qr-reader');
+    const back = document.getElementById('qr-back');
+    const cancel = document.getElementById('qr-cancel');
+    if (perm) perm.style.display = 'none';
+    if (reader) reader.style.display = 'block';
+    if (back) back.style.display = 'none';
+    if (cancel) cancel.style.display = 'block';
+    setTimeout(() => this._startScanner(this._scanOrderId, this._scanRole), 80);
+  },
+
+  _backToScanIntro() {
+    this._stopScanner();
+    this.openScanQR(this._scanOrderId, this._scanRole);
+  },
+
+  _openManualCode() {
+    this._stopScanner();
+    const role = this._scanRole;
+    const orderId = this._scanOrderId;
+    this.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">⌨️ Enter Delivery Code</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Type the 4-digit code shown on the other party's QR screen.</p>
+      <input id="manual-code" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off"
+        style="width:100%;text-align:center;font-size:28px;font-weight:900;letter-spacing:8px;padding:14px;border-radius:12px;border:2px solid var(--border);background:var(--bg-surface);color:white;margin-bottom:12px;" />
+      <div id="manual-result" style="margin-bottom:12px;"></div>
+      <button class="btn-primary" style="width:100%;margin-bottom:10px;" onclick="Modals._submitManualCode()">Verify Code</button>
+      <button class="btn-secondary" style="width:100%" onclick="Modals.openScanQR('${orderId}','${role}')">← Back</button>
+    `);
+    setTimeout(() => document.getElementById('manual-code')?.focus(), 80);
+  },
+
+  async _submitManualCode() {
+    const input = document.getElementById('manual-code');
+    const out = document.getElementById('manual-result');
+    const code = (input?.value || '').trim();
+    if (!code) { if (out) out.innerHTML = '<div style="color:var(--danger);font-size:12px;">Please enter the 4-digit code.</div>'; return; }
+    const role = this._scanRole;
+    const orderId = this._scanOrderId;
+    try {
+      const result = await Api.delivery.verifyCode(orderId, { code, scanner_role: role });
+      if (result.already_confirmed) {
+        if (out) out.innerHTML = '<div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;text-align:center;font-size:14px;font-weight:800;color:var(--success);">✅ Delivery Already Confirmed!</div>';
+        return;
+      }
+      if (result.success) {
+        if (out) out.innerHTML = `
+          <div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;">
+            <div style="font-size:14px;font-weight:800;color:var(--success);margin-bottom:4px;">✅ Code Verified!</div>
+            <div style="font-size:11px;color:var(--text-secondary);">MEDEBIRR · Your Free Ecommerce</div>
+            ${result.delivery_complete ? '<div style="font-size:13px;font-weight:800;color:var(--success);margin-top:8px;">🎉 Delivery Complete! Both parties confirmed.</div>' : `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Waiting for ${role === 'rider' ? 'buyer' : 'rider'} to confirm...</div>`}
+          </div>`;
+      } else {
+        if (out) out.innerHTML = `
+          <div style="padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;">
+            <div style="font-size:14px;font-weight:800;color:var(--danger);margin-bottom:4px;">❌ ${result.message}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Attempt ${result.attempt || '?'} of 5 · ${result.remaining || '?'} remaining</div>
+          </div>`;
+      }
+    } catch (e) {
+      if (out) out.innerHTML = '<div style="color:var(--danger);font-size:12px;">Something went wrong. Try again.</div>';
+    }
   },
 
   _qrHtml5QrCode: null,
@@ -1429,10 +1502,12 @@ const Modals = {
         () => {} // ignore scan failures (no QR in frame)
       );
     } catch (err) {
-      document.getElementById('qr-reader').innerHTML = `
+      const reader = document.getElementById('qr-reader');
+      if (reader) reader.innerHTML = `
         <div style="text-align:center;padding:20px;color:var(--danger);">
-          <div style="font-size:13px;font-weight:700;">Camera access required</div>
-          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Please allow camera access to scan QR codes.</div>
+          <div style="font-size:13px;font-weight:700;">Camera unavailable</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;margin-bottom:14px;">We couldn't open the camera. You can still verify with the delivery code.</div>
+          <button class="btn-secondary" style="width:100%" onclick="Modals._openManualCode()">⌨️ Enter code manually</button>
         </div>
       `;
     }

@@ -265,6 +265,81 @@ router.post('/:orderId/verify-otp', requireAuth, async (req, res, next) => {
 });
 
 /**
+ * POST /api/v1/delivery/:orderId/verify-code
+ * Manual fallback when camera scanning is unavailable (no camera permission,
+ * weak light, etc). The scanning party enters the order's 4-digit delivery
+ * code shown on the other party's QR screen. Records the matching
+ * verification flag for the scanner role — symmetric to QR scanning.
+ * Body: { code, scanner_role }
+ */
+router.post('/:orderId/verify-code', requireAuth, async (req, res, next) => {
+  try {
+    const { code, scanner_role } = req.body || {};
+    if (!code) return res.status(400).json({ success: false, message: 'Delivery code is required' });
+    if (!['rider', 'buyer'].includes(scanner_role)) {
+      return res.status(400).json({ success: false, message: 'scanner_role must be rider or buyer' });
+    }
+
+    const result = await query(
+      `SELECT o.*, s.store_name, s.admin_tg_user_id
+       FROM orders o JOIN stores s ON o.store_id = s.store_id
+       WHERE o.order_id = $1`,
+      [req.params.orderId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Order not found' });
+    const order = result.rows[0];
+
+    if (order.qr_verified_by_rider && order.qr_verified_by_buyer) {
+      return res.json({ success: true, already_confirmed: true, message: 'Delivery already confirmed by both parties' });
+    }
+    if (!order.delivery_otp) {
+      return res.status(400).json({ success: false, message: 'No delivery code set for this order' });
+    }
+    if (String(code).trim() !== String(order.delivery_otp)) {
+      const attempts = (order.qr_scan_attempts || 0) + 1;
+      await query('UPDATE orders SET qr_scan_attempts = $1 WHERE order_id = $2', [attempts, req.params.orderId]);
+      return res.json({
+        success: false,
+        message: 'Invalid delivery code',
+        attempt: attempts,
+        remaining: Math.max(0, 5 - attempts)
+      });
+    }
+
+    if (scanner_role === 'rider') {
+      await query('UPDATE orders SET qr_verified_by_rider = TRUE, updated_at = NOW() WHERE order_id = $1', [req.params.orderId]);
+    } else {
+      await query('UPDATE orders SET qr_verified_by_buyer = TRUE, updated_at = NOW() WHERE order_id = $1', [req.params.orderId]);
+    }
+
+    const bothVerified = (scanner_role === 'rider' && order.qr_verified_by_buyer) ||
+                         (scanner_role === 'buyer' && order.qr_verified_by_rider);
+
+    let deliveryComplete = false;
+    if (bothVerified) {
+      await query(
+        `UPDATE orders SET order_status = 'delivered', delivered_at = NOW(),
+         buyer_confirmed_at = NOW(), updated_at = NOW() WHERE order_id = $1`,
+        [req.params.orderId]
+      );
+      await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
+      deliveryComplete = true;
+      await notifyDeliveryComplete(order);
+    }
+
+    res.json({
+      success: true,
+      verified_by: scanner_role,
+      both_verified: bothVerified || deliveryComplete,
+      delivery_complete: deliveryComplete,
+      message: 'Delivery code verified'
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
  * POST /api/v1/delivery/:orderId/settle
  * Seller manual settlement (resolves in person without QR)
  */

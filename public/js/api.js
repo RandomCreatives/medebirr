@@ -181,6 +181,7 @@ const Api = {
     qr:            (orderId)          => Api.get(`/delivery/${orderId}/qr`),
     scan:          (orderId, data)     => Api.post(`/delivery/${orderId}/scan`, data),
     verifyOtp:     (orderId, data)     => Api.post(`/delivery/${orderId}/verify-otp`, data),
+    verifyCode:    (orderId, data)     => Api.post(`/delivery/${orderId}/verify-code`, data),
     settle:        (orderId)           => Api.post(`/delivery/${orderId}/settle`),
     receipt:       (orderId)           => Api.get(`/delivery/${orderId}/receipt`)
   },
