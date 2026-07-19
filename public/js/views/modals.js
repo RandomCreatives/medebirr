@@ -1376,12 +1376,24 @@ const Modals = {
             }
 
             if (result.success) {
+              const d = result.details || {};
+              const buyerName = d.buyer || result.buyer || 'N/A';
+              const sellerName = d.seller || result.seller || 'N/A';
+              const items = d.items || result.product || 'N/A';
+              const amount = d.amount != null ? d.amount : result.price;
+              const date = d.date_human || '';
+              const phone = d.buyer_phone ? ` · ${d.buyer_phone}` : '';
               document.getElementById('qr-result').innerHTML = `
                 <div style="padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;">
                   <div style="font-size:14px;font-weight:800;color:var(--success);margin-bottom:4px;">✅ QR Verified!</div>
-                  <div style="font-size:12px;color:var(--text-secondary);">
-                    Product: <strong style="color:white;">${result.product || 'N/A'}</strong><br>
-                    Price: <strong style="color:var(--accent);">Br ${(result.price || 0).toLocaleString()}</strong>
+                  <div style="font-size:11px;font-weight:800;color:var(--accent);margin-bottom:8px;">MEDEBIRR · Your Free Ecommerce</div>
+                  <div style="font-size:12px;color:var(--text-secondary);text-align:left;line-height:1.6;">
+                    🛍️ Shop: <strong style="color:white;">${sellerName}</strong><br>
+                    👤 Buyer: <strong style="color:white;">${buyerName}${phone}</strong><br>
+                    📦 Items: <strong style="color:white;">${items}</strong><br>
+                    💰 Amount: <strong style="color:var(--accent);">Br ${(Number(amount) || 0).toLocaleString()} ${d.currency || 'ETB'}</strong><br>
+                    📅 Date: <strong style="color:white;">${date}</strong><br>
+                    🔖 Ref: <strong style="color:white;">${result.orderRef || ''}</strong>
                   </div>
                   ${result.delivery_complete ? '<div style="font-size:13px;font-weight:800;color:var(--success);margin-top:8px;">🎉 Delivery Complete! Both parties confirmed.</div>' : `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Waiting for ${role === 'rider' ? 'buyer' : 'rider'} to confirm...</div>`}
                 </div>

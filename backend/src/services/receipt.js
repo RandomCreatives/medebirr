@@ -206,7 +206,13 @@ async function generateReceiptPDF({ order, items, buyer, store, rider, qrBuffer 
       const qrSize = 100;
       const qrX = LEFT + (W - qrSize) / 2;
       doc.image(qrBuffer, qrX, y, { width: qrSize, height: qrSize });
-      y += qrSize + 12;
+      y += qrSize + 8;
+      doc.fontSize(7).font('Helvetica').fillColor('#777777')
+         .text('Contains buyer, seller, items, amount & date · MEDEBIRR', LEFT, y, { width: W, align: 'center' });
+      y += 14;
+      doc.fontSize(8).font('Helvetica-Bold').fillColor('#FCCD04')
+         .text('MEDEBIRR — Your Free Ecommerce', LEFT, y, { width: W, align: 'center' });
+      y += 16;
     }
 
     // ── Return policy ──

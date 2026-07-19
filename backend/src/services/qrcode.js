@@ -14,19 +14,36 @@ function generateToken() {
 }
 
 /**
- * Build QR data payload from order
- * Contains embedded order info — works offline, no URL resolution needed
+ * Build QR data payload from order.
+ * Embedded, self-contained order info so the QR is meaningful even when
+ * scanned by a generic reader (shows buyer, seller, items, date, amount,
+ * shop) — and carries a unique verification token `v` per purchase.
  */
 function buildQRData(order, buyer, store, token) {
+  const items = Array.isArray(order.order_items)
+    ? order.order_items
+    : (typeof order.order_items === 'string' ? JSON.parse(order.order_items || '[]') : []);
+  const itemsSummary = items.length
+    ? items.map(i => `${i.quantity || 1}x ${i.title}`).join(', ')
+    : (order.title || 'Order');
+  const created = order.created_at ? new Date(order.created_at) : new Date();
+  const buyerName = buyer ? `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim() : 'Buyer';
   return {
+    brand: 'MEDEBIRR',
+    tagline: 'Your Free Ecommerce',
     oid: order.order_id,
     ref: order.order_ref,
-    p: order.order_items?.[0]?.title || order.title || 'Order',
-    pr: Number(order.total_etb),
-    b: buyer ? `${buyer.first_name} ${buyer.last_name || ''}`.trim() : 'Buyer',
-    s: store?.store_name || 'Store',
-    t: Date.now(),
-    v: token || order.qr_token || generateToken()
+    v: token || order.qr_token || generateToken(),
+    t: created.getTime(),
+    date: created.toISOString(),
+    date_human: created.toLocaleString('en-ET', { timeZone: 'Africa/Addis_Ababa', dateStyle: 'medium', timeStyle: 'short' }) + ' EAT',
+    buyer: buyerName,
+    buyer_phone: buyer?.phone || order.buyer_phone || null,
+    seller: store?.store_name || order.store_name || 'Store',
+    shop: store?.store_name || order.store_name || 'Store',
+    items: itemsSummary,
+    amount: Number(order.total_etb || 0),
+    currency: 'ETB'
   };
 }
 
@@ -94,7 +111,20 @@ function validateQRData(scanned, order) {
     price: scanned.pr,
     buyer: scanned.b,
     seller: scanned.s,
-    message: 'QR code verified successfully'
+    message: 'QR code verified successfully',
+    details: {
+      brand: scanned.brand,
+      tagline: scanned.tagline,
+      buyer: scanned.buyer,
+      buyer_phone: scanned.buyer_phone,
+      seller: scanned.seller,
+      shop: scanned.shop,
+      items: scanned.items,
+      amount: scanned.amount,
+      currency: scanned.currency,
+      date: scanned.date,
+      date_human: scanned.date_human
+    }
   };
 }
 
