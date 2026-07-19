@@ -33,7 +33,7 @@ async function generateQRAndReceipt(orderId) {
 
   // Generate QR token + data
   const token = qrService.generateToken();
-  const qrData = qrService.buildQRData(order, buyerResult.rows[0], { store_name: order.store_name });
+  const qrData = qrService.buildQRData(order, buyerResult.rows[0], { store_name: order.store_name }, token);
 
   await query(
     'UPDATE orders SET qr_token = $1, qr_data = $2, updated_at = NOW() WHERE order_id = $3',

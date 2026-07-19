@@ -17,7 +17,7 @@ function generateToken() {
  * Build QR data payload from order
  * Contains embedded order info — works offline, no URL resolution needed
  */
-function buildQRData(order, buyer, store) {
+function buildQRData(order, buyer, store, token) {
   return {
     oid: order.order_id,
     ref: order.order_ref,
@@ -26,7 +26,7 @@ function buildQRData(order, buyer, store) {
     b: buyer ? `${buyer.first_name} ${buyer.last_name || ''}`.trim() : 'Buyer',
     s: store?.store_name || 'Store',
     t: Date.now(),
-    v: order.qr_token || generateToken()
+    v: token || order.qr_token || generateToken()
   };
 }
 
