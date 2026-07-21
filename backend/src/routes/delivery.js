@@ -11,6 +11,7 @@ const qrService = require('../services/qrcode');
 const receiptService = require('../services/receipt');
 const { withinRadius } = require('../utils/geo');
 const inventory = require('../services/inventory');
+const ordersDal = require('../dal/orders');
 
 const router = express.Router();
 
@@ -22,13 +23,7 @@ const MAX_SCAN_ATTEMPTS = 5;
  */
 router.get('/:orderId/qr', requireAuth, async (req, res, next) => {
   try {
-    const result = await query(
-      `SELECT o.*, s.store_name
-       FROM orders o
-       JOIN stores s ON o.store_id = s.store_id
-       WHERE o.order_id = $1`,
-      [req.params.orderId]
-    );
+    const result = await ordersDal.getById(req.params.orderId);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     const order = result.rows[0];
@@ -65,13 +60,7 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
       return res.status(400).json({ error: 'scanner_role must be rider or buyer' });
     }
 
-    const result = await query(
-      `SELECT o.*, s.store_name, s.admin_tg_user_id
-       FROM orders o
-       JOIN stores s ON o.store_id = s.store_id
-       WHERE o.order_id = $1`,
-      [req.params.orderId]
-    );
+    const result = await ordersDal.getById(req.params.orderId);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     const order = result.rows[0];
@@ -86,40 +75,24 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
     const attemptNumber = (order.qr_scan_attempts || 0) + 1;
 
     // Log the verification attempt
-    await query(
-      `INSERT INTO delivery_verifications
-       (order_id, scanner_role, scanner_tg_id, scanned_role, scanned_order_ref, success, attempt_number)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [req.params.orderId, scanner_role, req.user.tg_user_id,
-       scanner_role === 'rider' ? 'buyer' : 'rider',
-       validation.orderRef || null, validation.valid, attemptNumber]
+    await ordersDal.logVerificationAttempt(
+      req.params.orderId, scanner_role, req.user.tg_user_id,
+      scanner_role === 'rider' ? 'buyer' : 'rider',
+      validation.orderRef || null, validation.valid, attemptNumber
     );
 
     // Update attempt count
-    await query(
-      'UPDATE orders SET qr_scan_attempts = $1 WHERE order_id = $2',
-      [attemptNumber, req.params.orderId]
-    );
+    await ordersDal.setField(req.params.orderId, 'qr_scan_attempts', attemptNumber);
 
     if (!validation.valid) {
-      // Check if max attempts exceeded
       if (attemptNumber >= MAX_SCAN_ATTEMPTS) {
-        // Auto-initiate return
-        await query(
-          `UPDATE orders SET
-            order_status = 'cancelled',
-            return_initiated_at = NOW(),
-            return_reason = 'QR verification failed after ' || $1 || ' attempts',
-            cancelled_at = NOW(),
-            updated_at = NOW()
-           WHERE order_id = $2`,
-          [attemptNumber, req.params.orderId]
-        );
+        await ordersDal.updateStatus(req.params.orderId, 'cancelled', {
+          return_initiated_at: new Date(),
+          return_reason: 'QR verification failed after ' + attemptNumber + ' attempts',
+          cancelled_at: new Date()
+        });
 
-        // Release reserved stock
         await inventory.releaseReservedStock(req.params.orderId);
-
-        // Notify all parties
         await notifyReturnInitiated(order);
 
         return res.json({
@@ -140,33 +113,23 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
 
     // Scan successful — update verification flag
     if (scanner_role === 'rider') {
-      await query('UPDATE orders SET qr_verified_by_rider = TRUE, updated_at = NOW() WHERE order_id = $1', [req.params.orderId]);
+      await ordersDal.setField(req.params.orderId, 'qr_verified_by_rider', true);
     } else {
-      await query('UPDATE orders SET qr_verified_by_buyer = TRUE, updated_at = NOW() WHERE order_id = $1', [req.params.orderId]);
+      await ordersDal.setField(req.params.orderId, 'qr_verified_by_buyer', true);
     }
 
-    // Check if both have now verified
     const bothVerified = (scanner_role === 'rider' && order.qr_verified_by_buyer) ||
                          (scanner_role === 'buyer' && order.qr_verified_by_rider);
 
     let deliveryComplete = false;
     if (bothVerified) {
-      // Both parties confirmed — complete delivery
-      await query(
-        `UPDATE orders SET
-          order_status = 'delivered',
-          delivered_at = NOW(),
-          buyer_confirmed_at = NOW(),
-          updated_at = NOW()
-         WHERE order_id = $1`,
-        [req.params.orderId]
-      );
+      await ordersDal.updateStatus(req.params.orderId, 'delivered', {
+        delivered_at: new Date(),
+        buyer_confirmed_at: new Date()
+      });
 
       await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
-
       deliveryComplete = true;
-
-      // Send delivery confirmation to all parties
       await notifyDeliveryComplete(order);
     }
 
@@ -188,9 +151,6 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
 /**
  * POST /api/v1/delivery/:orderId/verify-otp
  * Rider verifies the handover via the buyer's 4-digit delivery OTP.
- * Optional geofence: if both the buyer's pinned location and the rider's
- * current location are present, the OTP is rejected when the rider is
- * outside GEOFENCE_RADIUS_METERS (default 200m).
  * Body: { otp, rider_latitude, rider_longitude }
  */
 router.post('/:orderId/verify-otp', requireAuth, async (req, res, next) => {
@@ -198,12 +158,7 @@ router.post('/:orderId/verify-otp', requireAuth, async (req, res, next) => {
     const { otp, rider_latitude, rider_longitude } = req.body || {};
     if (!otp) return res.status(400).json({ error: 'otp is required' });
 
-    const result = await query(
-      `SELECT o.*, s.admin_tg_user_id, s.store_name
-       FROM orders o JOIN stores s ON o.store_id = s.store_id
-       WHERE o.order_id = $1`,
-      [req.params.orderId]
-    );
+    const result = await ordersDal.getById(req.params.orderId);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
     const order = result.rows[0];
 
@@ -238,15 +193,10 @@ router.post('/:orderId/verify-otp', requireAuth, async (req, res, next) => {
 
     let deliveryComplete = false;
     if (order.qr_verified_by_buyer) {
-      await query(
-        `UPDATE orders SET
-           order_status = 'delivered',
-           delivered_at = NOW(),
-           buyer_confirmed_at = NOW(),
-           updated_at = NOW()
-         WHERE order_id = $1`,
-        [req.params.orderId]
-      );
+      await ordersDal.updateStatus(req.params.orderId, 'delivered', {
+        delivered_at: new Date(),
+        buyer_confirmed_at: new Date()
+      });
       await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
       deliveryComplete = true;
       await notifyDeliveryComplete(order);
@@ -266,10 +216,7 @@ router.post('/:orderId/verify-otp', requireAuth, async (req, res, next) => {
 
 /**
  * POST /api/v1/delivery/:orderId/verify-code
- * Manual fallback when camera scanning is unavailable (no camera permission,
- * weak light, etc). The scanning party enters the order's 4-digit delivery
- * code shown on the other party's QR screen. Records the matching
- * verification flag for the scanner role — symmetric to QR scanning.
+ * Manual fallback when camera scanning is unavailable.
  * Body: { code, scanner_role }
  */
 router.post('/:orderId/verify-code', requireAuth, async (req, res, next) => {
@@ -280,12 +227,7 @@ router.post('/:orderId/verify-code', requireAuth, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'scanner_role must be rider or buyer' });
     }
 
-    const result = await query(
-      `SELECT o.*, s.store_name, s.admin_tg_user_id
-       FROM orders o JOIN stores s ON o.store_id = s.store_id
-       WHERE o.order_id = $1`,
-      [req.params.orderId]
-    );
+    const result = await ordersDal.getById(req.params.orderId);
     if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Order not found' });
     const order = result.rows[0];
 
@@ -297,7 +239,7 @@ router.post('/:orderId/verify-code', requireAuth, async (req, res, next) => {
     }
     if (String(code).trim() !== String(order.delivery_otp)) {
       const attempts = (order.qr_scan_attempts || 0) + 1;
-      await query('UPDATE orders SET qr_scan_attempts = $1 WHERE order_id = $2', [attempts, req.params.orderId]);
+      await ordersDal.setField(req.params.orderId, 'qr_scan_attempts', attempts);
       return res.json({
         success: false,
         message: 'Invalid delivery code',
@@ -307,9 +249,9 @@ router.post('/:orderId/verify-code', requireAuth, async (req, res, next) => {
     }
 
     if (scanner_role === 'rider') {
-      await query('UPDATE orders SET qr_verified_by_rider = TRUE, updated_at = NOW() WHERE order_id = $1', [req.params.orderId]);
+      await ordersDal.setField(req.params.orderId, 'qr_verified_by_rider', true);
     } else {
-      await query('UPDATE orders SET qr_verified_by_buyer = TRUE, updated_at = NOW() WHERE order_id = $1', [req.params.orderId]);
+      await ordersDal.setField(req.params.orderId, 'qr_verified_by_buyer', true);
     }
 
     const bothVerified = (scanner_role === 'rider' && order.qr_verified_by_buyer) ||
@@ -317,11 +259,10 @@ router.post('/:orderId/verify-code', requireAuth, async (req, res, next) => {
 
     let deliveryComplete = false;
     if (bothVerified) {
-      await query(
-        `UPDATE orders SET order_status = 'delivered', delivered_at = NOW(),
-         buyer_confirmed_at = NOW(), updated_at = NOW() WHERE order_id = $1`,
-        [req.params.orderId]
-      );
+      await ordersDal.updateStatus(req.params.orderId, 'delivered', {
+        delivered_at: new Date(),
+        buyer_confirmed_at: new Date()
+      });
       await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
       deliveryComplete = true;
       await notifyDeliveryComplete(order);
@@ -345,13 +286,7 @@ router.post('/:orderId/verify-code', requireAuth, async (req, res, next) => {
  */
 router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
   try {
-    const result = await query(
-      `SELECT o.*, s.admin_tg_user_id
-       FROM orders o
-       JOIN stores s ON o.store_id = s.store_id
-       WHERE o.order_id = $1`,
-      [req.params.orderId]
-    );
+    const result = await ordersDal.getById(req.params.orderId);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     const order = result.rows[0];
@@ -365,22 +300,14 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
       return res.status(400).json({ error: 'Can only settle dispatched or return-pending orders' });
     }
 
-    // Mark as delivered via settlement
-    await query(
-      `UPDATE orders SET
-        order_status = 'delivered',
-        delivered_at = NOW(),
-        settled_at = NOW(),
-        buyer_confirmed_at = NOW(),
-        updated_at = NOW()
-       WHERE order_id = $1`,
-      [req.params.orderId]
-    );
+    await ordersDal.updateStatus(req.params.orderId, 'delivered', {
+      delivered_at: new Date(),
+      settled_at: new Date(),
+      buyer_confirmed_at: new Date()
+    });
 
-    // Update store stats + release reserved stock + update order counts
     await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
 
-    // Notify buyer
     try {
       await tg.tgCall('sendMessage', {
         chat_id: order.buyer_tg_user_id,
@@ -389,7 +316,6 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
       });
     } catch (_) {}
 
-    // Notify rider if assigned
     if (order.rider_name) {
       try {
         const riderResult = await query(
@@ -406,7 +332,6 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
       } catch (_) {}
     }
 
-    // Notify seller of the payout (funds released on settlement)
     try {
       const notif = require('../services/notifications');
       const storeRes = await query('SELECT telebirr_account_name, cbe_account_name FROM stores WHERE store_id = $1', [order.store_id]);
@@ -428,42 +353,30 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
  */
 router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
   try {
-    const result = await query(
-      `SELECT o.*, s.store_name, s.location_sub_city, s.business_phone,
-              s.admin_tg_user_id, s.verification_tier
-       FROM orders o
-       JOIN stores s ON o.store_id = s.store_id
-       WHERE o.order_id = $1`,
-      [req.params.orderId]
-    );
+    const result = await ordersDal.getById(req.params.orderId);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     const order = result.rows[0];
 
-    // Return cached PDF if available
     if (order.receipt_pdf_url) {
       return res.json({ receipt_url: order.receipt_pdf_url, cached: true });
     }
 
-    // Get buyer info
     const buyerResult = await query(
       'SELECT first_name, last_name, username FROM users WHERE tg_user_id = $1',
       [order.buyer_tg_user_id]
     );
 
-    // Get order items
     const itemsResult = await query(
       'SELECT * FROM order_items WHERE order_id = $1',
       [req.params.orderId]
     );
 
-    // Generate QR buffer
     let qrBuffer = null;
     if (order.qr_data) {
       qrBuffer = await qrService.generateQRBuffer(order.qr_data);
     }
 
-    // Generate PDF
     const pdfUrl = await receiptService.generateAndUploadReceipt({
       order,
       items: itemsResult.rows,
@@ -473,9 +386,8 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
       qrBuffer
     });
 
-    // Cache Supabase URLs (skip huge data URLs)
     if (pdfUrl && !pdfUrl.startsWith('data:')) {
-      await query('UPDATE orders SET receipt_pdf_url = $1 WHERE order_id = $2', [pdfUrl, req.params.orderId]);
+      await ordersDal.setField(req.params.orderId, 'receipt_pdf_url', pdfUrl);
     }
 
     res.json({ receipt_url: pdfUrl, cached: false });
@@ -491,13 +403,7 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
 router.post('/:orderId/return', requireAuth, async (req, res, next) => {
   try {
     const { reason } = req.body || {};
-    const result = await query(
-      `SELECT o.*, s.admin_tg_user_id, s.store_name
-       FROM orders o
-       JOIN stores s ON o.store_id = s.store_id
-       WHERE o.order_id = $1`,
-      [req.params.orderId]
-    );
+    const result = await ordersDal.getById(req.params.orderId);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     const order = result.rows[0];
@@ -505,22 +411,13 @@ router.post('/:orderId/return', requireAuth, async (req, res, next) => {
       return res.status(400).json({ error: 'Order cannot be returned in current status' });
     }
 
-    // Mark as returned/cancelled
-    await query(
-      `UPDATE orders SET
-        order_status = 'cancelled',
-        return_initiated_at = NOW(),
-        return_reason = $1,
-        cancelled_at = NOW(),
-        updated_at = NOW()
-       WHERE order_id = $2`,
-      [reason || 'Return initiated', req.params.orderId]
-    );
+    await ordersDal.updateStatus(req.params.orderId, 'cancelled', {
+      return_initiated_at: new Date(),
+      return_reason: reason || 'Return initiated',
+      cancelled_at: new Date()
+    });
 
-    // Release reserved stock
     await inventory.releaseReservedStock(req.params.orderId);
-
-    // Notify parties
     await notifyReturnInitiated(order);
 
     res.json({ message: 'Return initiated', order_id: order.order_id });
@@ -529,11 +426,7 @@ router.post('/:orderId/return', requireAuth, async (req, res, next) => {
   }
 });
 
-/**
- * Notify all parties when return is initiated
- */
 async function notifyReturnInitiated(order) {
-  // Notify buyer
   try {
     await tg.tgCall('sendMessage', {
       chat_id: order.buyer_tg_user_id,
@@ -542,7 +435,6 @@ async function notifyReturnInitiated(order) {
     });
   } catch (_) {}
 
-  // Notify seller
   try {
     await tg.tgCall('sendMessage', {
       chat_id: order.admin_tg_user_id,
@@ -552,11 +444,7 @@ async function notifyReturnInitiated(order) {
   } catch (_) {}
 }
 
-/**
- * Notify all parties when delivery is complete
- */
 async function notifyDeliveryComplete(order) {
-  // Notify buyer
   try {
     await tg.tgCall('sendMessage', {
       chat_id: order.buyer_tg_user_id,
@@ -565,7 +453,6 @@ async function notifyDeliveryComplete(order) {
     });
   } catch (_) {}
 
-  // Notify seller
   try {
     await tg.tgCall('sendMessage', {
       chat_id: order.admin_tg_user_id,

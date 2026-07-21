@@ -3,31 +3,31 @@ auth.logout.confirm,Log Out?,auth,auto-detected from code,,No
 auth.logout.desc,You\,auth,auto-detected from code,,No
 auth.logout.yes,Log Out,auth,auto-detected from code,,No
 auth.switchAccount,Switch Account,auth,auto-detected from code,,No
-buyer.address.addNew,Add New Address,buyer,auto-detected from code,,No
+buyer.address.addNew,Add New Address,buyer,auto-detected from code,?????? ???,No
 buyer.address.couldNotSave,Could not save address,buyer,auto-detected from code,,No
 buyer.address.couldNotUpdate,Could not update address,buyer,auto-detected from code,,No
 buyer.address.default,Default,buyer,auto-detected from code,,No
 buyer.address.home,Home,buyer,auto-detected from code,,No
-buyer.address.manage,Manage Address,buyer,auto-detected from code,,No
+buyer.address.manage,Manage Address,buyer,auto-detected from code,??????  ??? ???,No
 buyer.address.noSaved,No saved addresses,buyer,auto-detected from code,,No
-buyer.address.noSavedDesc,Add a delivery address for faster checkout.,buyer,auto-detected from code,,No
-buyer.address.saved,Address saved!,buyer,auto-detected from code,,No
-buyer.address.updated,Address updated!,buyer,auto-detected from code,,No
+buyer.address.noSavedDesc,Add a delivery address for faster checkout.,buyer,auto-detected from code,????? ?? ?? ???????/??????? ????,No
+buyer.address.saved,Address saved!,buyer,auto-detected from code,?????? ??????,No
+buyer.address.updated,Address updated!,buyer,auto-detected from code,???? ?????? ????????,No
 buyer.address.work,Work,buyer,auto-detected from code,,No
 buyer.coupons.applied,${result.message},buyer,auto-detected from code,,No
 buyer.coupons.available,Available Coupons (${available.length}),buyer,auto-detected from code,,No
 buyer.coupons.copied,"Code ""${code}"" copied!",buyer,auto-detected from code,,No
 buyer.coupons.copy,Copy,buyer,auto-detected from code,,No
 buyer.coupons.copyFailed,Failed to copy,buyer,auto-detected from code,,No
-buyer.coupons.enterCode,Enter code,buyer,auto-detected from code,,No
+buyer.coupons.enterCode,Enter code,buyer,auto-detected from code,????? ????? ????,No
 buyer.coupons.enterFirst,Enter a code first,buyer,auto-detected from code,,No
 buyer.coupons.expired,Expired,buyer,auto-detected from code,,No
 buyer.coupons.expiresIn,Expires in ${daysLeft} days,buyer,auto-detected from code,,No
-buyer.coupons.haveCode,Have a promo code?,buyer,auto-detected from code,,No
+buyer.coupons.haveCode,Have a promo code?,buyer,auto-detected from code,????? ??? ?????,No
 buyer.coupons.invalid,${err.message},buyer,auto-detected from code,,No
 buyer.coupons.minOrder,Min. order: ${State.formatETB(c.min_order_etb)},buyer,auto-detected from code,,No
-buyer.coupons.myCoupons,My Coupons,buyer,auto-detected from code,,No
-buyer.coupons.noCoupons,No coupons yet. Check back soon!,buyer,auto-detected from code,,No
+buyer.coupons.myCoupons,My Coupons,buyer,auto-detected from code,???? ????,No
+buyer.coupons.noCoupons,No coupons yet. Check back soon!,buyer,auto-detected from code,???? ???? ?????? ,No
 buyer.coupons.redeemed,Redeemed (${redeemed.length}),buyer,auto-detected from code,,No
 buyer.coupons.used,Used,buyer,auto-detected from code,,No
 buyer.coupons.validating,Validating...,buyer,auto-detected from code,,No
@@ -46,11 +46,11 @@ buyer.filter.food,☕ Food & Coffee,buyer,auto-detected from code,,No
 buyer.filter.footwear,👟 Footwear,buyer,auto-detected from code,,No
 buyer.help.center,Help Center,buyer,auto-detected from code,,No
 buyer.notifications.emptyDesc,You\,buyer,auto-detected from code,,No
-buyer.notifications.emptyTitle,No notifications yet,buyer,auto-detected from code,,No
-buyer.notifications.title,Notifications,buyer,auto-detected from code,,No
+buyer.notifications.emptyTitle,No notifications yet,buyer,auto-detected from code,??? ??????? ??????,No
+buyer.notifications.title,Notifications,buyer,auto-detected from code,???????,No
 buyer.orders.active,Active,buyer,auto-detected from code,,No
-buyer.orders.all,All,buyer,auto-detected from code,,No
-buyer.orders.cancelled,Cancelled,buyer,auto-detected from code,,No
+buyer.orders.all,All,buyer,auto-detected from code,?????,No
+buyer.orders.cancelled,Cancelled,buyer,auto-detected from code,????? ,No
 buyer.orders.cancelledReason,${o.cancel_reason || \,buyer,auto-detected from code,,No
 buyer.orders.completed,Completed,buyer,auto-detected from code,,No
 buyer.orders.myOrders,My Orders,buyer,auto-detected from code,,No
@@ -61,22 +61,22 @@ buyer.orders.receipt,📄 Receipt,buyer,auto-detected from code,,No
 buyer.orders.scanRider,📷 Scan Rider\,buyer,auto-detected from code,,No
 buyer.orders.showMyQR,📱 Show My QR,buyer,auto-detected from code,,No
 buyer.orders.trackSoon,Live tracking coming soon!,buyer,auto-detected from code,,No
-buyer.orders.viewDetails,View Details,buyer,auto-detected from code,,No
-buyer.orders.writeReview,Write a Review,buyer,auto-detected from code,,No
-buyer.payment.addCard,Add New Card,buyer,auto-detected from code,,No
-buyer.payment.addSub,Your card details are encrypted. Only the last 4 digits are stored.,buyer,auto-detected from code,,No
-buyer.payment.addTitle,Add Payment Card,buyer,auto-detected from code,,No
-buyer.payment.cardAdded,Card added!,buyer,auto-detected from code,,No
-buyer.payment.cardNumber,Card Number,buyer,auto-detected from code,,No
-buyer.payment.cardNumberPlaceholder,1234 5678 9012 3456,buyer,auto-detected from code,,No
-buyer.payment.cardRemoved,Card removed,buyer,auto-detected from code,,No
-buyer.payment.cardholder,Cardholder Name,buyer,auto-detected from code,,No
-buyer.payment.cardholderLabel,Cardholder,buyer,auto-detected from code,,No
-buyer.payment.cardholderPlaceholder,John Doe,buyer,auto-detected from code,,No
-buyer.payment.cash,💵 Cash on Delivery,buyer,auto-detected from code,,No
-buyer.payment.cbe,🏦 CBE Birr,buyer,auto-detected from code,,No
-buyer.payment.cvv,CVV,buyer,auto-detected from code,,No
-buyer.payment.cvvPlaceholder,•••,buyer,auto-detected from code,,No
+buyer.orders.viewDetails,View Details,buyer,auto-detected from code,???? ????? ??? ?????,No
+buyer.orders.writeReview,Write a Review,buyer,auto-detected from code,???????? ??? ???????,No
+buyer.payment.addCard,Add New Card,buyer,auto-detected from code,????? ????? ??? ???????,No
+buyer.payment.addSub,Your card details are encrypted. Only the last 4 digits are stored.,buyer,auto-detected from code,????? ???? ??? ????? ????? ??? ,No
+buyer.payment.addTitle,Add Payment Card,buyer,auto-detected from code,???? ????? ??? ????,No
+buyer.payment.cardAdded,Card added!,buyer,auto-detected from code,???? ???????,No
+buyer.payment.cardNumber,Card Number,buyer,auto-detected from code,???? ???,No
+buyer.payment.cardNumberPlaceholder,1234 5678 9012 3456,buyer,auto-detected from code,1234 5678 9012 3456,No
+buyer.payment.cardRemoved,Card removed,buyer,auto-detected from code,???? ??????,No
+buyer.payment.cardholder,Cardholder Name,buyer,auto-detected from code,??? ?? ??? ??,No
+buyer.payment.cardholderLabel,Cardholder,buyer,auto-detected from code,???? ????,No
+buyer.payment.cardholderPlaceholder,John Doe,buyer,auto-detected from code,???? ????,No
+buyer.payment.cash,💵 Cash on Delivery,buyer,auto-detected from code,???? ???? ??????,No
+buyer.payment.cbe,🏦 CBE Birr,buyer,auto-detected from code,? ??? ??? ??????,No
+buyer.payment.cvv,CVV,buyer,auto-detected from code,???? ??? ???? ??? ???? ????,No
+buyer.payment.cvvPlaceholder,•••,buyer,auto-detected from code,123,No
 buyer.payment.default,Default,buyer,auto-detected from code,,No
 buyer.payment.defaultUpdated,Default card updated,buyer,auto-detected from code,,No
 buyer.payment.expires,Expires,buyer,auto-detected from code,,No
@@ -92,10 +92,10 @@ buyer.payment.invalidNumber2,Invalid number,buyer,auto-detected from code,,No
 buyer.payment.methods,Payment Methods,buyer,auto-detected from code,,No
 buyer.payment.noCards,No saved cards,buyer,auto-detected from code,,No
 buyer.payment.noCardsDesc,Add a payment method for faster checkout.,buyer,auto-detected from code,,No
-buyer.payment.otherMethods,Other Payment Methods,buyer,auto-detected from code,,No
-buyer.payment.remove,Remove,buyer,auto-detected from code,,No
-buyer.payment.saveCard,Save Card,buyer,auto-detected from code,,No
-buyer.payment.setDefaultBtn,Set Default,buyer,auto-detected from code,,No
+buyer.payment.otherMethods,Other Payment Methods,buyer,auto-detected from code,??? ????? ?????,No
+buyer.payment.remove,Remove,buyer,auto-detected from code,????,No
+buyer.payment.saveCard,Save Card,buyer,auto-detected from code,???? ??????,No
+buyer.payment.setDefaultBtn,Set Default,buyer,auto-detected from code,????? ???? ,No
 buyer.payment.setDefaultCheck,Set as default,buyer,auto-detected from code,,No
 buyer.payment.telebirr,📱 Telebirr,buyer,auto-detected from code,,No
 buyer.payment.validNumber,Valid number,buyer,auto-detected from code,,No
