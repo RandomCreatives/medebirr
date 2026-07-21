@@ -630,12 +630,12 @@ const App = {
         State.addresses = data.addresses || [];
       } catch (e) {}
     }
-    if (tab === 'wishlist' && !State.wishlistItems) {
+    if (tab === 'wishlist') {
       try {
         const data = await Api.users.wishlist();
         State.wishlistItems = data.wishlist || [];
         State.wishlist = new Set(State.wishlistItems.map(p => p.product_id));
-      } catch (e) { State.wishlistItems = []; }
+      } catch (e) { State.wishlistItems = State.wishlistItems || []; }
     }
     if (tab === 'profile') {
       if (!State.paymentMethods) this._loadPaymentMethods();
@@ -998,10 +998,19 @@ const App = {
     const wasSaved = State.wishlist.has(productId);
     if (wasSaved) {
       State.wishlist.delete(productId);
+      if (State.wishlistItems) {
+        State.wishlistItems = State.wishlistItems.filter(p => p.product_id !== productId);
+      }
       await Api.users.removeWishlist(productId).catch(() => {});
       this.toast('Removed from saved', 'info');
     } else {
       State.wishlist.add(productId);
+      // Add to wishlistItems if we can find the product data
+      if (State.wishlistItems) {
+        const prod = State.products?.find(p => p.product_id === productId)
+          || State.wishlistItems.find(p => p.product_id === productId);
+        if (prod) State.wishlistItems.unshift(prod);
+      }
       await Api.users.addWishlist(productId).catch(() => {});
       this.toast('Saved!', 'success');
     }
