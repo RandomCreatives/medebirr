@@ -376,7 +376,7 @@ async function handleScraperMessage(msg, botToken) {
 
   const caption = msg.caption || '';
   const hasCommand = /\/(sell|newproduct)/i.test(caption);
-  const hasPrice = /\d[\d,\.]*\s*(birr|br|etb|k)\b/i.test(caption);
+  const hasPrice = captionHasPrice(caption);
   const isPhoto = Array.isArray(msg.photo) && msg.photo.length > 0;
 
   if (!isPhoto && !hasCommand) return; // ignore unrelated text
@@ -458,13 +458,27 @@ async function handleScraperMessage(msg, botToken) {
 }
 
 /**
+ * Check if a caption contains a price — either with currency suffix
+ * (e.g. "1500 Br") or as a standalone number on its own line (e.g. "1500").
+ */
+function captionHasPrice(caption) {
+  if (!caption) return false;
+  if (/\d[\d,\.]*\s*(birr|br|etb|k)\b/i.test(caption)) return true;
+  const lines = caption.split('\n');
+  return lines.some(line => {
+    const num = line.trim().replace(/,/g, '');
+    return /^\d+(\.\d{1,2})?$/.test(num) && parseFloat(num) > 0;
+  });
+}
+
+/**
  * Handle incoming photo messages — detect products and create pending products
  */
 async function handlePhotoMessage(msg) {
   const chatId = msg.chat?.id;
   const caption = msg.caption || '';
   const hasCommand = /\/(sell|newproduct)/i.test(caption);
-  const hasPrice = /\d[\d,\.]*\s*(birr|br|etb|k)\b/i.test(caption);
+  const hasPrice = captionHasPrice(caption);
 
   // Find the store linked to this group
   const storeResult = await query(
