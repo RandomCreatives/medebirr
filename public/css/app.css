@@ -1481,3 +1481,38 @@ flex-shrink: 0;
 .co-review-name { color: var(--text-secondary); flex: 1; }
 .co-review-price { font-weight: 800; flex-shrink: 0; margin-left: 12px; }
 .co-step-line.active { background: var(--success); }
+
+/* ═══════════════════════════════════════════════════════
+   PRODUCT WIZARD
+═══════════════════════════════════════════════════════ */
+.wiz-page-title { font-size: 20px; font-weight: 800; margin-bottom: 2px; }
+.wiz-page-desc { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; }
+.wiz-section-card {
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px;
+}
+.wiz-section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.wiz-section-title { font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+.wiz-section-link { font-size: 10px; color: var(--accent); cursor: pointer; }
+.wiz-section-hint { font-size: 10px; color: var(--text-muted); display: flex; align-items: center; gap: 3px; }
+.wiz-toggle-card {
+  background: var(--bg-surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px;
+}
+.wiz-toggle-label {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer;
+}
+.wiz-toggle-text { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.wiz-toggle-input { accent-color: var(--accent); }
+.wiz-toggle-hint { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+.wiz-edit-badge {
+  font-size: 10px; color: var(--accent); cursor: pointer; flex-shrink: 0;
+}
+.review-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; color: var(--text-secondary); padding: 6px 0; gap: 6px;
+}

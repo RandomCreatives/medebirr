@@ -889,15 +889,15 @@ const Modals = {
     const imgs = Array.isArray(d.image_urls) ? d.image_urls : ['','','','',''];
     return `
       <div class="modal-handle"></div>
-      <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${State.t('seller.wizard.page1Title')}</div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${State.t('seller.wizard.page1Desc')}</div>
+      <div class="wiz-page-title">${State.t('seller.wizard.page1Title')}</div>
+      <div class="wiz-page-desc">${State.t('seller.wizard.page1Desc')}</div>
       <div class="form-group">
         <label class="form-label">${State.t('seller.addProduct.images')}</label>
         <div style="display:flex;gap:6px;margin-bottom:8px;">
           <input type="file" accept="image/jpeg,image/png,image/webp" multiple id="wizFileInput" hidden onchange="Modals._wizUploadImages(this.files)"/>
-          <button onclick="document.getElementById('wizFileInput').click()" style="flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer;">📷 ${State.t('seller.addProduct.uploadDevice')}</button>
+          <button onclick="document.getElementById('wizFileInput').click()" style="flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer;">${Icons.file(18)} ${State.t('seller.addProduct.uploadDevice')}</button>
         </div>
-        <div class="wiz-img-row" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">${imgs.map((url, i) => url ? `<div style="width:56px;height:56px;border-radius:8px;border:1px solid var(--border);background:url(${url}) center/cover no-repeat var(--bg-surface);flex-shrink:0;position:relative;"><span onclick="Modals._wizRemoveImg(${i})" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:white;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;">✕</span></div>` : '').join('')}</div>
+        <div class="wiz-img-row" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">${imgs.map((url, i) => url ? `<div style="width:56px;height:56px;border-radius:8px;border:1px solid var(--border);background:url(${url}) center/cover no-repeat var(--bg-surface);flex-shrink:0;position:relative;"><span onclick="Modals._wizRemoveImg(${i})" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:white;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;">${Icons.trash(12)}</span></div>` : '').join('')}</div>
         <div style="display:flex;flex-direction:column;gap:4px;">${imgs.map((url, i) => `<input class="wiz-img-url" data-idx="${i}" value="${url || ''}" placeholder="Image URL ${i+1}" style="font-size:11px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);width:100%;box-sizing:border-box;outline:none;"/>`).join('')}</div>
         <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${State.t('seller.addProduct.imageNote')}</div>
       </div>
@@ -915,34 +915,16 @@ const Modals = {
           <input class="form-input" id="wizComparePrice" type="number" value="${d.compare_price}" placeholder="${State.t('seller.addProduct.comparePlaceholder')}" style="font-size:13px;"/>
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">${State.t('seller.addProduct.category')} <span style="color:var(--danger);">*</span></label>
-        <div class="wiz-cat-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
-          ${cats.map(([val, emoji, label]) => `
-            <div class="wiz-cat-item" data-cat="${val}" onclick="Modals._wizSelectCat('${val}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:10px;border:2px solid ${d.category === val ? 'var(--accent)' : 'var(--border)'};background:${d.category === val ? 'var(--accent-soft)' : 'var(--bg-surface)'};cursor:pointer;transition:all 0.15s;">
-              <span style="font-size:22px;">${emoji}</span>
-              <span style="font-size:10px;font-weight:700;text-align:center;color:${d.category === val ? 'var(--accent)' : 'var(--text-secondary)'};">${label}</span>
-            </div>
-          `).join('')}
-        </div>
-        <input type="hidden" id="wizCategory" value="${d.category}"/>
-      </div>
-    `;
-  },
-
-  _wizP2() {
-    const d = Modals._wizD;
-    return `
-      <div class="modal-handle"></div>
-      <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${State.t('seller.wizard.page2Title')}</div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${State.t('seller.wizard.page2Desc')}</div>
-      <div class="form-group">
-        <label class="form-label">${State.t('seller.addProduct.description')}</label>
-        <textarea class="form-textarea" id="wizDesc" placeholder="${State.t('seller.addProduct.descPlaceholder').replace(/<[^>]*>/g, '')}" style="min-height:70px;">${d.description}</textarea>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <div class="form-group">
-          <label class="form-label">${State.t('seller.wizard.condition')}</label>
+          <label class="form-label">${State.t('seller.addProduct.category')} <span style="color:var(--danger);">*</span></label>
+          <select class="form-select" id="wizCategory">
+            <option value="" ${!d.category ? 'selected' : ''}>${State.t('seller.addProduct.selectCategory')}</option>
+            ${cats.map(([val, emoji, label]) => `<option value="${val}" ${d.category === val ? 'selected' : ''}>${emoji} ${label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${State.t('seller.wizard.condition')} <span style="color:var(--danger);">*</span></label>
           <select class="form-select" id="wizCondition">
             <option value="new" ${d.condition==='new'?'selected':''}>${State.t('seller.wizard.conditionNew')}</option>
             <option value="slightly_used" ${d.condition==='slightly_used'?'selected':''}>${State.t('seller.wizard.conditionSlightlyUsed')}</option>
@@ -951,9 +933,28 @@ const Modals = {
             <option value="refurbished" ${d.condition==='refurbished'?'selected':''}>${State.t('seller.wizard.conditionRefurbished')}</option>
           </select>
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${State.t('seller.addProduct.description')} <span style="color:var(--danger);">*</span></label>
+        <textarea class="form-textarea" id="wizDesc" placeholder="${State.t('seller.addProduct.descPlaceholder').replace(/<[^>]*>/g, '')}" style="min-height:80px;">${d.description}</textarea>
+      </div>
+    `;
+  },
+
+  _wizP2() {
+    const d = Modals._wizD;
+    return `
+      <div class="modal-handle"></div>
+      <div class="wiz-page-title">${State.t('seller.wizard.page2Title')}</div>
+      <div class="wiz-page-desc">${State.t('seller.wizard.page2Desc')}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <div class="form-group">
           <label class="form-label">${State.t('seller.wizard.size')}</label>
           <input class="form-input" id="wizSize" value="${d.size}" placeholder="${State.t('seller.wizard.sizeHint')}"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${State.t('seller.addProduct.stock')} <span style="color:var(--danger);">*</span></label>
+          <input class="form-input" id="wizStock" type="number" value="${d.stock_quantity}" min="0" style="font-size:15px;font-weight:700;"/>
         </div>
       </div>
       <div class="form-group">
@@ -966,33 +967,29 @@ const Modals = {
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <div class="form-group">
-          <label class="form-label">${State.t('seller.addProduct.stock')} <span style="color:var(--danger);">*</span></label>
-          <input class="form-input" id="wizStock" type="number" value="${d.stock_quantity}" min="0" style="font-size:15px;font-weight:700;"/>
-        </div>
-        <div class="form-group">
           <label class="form-label">${State.t('seller.addProduct.subCategory')}</label>
           <input class="form-input" id="wizSubCategory" value="${d.sub_category}" placeholder="${State.t('seller.addProduct.subCategoryPlaceholder')}"/>
         </div>
+        <div class="form-group">
+          <label class="form-label">${State.t('seller.addProduct.tags')}</label>
+          <input class="form-input" id="wizTags" value="${d.tags}" placeholder="${State.t('seller.addProduct.tagsPlaceholder')}"/>
+        </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">${State.t('seller.addProduct.tags')}</label>
-        <input class="form-input" id="wizTags" value="${d.tags}" placeholder="${State.t('seller.addProduct.tagsPlaceholder')}"/>
-      </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
-        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:${d.show_product_code ? '8px' : '0'};">
-          <span style="font-size:13px;font-weight:700;">${State.t('seller.wizard.productCode')}</span>
-          <input type="checkbox" id="wizShowCode" ${d.show_product_code ? 'checked' : ''} onchange="Modals._wizToggleCode()" style="accent-color:var(--accent);"/>
+      <div class="wiz-toggle-card" style="margin-bottom:12px;">
+        <label class="wiz-toggle-label">
+          <span class="wiz-toggle-text">${Icons.key(16)} ${State.t('seller.wizard.productCode')}</span>
+          <input type="checkbox" class="wiz-toggle-input" id="wizShowCode" ${d.show_product_code ? 'checked' : ''} onchange="Modals._wizToggleCode()"/>
         </label>
         <div id="wizCodeDisplay" style="${d.show_product_code ? '' : 'display:none;'}font-family:monospace;font-size:16px;font-weight:900;color:var(--accent);letter-spacing:2px;padding:6px 10px;background:var(--bg-card);border-radius:6px;">${d.product_code}</div>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${State.t('seller.wizard.productCodeDesc')}</div>
+        <div class="wiz-toggle-hint">${State.t('seller.wizard.productCodeDesc')}</div>
       </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
-        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:${d.show_barcode ? '8px' : '0'};">
-          <span style="font-size:13px;font-weight:700;">${State.t('seller.wizard.barcode')}</span>
-          <input type="checkbox" id="wizShowBarcode" ${d.show_barcode ? 'checked' : ''} onchange="Modals._wizToggleBarcode()" style="accent-color:var(--accent);"/>
+      <div class="wiz-toggle-card" style="margin-bottom:12px;">
+        <label class="wiz-toggle-label">
+          <span class="wiz-toggle-text">${Icons.tag(16)} ${State.t('seller.wizard.barcode')}</span>
+          <input type="checkbox" class="wiz-toggle-input" id="wizShowBarcode" ${d.show_barcode ? 'checked' : ''} onchange="Modals._wizToggleBarcode()"/>
         </label>
         <div id="wizBarcodeDisplay" style="${d.show_barcode ? '' : 'display:none;'}font-family:monospace;font-size:22px;font-weight:900;text-align:center;letter-spacing:3px;padding:10px;background:white;border-radius:6px;color:#000;">${d.barcode || '—'}</div>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${State.t('seller.wizard.barcodeDesc')}</div>
+        <div class="wiz-toggle-hint">${State.t('seller.wizard.barcodeDesc')}</div>
       </div>
     `;
   },
@@ -1001,16 +998,16 @@ const Modals = {
     const d = Modals._wizD;
     const store = State.stores[0] || {};
     const deliveryMode = d.self_delivery ? 'self' : d.company_delivery ? 'company' : 'pickup';
-    const deliveryLabel = {self: State.t('seller.wizard.selfDelivery'), company: State.t('seller.wizard.companyDelivery'), pickup: '📦 Pickup / Collect'};
+    const deliveryLabel = {self: State.t('seller.wizard.selfDelivery'), company: State.t('seller.wizard.companyDelivery'), pickup: 'Pickup / Collect'};
     const payDet = [d.cash_on_delivery ? State.t('seller.wizard.cod') : '', d.telebirr_enabled ? State.t('seller.wizard.telebirr') : '', d.cbe_enabled ? State.t('seller.wizard.cbe') : ''].filter(Boolean).join(', ') || '—';
     return `
       <div class="modal-handle"></div>
-      <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${State.t('seller.wizard.page3Title')}</div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${State.t('seller.wizard.page3Desc')}</div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <span style="font-size:14px;font-weight:800;">${State.t('seller.wizard.deliveryTitle')}</span>
-          <span style="font-size:10px;color:var(--text-muted);cursor:pointer;" onclick="Modals.close();setTimeout(()=>{App.switchTab('settings');SellerViews._openSettingsGroup('delivery')},200)">${State.t('seller.wizard.changeSettings')}</span>
+      <div class="wiz-page-title">${State.t('seller.wizard.page3Title')}</div>
+      <div class="wiz-page-desc">${State.t('seller.wizard.page3Desc')}</div>
+      <div class="wiz-section-card" style="margin-bottom:12px;">
+        <div class="wiz-section-head">
+          <span class="wiz-section-title">${Icons.truck(18)} ${State.t('seller.wizard.deliveryTitle')}</span>
+          <span class="wiz-section-link" onclick="Modals.close();setTimeout(()=>{App.switchTab('settings');SellerViews._openSettingsGroup('delivery')},200)">${State.t('seller.wizard.changeSettings')}</span>
         </div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">${deliveryLabel[deliveryMode]} ${d.self_delivery ? '· ' + State.t('seller.wizard.radiusKm',{n:d.delivery_radius}) : ''}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
@@ -1027,22 +1024,28 @@ const Modals = {
             </select>
           </div>
         </div>
-        <div style="font-size:12px;font-weight:600;margin-bottom:6px;">${State.t('seller.wizard.assignPersonnel')}</div>
+      </div>
+      <div class="wiz-section-card" style="margin-bottom:12px;">
+        <div class="wiz-section-head">
+          <span class="wiz-section-title">${Icons.users(18)} ${State.t('seller.wizard.assignPersonnel')}</span>
+          <span class="wiz-section-hint">${Icons.zap(14)} Bike, post office & more coming</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Assign a person responsible for delivering this item. This will expand to support bike riders and post office partnerships.</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <input class="form-input" id="wizAssignName" value="${d.assign_name}" placeholder="${State.t('seller.wizard.assignName')}" style="font-size:12px;padding:8px;"/>
           <input class="form-input" id="wizAssignPhone" value="${d.assign_phone}" placeholder="${State.t('seller.wizard.assignPhone')}" style="font-size:12px;padding:8px;"/>
         </div>
       </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <span style="font-size:14px;font-weight:800;">${State.t('seller.wizard.paymentTitle')}</span>
-          <span style="font-size:10px;color:var(--text-muted);">${d.payment_locked ? '🔒' : '🔓'} ${State.t('seller.wizard.storeDefaults')}</span>
+      <div class="wiz-section-card" style="margin-bottom:12px;">
+        <div class="wiz-section-head">
+          <span class="wiz-section-title">${Icons.wallet(18)} ${State.t('seller.wizard.paymentTitle')}</span>
+          <span style="font-size:10px;color:var(--text-muted);">${d.payment_locked ? Icons.lock(14) : ''} ${State.t('seller.wizard.storeDefaults')}</span>
         </div>
         <div style="font-size:12px;color:var(--text-secondary);">${payDet}</div>
         ${d.telebirr_enabled && store.telebirr_merchant_id ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Telebirr: ${store.telebirr_merchant_id}</div>` : ''}
         ${d.cbe_enabled && store.cbe_account_number ? `<div style="font-size:11px;color:var(--text-muted);">CBE: ${store.cbe_account_number}</div>` : ''}
         <div style="margin-top:10px;font-size:11px;text-align:right;">
-          <a href="#" onclick="Modals._wizPaymentUnlock()" style="color:${d.payment_locked ? 'var(--warning)' : 'var(--accent)'};">${d.payment_locked ? State.t('seller.wizard.enterPassword') : State.t('seller.wizard.changeSettings')}</a>
+          <a href="#" onclick="Modals._wizPaymentUnlock()" style="color:${d.payment_locked ? 'var(--warning)' : 'var(--accent)'};">${d.payment_locked ? Icons.lock(13) + ' ' + State.t('seller.wizard.enterPassword') : State.t('seller.wizard.changeSettings')}</a>
         </div>
       </div>
     `;
@@ -1051,42 +1054,40 @@ const Modals = {
   _wizP4() {
     const d = Modals._wizD;
     const cats = {'electronics':'📱','fashion':'👗','groceries':'☕','footwear':'👟','furniture':'🪑','beauty':'💄','home':'🏠','sports':'⚽','other':'📦'};
-    const thumb = d.image_urls && d.image_urls[0] ? `<div style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:url(${d.image_urls[0]}) center/cover no-repeat var(--bg-surface);flex-shrink:0;"></div>` : `<div style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📦</div>`;
+    const condLabels = {new: State.t('seller.wizard.conditionNew'), slightly_used: State.t('seller.wizard.conditionSlightlyUsed'), repack: State.t('seller.wizard.conditionRepack'), used: State.t('seller.wizard.conditionUsed'), refurbished: State.t('seller.wizard.conditionRefurbished')};
+    const thumb = d.image_urls && d.image_urls[0] ? `<div style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:url(${d.image_urls[0]}) center/cover no-repeat var(--bg-surface);flex-shrink:0;"></div>` : `<div style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${Icons.box(24, 'var(--text-muted)')}</div>`;
     return `
       <div class="modal-handle"></div>
-      <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${State.t('seller.wizard.page4Title')}</div>
-      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${State.t('seller.wizard.page4Desc')}</div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;">
+      <div class="wiz-page-title">${State.t('seller.wizard.page4Title')}</div>
+      <div class="wiz-page-desc">${State.t('seller.wizard.page4Desc')}</div>
+      <div class="wiz-section-card" style="margin-bottom:10px;">
         <div style="display:flex;gap:10px;align-items:flex-start;">
           ${thumb}
           <div style="flex:1;min-width:0;">
             <div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.title || '—'}</div>
             <div style="font-size:13px;font-weight:700;color:var(--accent);margin-top:2px;">${State.formatETB(d.price_etb)}</div>
-            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${cats[d.category] || '📦'} ${d.category} · ${State.t('seller.wizard.condition').toLowerCase()}: ${d.condition}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${cats[d.category] || '📦'} ${d.category} · ${condLabels[d.condition] || d.condition}</div>
           </div>
-          <span style="font-size:10px;color:var(--accent);cursor:pointer;" onclick="Modals._wizGo(1)">✏️</span>
+          <span class="wiz-edit-badge" onclick="Modals._wizGo(1)">${Icons.edit(14)}</span>
         </div>
-        ${d.description ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:8px;line-height:1.4;">${d.description.slice(0, 120)}${d.description.length > 120 ? '...' : ''}</div>` : ''}
-        <div style="display:flex;gap:10px;margin-top:8px;font-size:11px;color:var(--text-muted);">
-          <span>📦 ${State.t('seller.addProduct.stock')}: ${d.stock_quantity}</span>
-          ${d.size ? `<span>📏 ${d.size}</span>` : ''}
-          ${d.show_product_code ? `<span>🔑 ${d.product_code}</span>` : ''}
+        ${d.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.5;">${d.description.slice(0, 150)}${d.description.length > 150 ? '...' : ''}</div>` : ''}
+        <div style="display:flex;gap:10px;margin-top:8px;font-size:11px;color:var(--text-muted);flex-wrap:wrap;">
+          <span>${Icons.box(14)} ${State.t('seller.addProduct.stock')}: ${d.stock_quantity}</span>
+          ${d.size ? `<span>${Icons.tag(14)} ${d.size}</span>` : ''}
+          ${d.show_product_code ? `<span>${Icons.key(14)} ${d.product_code}</span>` : ''}
         </div>
       </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);">
-          <span>${State.t('seller.wizard.deliveryTitle')}</span>
-          <span style="color:var(--accent);cursor:pointer;" onclick="Modals._wizGo(3)">✏️</span>
-        </div>
-        <div style="font-size:12px;margin-top:4px;">${d.self_delivery ? State.t('seller.wizard.selfDelivery') : d.company_delivery ? State.t('seller.wizard.companyDelivery') : '—'}</div>
+      <div class="review-row">
+        <span>${Icons.truck(16)} ${State.t('seller.wizard.deliveryTitle')}</span>
+        <span style="color:var(--accent);cursor:pointer;" onclick="Modals._wizGo(3)">${Icons.edit(14)}</span>
       </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);">
-          <span>${State.t('seller.wizard.paymentTitle')}</span>
-          <span style="color:var(--accent);cursor:pointer;" onclick="Modals._wizGo(3)">✏️</span>
-        </div>
-        <div style="font-size:12px;margin-top:4px;">${[d.cash_on_delivery ? State.t('seller.wizard.cod') : '', d.telebirr_enabled ? State.t('seller.wizard.telebirr') : '', d.cbe_enabled ? State.t('seller.wizard.cbe') : ''].filter(Boolean).join(', ') || '—'}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin:-4px 0 10px 20px;">${d.self_delivery ? State.t('seller.wizard.selfDelivery') : d.company_delivery ? State.t('seller.wizard.companyDelivery') : '—'}</div>
+      ${d.assign_name ? `<div class="review-row"><span>${Icons.users(16)} ${State.t('seller.wizard.assignPersonnel')}</span><span style="color:var(--accent);cursor:pointer;" onclick="Modals._wizGo(3)">${Icons.edit(14)}</span></div><div style="font-size:12px;color:var(--text-secondary);margin:-4px 0 10px 20px;">${d.assign_name}${d.assign_phone ? ' · ' + d.assign_phone : ''}</div>` : ''}
+      <div class="review-row">
+        <span>${Icons.wallet(16)} ${State.t('seller.wizard.paymentTitle')}</span>
+        <span style="color:var(--accent);cursor:pointer;" onclick="Modals._wizGo(3)">${Icons.edit(14)}</span>
       </div>
+      <div style="font-size:12px;color:var(--text-secondary);margin:-4px 0 10px 20px;">${[d.cash_on_delivery ? State.t('seller.wizard.cod') : '', d.telebirr_enabled ? State.t('seller.wizard.telebirr') : '', d.cbe_enabled ? State.t('seller.wizard.cbe') : ''].filter(Boolean).join(', ') || '—'}</div>
       <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;cursor:pointer;">
         <input type="checkbox" id="wizPublish" ${d.is_published ? 'checked' : ''} style="accent-color:var(--accent);">
         ${State.t('seller.addProduct.publishNow')}
@@ -1100,7 +1101,7 @@ const Modals = {
     if (document.getElementById('wizPrice')) d.price_etb = document.getElementById('wizPrice').value;
     if (document.getElementById('wizComparePrice')) d.compare_price = document.getElementById('wizComparePrice').value;
     if (document.getElementById('wizCategory')) d.category = document.getElementById('wizCategory').value;
-    if (document.getElementById('wizDesc')) d.description = document.getElementById('wizDesc').value;
+    if (document.getElementById('wizDesc')) d.description = document.getElementById('wizDesc').value.trim();
     if (document.getElementById('wizCondition')) d.condition = document.getElementById('wizCondition').value;
     if (document.getElementById('wizSize')) d.size = document.getElementById('wizSize').value.trim();
     if (document.getElementById('wizMaterials')) d.materials = document.getElementById('wizMaterials').value.trim();
@@ -1117,16 +1118,6 @@ const Modals = {
     if (document.getElementById('wizPublish')) d.is_published = document.getElementById('wizPublish').checked;
     const urls = [...document.querySelectorAll('.wiz-img-url')].map(i => i.value.trim()).filter(Boolean);
     if (urls.length) d.image_urls = urls;
-  },
-
-  _wizSelectCat(val) {
-    document.getElementById('wizCategory').value = val;
-    document.querySelectorAll('.wiz-cat-item').forEach(el => {
-      const isActive = el.dataset.cat === val;
-      el.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
-      el.style.background = isActive ? 'var(--accent-soft)' : 'var(--bg-surface)';
-      el.querySelector('span:last-child').style.color = isActive ? 'var(--accent)' : 'var(--text-secondary)';
-    });
   },
 
   _wizRemoveImg(idx) {

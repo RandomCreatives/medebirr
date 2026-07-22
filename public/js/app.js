@@ -1209,7 +1209,13 @@ const App = {
     if (typeof Modals._wizD !== 'undefined' && document.getElementById('wizTitle')) {
       Modals._wizCollect();
       const d = Modals._wizD;
+      if (!d.title) { this.toast(State.t('seller.addProduct.titleRequired'), 'error'); return null; }
+      if (!d.description) { this.toast(State.t('seller.addProduct.descRequiredErr'), 'error'); return null; }
       if (!d.category) { this.toast(State.t('seller.wizard.categoryRequired'), 'error'); return null; }
+      const price = parseFloat(d.price_etb);
+      if (!price || price <= 0) { this.toast(State.t('seller.addProduct.priceRequired'), 'error'); return null; }
+      const stock = parseInt(d.stock_quantity);
+      if (stock === undefined || stock < 0) { this.toast(State.t('seller.addProduct.stockRequired'), 'error'); return null; }
       const urls = d.image_urls.filter(Boolean);
       if (!urls.length) { this.toast(State.t('seller.wizard.imageRequired'), 'error'); return null; }
       Modals._wizSaveDraft();
@@ -1217,9 +1223,9 @@ const App = {
       return {
         title: d.title,
         description: d.description,
-        price_etb: parseFloat(d.price_etb) || 0,
+        price_etb: price,
         compare_price: parseFloat(d.compare_price) || null,
-        stock_quantity: d.stock_quantity || 1,
+        stock_quantity: stock || 1,
         category: d.category,
         sub_category: d.sub_category || null,
         tags: d.tags ? d.tags.split(',').map(t => t.trim()).filter(Boolean) : null,
