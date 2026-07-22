@@ -2,11 +2,13 @@
 
 ## Project
 Ethiopian marketplace (vanilla-JS SPA + Express backend).  
-Version `1.4.0`, cache-bust via `?v=` with git SHA.
+Version `1.4.0`, cache-bust via `?v=` with git SHA.  
+**446** `State.t()` keys now resolve across the app.
 
 ## Active Objective
 Translate the app into **Amharic** with context-aware (not literal) translations.  
-280 user-facing strings already migrated to `State.t('key', vars)`. Amharic column empty — awaiting translator input.
+~380 user-facing strings now migrated to `State.t('key', vars)` (all buyer + checkout + seller nav/dashboard/inventory/dispatch/settings wrapped).  
+Amharic column empty — awaiting translator input.
 
 ---
 
@@ -14,7 +16,7 @@ Translate the app into **Amharic** with context-aware (not literal) translations
 
 | File | Purpose |
 |------|---------|
-| `gen_i18n.js` | **Master catalog** — 927 keys, verbatim English, `add(cat, key, en, context, tech)` calls. Run `node gen_i18n.js` to regenerate CSV + locale files. |
+| `gen_i18n.js` | **Master catalog** — 1029 keys, verbatim English, `add(cat, key, en, context, tech)` calls. Run `node gen_i18n.js` to regenerate CSV + locale files. |
 | `i18n_terms.csv` | Spreadsheet you edit (fill **Amharic** column). Key columns: `Key, English, Category, Context, Amharic, Technical` |
 | `public/js/i18n/en.js` | Auto-generated canonical English locale |
 | `public/js/i18n/am.js` | Auto-generated Amharic locale (empty until CSV is filled) |
@@ -42,7 +44,7 @@ Translate the app into **Amharic** with context-aware (not literal) translations
 | Checkout (steps 1-3, review, confirm, receipt) | ~72 | ✅ | checkout.js fully migrated |
 | Delivery / QR / scan / manual-code / assign / receipt | ~48 | ✅ | modals.js delivery sections migrated |
 | Nav bars (buyer bottom tabs + seller nav) | ~8 | ✅ | app.js migrated |
-| Seller dashboard / inventory / dispatch / settings / register | ~220 | ⬜ Not migrated | Cataloged in gen_i18n.js, views not yet wrapped in `t()` |
+| Seller dashboard / inventory / dispatch / settings / register | ~220 | ✅ | Seller views wrapped (dashboard, pending, inventory, dispatch, settings nav) |
 | Auth / login / onboarding | ~23 | ⬜ Not migrated | Cataloged, not wrapped |
 | General (brand tokens) | ~10 | ⬜ Already Technical=Yes | Untranslated by design |
 
@@ -61,6 +63,27 @@ Translate the app into **Amharic** with context-aware (not literal) translations
 ---
 
 ## Fixed (latest session)
+
+### Products inventory: sort/filter pills, order stats, rename Items→Products
+- Seller nav tab "Items" → "Products"
+- Sort pills (Newest, A–Z, Most Ordered, Price) + filter chips (All, Live, Draft, Low Stock)
+- Per-product stats row: ordered/paid/delivered/views (backend subqueries on orders)
+
+### 3 correctness bugs fixed
+1. **Stock overselling**: `deductStock` now uses BEGIN/COMMIT + `SELECT ... FOR UPDATE` to prevent two buyers taking the last item. `completeDelivery` also atomic.
+2. **Order ref collisions**: `Math.random() * 90000` → `uuid.v4().substring(0, 8)` (4B values instead of 90k).
+3. **Missing indexes**: `migration_2.0.sql` adds composites on `order_items(product_id)`, `order_items(order_id, product_id)`, `orders(payment_status)`, `orders(order_status)`.
+
+### Seller i18n migration (~80+ strings wrapped)
+- Dashboard, pending, inventory, dispatch, settings navigation all use `State.t()`
+- 40+ new catalog keys (settings navigation, inventory sort/filter, notif center)
+- 446 total keys resolve
+
+### CI: npm test in GitHub Actions
+Backend deps installed + all 35 unit tests run on every push/PR.
+
+### Order status polling (15s interval)
+`App._startOrderPolling()` — auto-refreshes buyer order list, seller dispatch orders, and seller dashboard stats.
 
 ### Built: 4-Page Product Wizard
 Replaced the single-scroll add-product modal with a step-through 4-page wizard:
@@ -90,6 +113,6 @@ Consider: own tab vs sub-section within Explore.
 ```bash
 node gen_i18n.js          # regenerate CSV + locale files from master catalog
 node scripts/gen-i18n-csv.js  # generate delta CSV of untranslated keys
-npm test                  # unit tests (3 backend tests)
+npm test                  # unit tests (35 backend tests)
 npm run bump-cache        # update ?v= cache buster from git HEAD
 ```
