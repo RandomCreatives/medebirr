@@ -4,18 +4,21 @@ const { requireAuth, requireSellerOf } = require('../middleware/auth');
 const { query, getClient } = require('../db');
 const { generateOTP } = require('../utils/otp');
 const inventory = require('../services/inventory');
+const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
 /**
- * Generate unique order reference
+ * Generate unique order reference.
+ * Uses UUID suffix (8 hex chars = 4 billion values) instead of Math.random()
+ * (90k values) to eliminate collision risk under high throughput.
  */
 function generateOrderRef() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const rand = Math.floor(Math.random() * 90000) + 10000;
-  return `ORD-${date}-${rand}`;
+  const suffix = uuidv4().replace(/-/g, '').substring(0, 8);
+  return `ORD-${date}-${suffix}`;
 }
 
 /**

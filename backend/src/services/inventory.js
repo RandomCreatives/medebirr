@@ -13,24 +13,54 @@
  * (completeDelivery) is intentional: a unit is consumed from available
  * inventory the moment it is paid for, but a sale is only counted toward a
  * store's stats once the buyer actually receives it.
+ *
+ * ── Concurrency ──
+ * deductStock uses SELECT ... FOR UPDATE inside a transaction to prevent
+ * overselling when two buyers pay for the last item simultaneously.
  */
 
-const { query } = require('../db');
+const { query, getClient } = require('../db');
 
 /**
  * Reduce actual stock and release the reservation for a paid order.
- * Idempotent-ish: GREATEST(0, ...) guards against negative values.
+ * Uses a transaction with row-level lock (FOR UPDATE) to prevent overselling.
  */
 async function deductStock(orderId) {
-  const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [orderId]);
-  for (const item of items.rows) {
-    await query(
-      `UPDATE products SET
-         stock_quantity = GREATEST(0, stock_quantity - $1),
-         reserved_stock = GREATEST(0, reserved_stock - $1)
-       WHERE product_id = $2`,
-      [item.quantity, item.product_id]
+  const client = await getClient();
+  try {
+    await client.query('BEGIN');
+    const items = await client.query(
+      'SELECT product_id, quantity FROM order_items WHERE order_id = $1',
+      [orderId]
     );
+    for (const item of items.rows) {
+      const lock = await client.query(
+        'SELECT stock_quantity FROM products WHERE product_id = $1 FOR UPDATE',
+        [item.product_id]
+      );
+      if (lock.rows.length === 0) {
+        throw new Error(`Product ${item.product_id} not found`);
+      }
+      if (Number(lock.rows[0].stock_quantity) < Number(item.quantity)) {
+        throw new Error(
+          `Insufficient stock for product ${item.product_id}: ` +
+          `have ${lock.rows[0].stock_quantity}, need ${item.quantity}`
+        );
+      }
+      await client.query(
+        `UPDATE products SET
+           stock_quantity = GREATEST(0, stock_quantity - $1),
+           reserved_stock = GREATEST(0, reserved_stock - $1)
+         WHERE product_id = $2`,
+        [item.quantity, item.product_id]
+      );
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
   }
 }
 
@@ -56,30 +86,44 @@ async function releaseReservedStock(orderId) {
  * Used by both the QR-scan, OTP-verify, and manual-settle paths so the
  * sales numbers can never be double-counted if two flows fire.
  *
+ * Wrapped in a transaction so product and store updates are atomic.
+ *
  * @param {string} orderId
  * @param {number|string} totalEtb  order total in ETB (passed in to avoid a re-query)
  * @param {string} storeId
  */
 async function completeDelivery(orderId, totalEtb, storeId) {
-  const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [orderId]);
-  for (const item of items.rows) {
-    await query(
-      `UPDATE products SET
-         order_count = order_count + $1,
-         reserved_stock = GREATEST(0, reserved_stock - $1)
-       WHERE product_id = $2`,
-      [item.quantity, item.product_id]
+  const client = await getClient();
+  try {
+    await client.query('BEGIN');
+    const items = await client.query(
+      'SELECT product_id, quantity FROM order_items WHERE order_id = $1',
+      [orderId]
     );
+    for (const item of items.rows) {
+      await client.query(
+        `UPDATE products SET
+           order_count = order_count + $1,
+           reserved_stock = GREATEST(0, reserved_stock - $1)
+         WHERE product_id = $2`,
+        [item.quantity, item.product_id]
+      );
+    }
+    await client.query(
+      `UPDATE stores SET
+         total_orders = total_orders + 1,
+         total_revenue = total_revenue + $1,
+         updated_at = NOW()
+       WHERE store_id = $2`,
+      [totalEtb, storeId]
+    );
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
   }
-
-  await query(
-    `UPDATE stores SET
-       total_orders = total_orders + 1,
-       total_revenue = total_revenue + $1,
-       updated_at = NOW()
-     WHERE store_id = $2`,
-    [totalEtb, storeId]
-  );
 }
 
 module.exports = { deductStock, releaseReservedStock, completeDelivery };

@@ -183,19 +183,18 @@ console.log('\n📦 Order Reference Generation');
 
 function generateOrderRef() {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const rand = Math.floor(Math.random() * 90000) + 10000;
-  return `ORD-${date}-${rand}`;
+  const suffix = require('uuid').v4().replace(/-/g, '').substring(0, 8);
+  return `ORD-${date}-${suffix}`;
 }
 
 test('Order ref matches expected format', () => {
   const ref = generateOrderRef();
-  assert(/^ORD-\d{8}-\d{5}$/.test(ref), `Invalid format: ${ref}`);
+  assert(/^ORD-\d{8}-[a-f0-9]{8}$/.test(ref), `Invalid format: ${ref}`);
 });
 
 test('Two consecutive order refs are unique', () => {
   const a = generateOrderRef();
   const b = generateOrderRef();
-  // They should have same date prefix, different randoms (highly likely)
   assert(a.startsWith('ORD-'), 'Should start with ORD-');
   assert(b.startsWith('ORD-'), 'Should start with ORD-');
 });
