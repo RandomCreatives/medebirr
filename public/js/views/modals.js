@@ -19,6 +19,7 @@ const Modals = {
     backdrop.classList.remove('open', 'pdp-backdrop');
     sheet.className = 'modal-sheet';
     if (App._paymentPollTimer) clearInterval(App._paymentPollTimer);
+    if (Modals._wizSaveTimer) { clearInterval(Modals._wizSaveTimer); Modals._wizSaveTimer = null; }
   },
 
   // ── Checkout Sheet ────────────────────────────────
@@ -847,125 +848,467 @@ const Modals = {
       </div>`;
   },
 
-  // ── Add / Edit Product ────────────────────────────
-  openAddProduct(product = null) {
-    const isEdit = !!product;
-    const imgs = isEdit && Array.isArray(product.image_urls) ? product.image_urls : [''];
-    const imgFields = [0,1,2].map(i => `
-      <input class="form-input prod-img-url" data-idx="${i}" value="${imgs[i] || ''}"
-             placeholder="Image URL ${i+1} ${i===0?'(required)':'(optional)'}"
-             style="font-size:12px;"/>
-    `).join('');
-    this.open(`
+  // ── 4-Page Product Wizard ────────────────────────
+  _genProductCode() {
+    const ts = Date.now().toString(36).toUpperCase();
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return (ts.slice(-4) + rand).slice(0, 8);
+  },
+
+  _genBarcode(code) {
+    if (!code) code = Modals._genProductCode();
+    let num = '';
+    for (let i = 0; i < code.length; i++) num += code.charCodeAt(i) % 10;
+    while (num.length < 12) num += Math.floor(Math.random() * 10);
+    return num.slice(0, 12);
+  },
+
+  _wizStepDots(current, total) {
+    return `<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:16px;">
+      ${Array.from({length: total}, (_, i) => `
+        <div style="width:${i+1 === current ? 28 : 8}px;height:8px;border-radius:4px;background:${i+1 <= current ? 'var(--accent)' : 'var(--border)'};transition:all 0.3s;"></div>
+      `).join('')}
+    </div>`;
+  },
+
+  _wizNav(current, total, isEdit) {
+    const dots = [];
+    if (current > 1) dots.push(`<button class="wiz-back btn-secondary" style="flex:1;padding:12px;font-size:13px;" onclick="Modals._wizGo(${current - 1})">${State.t('seller.wizard.back')}</button>`);
+    if (current < total) dots.push(`<button class="wiz-next btn-primary" style="flex:2;padding:12px;font-size:13px;" onclick="Modals._wizGo(${current + 1})">${State.t('seller.wizard.next')}</button>`);
+    if (current === total) dots.push(`<button class="wiz-publish btn-primary" style="flex:2;padding:12px;font-size:13px;background:var(--success);" onclick="App.${isEdit ? `updateProduct('${Modals._wizProductId}')` : 'createProduct()'}">${State.t('seller.wizard.publish')}</button>`);
+    return `<div style="display:flex;gap:8px;margin-top:16px;">${dots.join('')}</div>`;
+  },
+
+  _wizP1() {
+    const d = Modals._wizD;
+    const cats = [
+      ['electronics','📱','Electronics'],['fashion','👗','Fashion'],['groceries','☕','Coffee & Food'],
+      ['footwear','👟','Footwear'],['furniture','🪑','Furniture'],['beauty','💄','Beauty'],
+      ['home','🏠','Home & Garden'],['sports','⚽','Sports'],['other','📦','Other']
+    ];
+    const imgs = Array.isArray(d.image_urls) ? d.image_urls : ['','','','',''];
+    return `
       <div class="modal-handle"></div>
-      <div class="modal-title">${isEdit ? 'Edit Item' : '+ Publish New Item'}</div>
-      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;">Item will appear in the buyer discovery feed and auto-broadcast to your Telegram group.</p>
-
+      <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${State.t('seller.wizard.page1Title')}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${State.t('seller.wizard.page1Desc')}</div>
       <div class="form-group">
-        <label class="form-label">Item Title</label>
-        <input class="form-input" id="prodTitle" value="${isEdit ? product.title : ''}" placeholder="e.g. Apple iPhone 15 Pro Max (256GB)"/>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Description</label>
-        <textarea class="form-textarea" id="prodDesc">${isEdit ? (product.description || '') : ''}</textarea>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Specifications <span style="color:var(--danger);">*</span></label>
-        <textarea class="form-textarea" id="prodSpecs" placeholder="Key specs, dimensions, weight, technical details (one per line)">${isEdit ? (product.specifications || '') : ''}</textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Materials <span style="color:var(--danger);">*</span></label>
-        <textarea class="form-textarea" id="prodMaterials" placeholder="e.g. 100% cotton, genuine leather, aluminum alloy">${isEdit ? (product.materials || '') : ''}</textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Shipping Info</label>
-        <textarea class="form-textarea" id="prodShipping" placeholder="Lead time, handling notes, dispatch details (optional — store policy applies if blank)">${isEdit ? (product.shipping_info || '') : ''}</textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Duty / Customs</label>
-        <textarea class="form-textarea" id="prodDuty" placeholder="Import duty, customs, or tax notes (optional)">${isEdit ? (product.duty_info || '') : ''}</textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Returns (per product)</label>
-        <textarea class="form-textarea" id="prodReturn" placeholder="Product-specific return notes (optional — store policy applies if blank)">${isEdit ? (product.return_info || '') : ''}</textarea>
-      </div>
-
-      <!-- Image URLs -->
-      <div class="form-group">
-        <label class="form-label">Product Images</label>
+        <label class="form-label">${State.t('seller.addProduct.images')}</label>
         <div style="display:flex;gap:6px;margin-bottom:8px;">
-          <input type="file" accept="image/jpeg,image/png,image/webp" multiple id="prodImageFileInput" hidden onchange="Modals._uploadImages(this.files, '.prod-img-url')"/>
-          <button onclick="document.getElementById('prodImageFileInput').click()" style="flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;">📷 Upload from Device</button>
+          <input type="file" accept="image/jpeg,image/png,image/webp" multiple id="wizFileInput" hidden onchange="Modals._wizUploadImages(this.files)"/>
+          <button onclick="document.getElementById('wizFileInput').click()" style="flex:1;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer;">📷 ${State.t('seller.addProduct.uploadDevice')}</button>
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          ${imgFields}
-        </div>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Upload from device or paste direct image URLs (jpg/png/webp). First image is the thumbnail. Max 5 images, 10MB each.</div>
+        <div class="wiz-img-row" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">${imgs.map((url, i) => url ? `<div style="width:56px;height:56px;border-radius:8px;border:1px solid var(--border);background:url(${url}) center/cover no-repeat var(--bg-surface);flex-shrink:0;position:relative;"><span onclick="Modals._wizRemoveImg(${i})" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:white;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;">✕</span></div>` : '').join('')}</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">${imgs.map((url, i) => `<input class="wiz-img-url" data-idx="${i}" value="${url || ''}" placeholder="Image URL ${i+1}" style="font-size:11px;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);width:100%;box-sizing:border-box;outline:none;"/>`).join('')}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${State.t('seller.addProduct.imageNote')}</div>
       </div>
+      <div class="form-group">
+        <label class="form-label">${State.t('seller.addProduct.itemTitle')} <span style="color:var(--danger);">*</span></label>
+        <input class="form-input" id="wizTitle" value="${d.title}" placeholder="${State.t('seller.addProduct.titlePlaceholder')}" style="font-size:15px;font-weight:700;"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="form-group">
+          <label class="form-label">${State.t('seller.addProduct.price')} <span style="color:var(--danger);">*</span></label>
+          <input class="form-input" id="wizPrice" type="number" value="${d.price_etb}" placeholder="0" style="font-size:15px;font-weight:700;"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${State.t('seller.addProduct.comparePrice')}</label>
+          <input class="form-input" id="wizComparePrice" type="number" value="${d.compare_price}" placeholder="${State.t('seller.addProduct.comparePlaceholder')}" style="font-size:13px;"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">${State.t('seller.addProduct.category')} <span style="color:var(--danger);">*</span></label>
+        <div class="wiz-cat-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+          ${cats.map(([val, emoji, label]) => `
+            <div class="wiz-cat-item" data-cat="${val}" onclick="Modals._wizSelectCat('${val}')" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:10px;border:2px solid ${d.category === val ? 'var(--accent)' : 'var(--border)'};background:${d.category === val ? 'var(--accent-soft)' : 'var(--bg-surface)'};cursor:pointer;transition:all 0.15s;">
+              <span style="font-size:22px;">${emoji}</span>
+              <span style="font-size:10px;font-weight:700;text-align:center;color:${d.category === val ? 'var(--accent)' : 'var(--text-secondary)'};">${label}</span>
+            </div>
+          `).join('')}
+        </div>
+        <input type="hidden" id="wizCategory" value="${d.category}"/>
+      </div>
+    `;
+  },
 
-      <!-- Image preview -->
-      <div class="prod-img-preview-row" style="display:flex;gap:6px;margin-bottom:14px;"></div>
-
+  _wizP2() {
+    const d = Modals._wizD;
+    return `
+      <div class="modal-handle"></div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${State.t('seller.wizard.page2Title')}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${State.t('seller.wizard.page2Desc')}</div>
+      <div class="form-group">
+        <label class="form-label">${State.t('seller.addProduct.description')}</label>
+        <textarea class="form-textarea" id="wizDesc" placeholder="${State.t('seller.addProduct.descPlaceholder').replace(/<[^>]*>/g, '')}" style="min-height:70px;">${d.description}</textarea>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <div class="form-group">
-          <label class="form-label">Price (ETB)</label>
-          <input class="form-input" id="prodPrice" type="number" value="${isEdit ? product.price_etb : ''}" placeholder="0"/>
+          <label class="form-label">${State.t('seller.wizard.condition')}</label>
+          <select class="form-select" id="wizCondition">
+            <option value="new" ${d.condition==='new'?'selected':''}>${State.t('seller.wizard.conditionNew')}</option>
+            <option value="slightly_used" ${d.condition==='slightly_used'?'selected':''}>${State.t('seller.wizard.conditionSlightlyUsed')}</option>
+            <option value="repack" ${d.condition==='repack'?'selected':''}>${State.t('seller.wizard.conditionRepack')}</option>
+            <option value="used" ${d.condition==='used'?'selected':''}>${State.t('seller.wizard.conditionUsed')}</option>
+            <option value="refurbished" ${d.condition==='refurbished'?'selected':''}>${State.t('seller.wizard.conditionRefurbished')}</option>
+          </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Compare Price (ETB)</label>
-          <input class="form-input" id="prodComparePrice" type="number" value="${isEdit ? (product.compare_price || '') : ''}" placeholder="Optional original price"/>
-        </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-        <div class="form-group">
-          <label class="form-label">Stock Quantity</label>
-          <input class="form-input" id="prodStock" type="number" value="${isEdit ? product.stock_quantity : ''}" placeholder="0"/>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Sub-Category</label>
-          <input class="form-input" id="prodSubCategory" value="${isEdit ? (product.sub_category || '') : ''}" placeholder="e.g. Phones, Chairs..."/>
+          <label class="form-label">${State.t('seller.wizard.size')}</label>
+          <input class="form-input" id="wizSize" value="${d.size}" placeholder="${State.t('seller.wizard.sizeHint')}"/>
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Category</label>
-        <select class="form-select" id="prodCategory">
-          <option value="electronics" ${isEdit&&product.category==='electronics'?'selected':''}>📱 Electronics</option>
-          <option value="fashion" ${isEdit&&product.category==='fashion'?'selected':''}>👗 Fashion & Traditional</option>
-          <option value="groceries" ${isEdit&&product.category==='groceries'?'selected':''}>☕ Coffee & Food</option>
-          <option value="footwear" ${isEdit&&product.category==='footwear'?'selected':''}>👟 Footwear</option>
-          <option value="furniture" ${isEdit&&product.category==='furniture'?'selected':''}>🪑 Furniture</option>
-          <option value="beauty" ${isEdit&&product.category==='beauty'?'selected':''}>💄 Beauty</option>
-          <option value="other" ${isEdit&&product.category==='other'?'selected':''}>📦 Other</option>
-        </select>
+        <label class="form-label">${State.t('seller.addProduct.materials')}</label>
+        <input class="form-input" id="wizMaterials" value="${d.materials}" placeholder="${State.t('seller.addProduct.materialsPlaceholder')}"/>
       </div>
       <div class="form-group">
-        <label class="form-label">Tags (comma-separated)</label>
-        <input class="form-input" id="prodTags" value="${isEdit && Array.isArray(product.tags) ? product.tags.join(', ') : ''}" placeholder="e.g. wireless, bluetooth, premium"/>
+        <label class="form-label">${State.t('seller.addProduct.specifications')}</label>
+        <textarea class="form-textarea" id="wizSpecs" placeholder="${State.t('seller.addProduct.specsPlaceholder')}" style="min-height:50px;">${d.specifications}</textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="form-group">
+          <label class="form-label">${State.t('seller.addProduct.stock')} <span style="color:var(--danger);">*</span></label>
+          <input class="form-input" id="wizStock" type="number" value="${d.stock_quantity}" min="0" style="font-size:15px;font-weight:700;"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">${State.t('seller.addProduct.subCategory')}</label>
+          <input class="form-input" id="wizSubCategory" value="${d.sub_category}" placeholder="${State.t('seller.addProduct.subCategoryPlaceholder')}"/>
+        </div>
       </div>
       <div class="form-group">
-        <label class="form-label">SKU / Item Code (optional)</label>
-        <input class="form-input" id="prodSku" value="${isEdit ? (product.sku || '') : ''}" placeholder="e.g. AAPL-IP15-256-TI"/>
+        <label class="form-label">${State.t('seller.addProduct.tags')}</label>
+        <input class="form-input" id="wizTags" value="${d.tags}" placeholder="${State.t('seller.addProduct.tagsPlaceholder')}"/>
       </div>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:13px;cursor:pointer;">
-        <input type="checkbox" id="prodPublish" ${!isEdit || product.is_published ? 'checked' : ''} style="accent-color:var(--accent);">
-        Publish immediately (goes live in buyer hub)
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
+        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:${d.show_product_code ? '8px' : '0'};">
+          <span style="font-size:13px;font-weight:700;">${State.t('seller.wizard.productCode')}</span>
+          <input type="checkbox" id="wizShowCode" ${d.show_product_code ? 'checked' : ''} onchange="Modals._wizToggleCode()" style="accent-color:var(--accent);"/>
+        </label>
+        <div id="wizCodeDisplay" style="${d.show_product_code ? '' : 'display:none;'}font-family:monospace;font-size:16px;font-weight:900;color:var(--accent);letter-spacing:2px;padding:6px 10px;background:var(--bg-card);border-radius:6px;">${d.product_code}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${State.t('seller.wizard.productCodeDesc')}</div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;">
+        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:${d.show_barcode ? '8px' : '0'};">
+          <span style="font-size:13px;font-weight:700;">${State.t('seller.wizard.barcode')}</span>
+          <input type="checkbox" id="wizShowBarcode" ${d.show_barcode ? 'checked' : ''} onchange="Modals._wizToggleBarcode()" style="accent-color:var(--accent);"/>
+        </label>
+        <div id="wizBarcodeDisplay" style="${d.show_barcode ? '' : 'display:none;'}font-family:monospace;font-size:22px;font-weight:900;text-align:center;letter-spacing:3px;padding:10px;background:white;border-radius:6px;color:#000;">${d.barcode || '—'}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${State.t('seller.wizard.barcodeDesc')}</div>
+      </div>
+    `;
+  },
+
+  _wizP3() {
+    const d = Modals._wizD;
+    const store = State.stores[0] || {};
+    const deliveryMode = d.self_delivery ? 'self' : d.company_delivery ? 'company' : 'pickup';
+    const deliveryLabel = {self: State.t('seller.wizard.selfDelivery'), company: State.t('seller.wizard.companyDelivery'), pickup: '📦 Pickup / Collect'};
+    const payDet = [d.cash_on_delivery ? State.t('seller.wizard.cod') : '', d.telebirr_enabled ? State.t('seller.wizard.telebirr') : '', d.cbe_enabled ? State.t('seller.wizard.cbe') : ''].filter(Boolean).join(', ') || '—';
+    return `
+      <div class="modal-handle"></div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${State.t('seller.wizard.page3Title')}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${State.t('seller.wizard.page3Desc')}</div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:14px;font-weight:800;">${State.t('seller.wizard.deliveryTitle')}</span>
+          <span style="font-size:10px;color:var(--text-muted);cursor:pointer;" onclick="Modals.close();setTimeout(()=>{App.switchTab('settings');SellerViews._openSettingsGroup('delivery')},200)">${State.t('seller.wizard.changeSettings')}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">${deliveryLabel[deliveryMode]} ${d.self_delivery ? '· ' + State.t('seller.wizard.radiusKm',{n:d.delivery_radius}) : ''}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-size:10px;">${State.t('seller.wizard.radius')} (km)</label>
+            <select class="form-select" id="wizRadius" style="font-size:12px;padding:8px;">
+              ${[1,2,3,5,10,15,20,30,50].map(r => `<option value="${r}" ${d.delivery_radius==r?'selected':''}>${r} km</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-size:10px;">${State.t('seller.wizard.minDays')}</label>
+            <select class="form-select" id="wizMinDays" style="font-size:12px;padding:8px;">
+              ${[0,1,2,3,5,7,14].map(n => `<option value="${n}" ${d.min_delivery_days==n?'selected':''}>${n === 0 ? 'Same day' : n + (n===1?' day':' days')}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:600;margin-bottom:6px;">${State.t('seller.wizard.assignPersonnel')}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <input class="form-input" id="wizAssignName" value="${d.assign_name}" placeholder="${State.t('seller.wizard.assignName')}" style="font-size:12px;padding:8px;"/>
+          <input class="form-input" id="wizAssignPhone" value="${d.assign_phone}" placeholder="${State.t('seller.wizard.assignPhone')}" style="font-size:12px;padding:8px;"/>
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <span style="font-size:14px;font-weight:800;">${State.t('seller.wizard.paymentTitle')}</span>
+          <span style="font-size:10px;color:var(--text-muted);">${d.payment_locked ? '🔒' : '🔓'} ${State.t('seller.wizard.storeDefaults')}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);">${payDet}</div>
+        ${d.telebirr_enabled && store.telebirr_merchant_id ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Telebirr: ${store.telebirr_merchant_id}</div>` : ''}
+        ${d.cbe_enabled && store.cbe_account_number ? `<div style="font-size:11px;color:var(--text-muted);">CBE: ${store.cbe_account_number}</div>` : ''}
+        <div style="margin-top:10px;font-size:11px;text-align:right;">
+          <a href="#" onclick="Modals._wizPaymentUnlock()" style="color:${d.payment_locked ? 'var(--warning)' : 'var(--accent)'};">${d.payment_locked ? State.t('seller.wizard.enterPassword') : State.t('seller.wizard.changeSettings')}</a>
+        </div>
+      </div>
+    `;
+  },
+
+  _wizP4() {
+    const d = Modals._wizD;
+    const cats = {'electronics':'📱','fashion':'👗','groceries':'☕','footwear':'👟','furniture':'🪑','beauty':'💄','home':'🏠','sports':'⚽','other':'📦'};
+    const thumb = d.image_urls && d.image_urls[0] ? `<div style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:url(${d.image_urls[0]}) center/cover no-repeat var(--bg-surface);flex-shrink:0;"></div>` : `<div style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📦</div>`;
+    return `
+      <div class="modal-handle"></div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:2px;">${State.t('seller.wizard.page4Title')}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${State.t('seller.wizard.page4Desc')}</div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;">
+          ${thumb}
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.title || '—'}</div>
+            <div style="font-size:13px;font-weight:700;color:var(--accent);margin-top:2px;">${State.formatETB(d.price_etb)}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${cats[d.category] || '📦'} ${d.category} · ${State.t('seller.wizard.condition').toLowerCase()}: ${d.condition}</div>
+          </div>
+          <span style="font-size:10px;color:var(--accent);cursor:pointer;" onclick="Modals._wizGo(1)">✏️</span>
+        </div>
+        ${d.description ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:8px;line-height:1.4;">${d.description.slice(0, 120)}${d.description.length > 120 ? '...' : ''}</div>` : ''}
+        <div style="display:flex;gap:10px;margin-top:8px;font-size:11px;color:var(--text-muted);">
+          <span>📦 ${State.t('seller.addProduct.stock')}: ${d.stock_quantity}</span>
+          ${d.size ? `<span>📏 ${d.size}</span>` : ''}
+          ${d.show_product_code ? `<span>🔑 ${d.product_code}</span>` : ''}
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);">
+          <span>${State.t('seller.wizard.deliveryTitle')}</span>
+          <span style="color:var(--accent);cursor:pointer;" onclick="Modals._wizGo(3)">✏️</span>
+        </div>
+        <div style="font-size:12px;margin-top:4px;">${d.self_delivery ? State.t('seller.wizard.selfDelivery') : d.company_delivery ? State.t('seller.wizard.companyDelivery') : '—'}</div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);">
+          <span>${State.t('seller.wizard.paymentTitle')}</span>
+          <span style="color:var(--accent);cursor:pointer;" onclick="Modals._wizGo(3)">✏️</span>
+        </div>
+        <div style="font-size:12px;margin-top:4px;">${[d.cash_on_delivery ? State.t('seller.wizard.cod') : '', d.telebirr_enabled ? State.t('seller.wizard.telebirr') : '', d.cbe_enabled ? State.t('seller.wizard.cbe') : ''].filter(Boolean).join(', ') || '—'}</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="wizPublish" ${d.is_published ? 'checked' : ''} style="accent-color:var(--accent);">
+        ${State.t('seller.addProduct.publishNow')}
       </label>
-      <button class="btn-primary" onclick="App.${isEdit ? `updateProduct('${product.product_id}')` : 'createProduct()'}">
-        ${isEdit ? 'Save Changes' : '🚀 Publish to Medebirr Hub'}
-      </button>
+    `;
+  },
+
+  _wizCollect() {
+    const d = Modals._wizD;
+    if (document.getElementById('wizTitle')) d.title = document.getElementById('wizTitle').value.trim();
+    if (document.getElementById('wizPrice')) d.price_etb = document.getElementById('wizPrice').value;
+    if (document.getElementById('wizComparePrice')) d.compare_price = document.getElementById('wizComparePrice').value;
+    if (document.getElementById('wizCategory')) d.category = document.getElementById('wizCategory').value;
+    if (document.getElementById('wizDesc')) d.description = document.getElementById('wizDesc').value;
+    if (document.getElementById('wizCondition')) d.condition = document.getElementById('wizCondition').value;
+    if (document.getElementById('wizSize')) d.size = document.getElementById('wizSize').value.trim();
+    if (document.getElementById('wizMaterials')) d.materials = document.getElementById('wizMaterials').value.trim();
+    if (document.getElementById('wizSpecs')) d.specifications = document.getElementById('wizSpecs').value.trim();
+    if (document.getElementById('wizStock')) d.stock_quantity = parseInt(document.getElementById('wizStock').value) || 0;
+    if (document.getElementById('wizSubCategory')) d.sub_category = document.getElementById('wizSubCategory').value.trim();
+    if (document.getElementById('wizTags')) d.tags = document.getElementById('wizTags').value.trim();
+    if (document.getElementById('wizShowCode')) d.show_product_code = document.getElementById('wizShowCode').checked;
+    if (document.getElementById('wizShowBarcode')) d.show_barcode = document.getElementById('wizShowBarcode').checked;
+    if (document.getElementById('wizRadius')) d.delivery_radius = parseInt(document.getElementById('wizRadius').value) || 5;
+    if (document.getElementById('wizMinDays')) d.min_delivery_days = parseInt(document.getElementById('wizMinDays').value) || 1;
+    if (document.getElementById('wizAssignName')) d.assign_name = document.getElementById('wizAssignName').value.trim();
+    if (document.getElementById('wizAssignPhone')) d.assign_phone = document.getElementById('wizAssignPhone').value.trim();
+    if (document.getElementById('wizPublish')) d.is_published = document.getElementById('wizPublish').checked;
+    const urls = [...document.querySelectorAll('.wiz-img-url')].map(i => i.value.trim()).filter(Boolean);
+    if (urls.length) d.image_urls = urls;
+  },
+
+  _wizSelectCat(val) {
+    document.getElementById('wizCategory').value = val;
+    document.querySelectorAll('.wiz-cat-item').forEach(el => {
+      const isActive = el.dataset.cat === val;
+      el.style.borderColor = isActive ? 'var(--accent)' : 'var(--border)';
+      el.style.background = isActive ? 'var(--accent-soft)' : 'var(--bg-surface)';
+      el.querySelector('span:last-child').style.color = isActive ? 'var(--accent)' : 'var(--text-secondary)';
+    });
+  },
+
+  _wizRemoveImg(idx) {
+    if (Modals._wizD.image_urls) Modals._wizD.image_urls[idx] = '';
+    document.querySelectorAll('.wiz-img-url')[idx].value = '';
+    document.querySelectorAll('.wiz-img-url')[idx].dispatchEvent(new Event('input'));
+  },
+
+  _wizToggleCode() {
+    const show = document.getElementById('wizShowCode').checked;
+    document.getElementById('wizCodeDisplay').style.display = show ? 'block' : 'none';
+  },
+
+  _wizToggleBarcode() {
+    const show = document.getElementById('wizShowBarcode').checked;
+    document.getElementById('wizBarcodeDisplay').style.display = show ? 'block' : 'none';
+  },
+
+  _wizPaymentUnlock() {
+    const d = Modals._wizD;
+    if (!d.payment_locked) {
+      Modals.close();
+      setTimeout(() => { App.switchTab('settings'); SellerViews._openSettingsGroup('payout'); }, 200);
+      return;
+    }
+    const store = State.stores[0];
+    if (!store) return;
+    Modals.open(`
+      <div class="modal-handle"></div>
+      <div class="modal-title">🔒 ${State.t('seller.wizard.paymentLocked')}</div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6;">${State.t('seller.wizard.enterPassword')}</p>
+      <div class="form-group">
+        <label class="form-label">${State.t('auth.seller.passwordLabel')}</label>
+        <input class="form-input" id="wizPwdInput" type="password" placeholder="${State.t('auth.seller.passwordPlaceholder')}" style="font-family:monospace;" autofocus/>
+      </div>
+      <div id="wizPwdError" style="display:none;font-size:12px;color:var(--danger);margin-bottom:10px;"></div>
+      <button class="btn-primary" id="wizPwdBtn" onclick="Modals._wizVerifyPwd('${store.store_id}')">${State.t('auth.seller.unlock')}</button>
+      <button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="Modals.close()">${State.t('auth.seller.cancel')}</button>
     `);
-    // Live preview images on input
+    setTimeout(() => document.getElementById('wizPwdInput')?.focus(), 100);
+    document.getElementById('wizPwdInput')?.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('wizPwdBtn')?.click();
+    });
+  },
+
+  async _wizVerifyPwd(storeId) {
+    const pwd = document.getElementById('wizPwdInput')?.value?.trim();
+    const errEl = document.getElementById('wizPwdError');
+    const btn = document.getElementById('wizPwdBtn');
+    if (!pwd) { errEl.style.display = 'block'; errEl.textContent = State.t('auth.seller.pleaseEnter'); return; }
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Verifying...';
+    try {
+      const result = await Api.stores.verifyPassword(storeId, pwd);
+      if (result.store) {
+        Modals._wizD.payment_locked = false;
+        App.toast('Payment info unlocked — change in Settings.', 'success');
+        Modals.close();
+        setTimeout(() => { App.switchTab('settings'); SellerViews._openSettingsGroup('payout'); }, 200);
+      }
+    } catch (err) {
+      errEl.style.display = 'block';
+      errEl.textContent = err.message || State.t('auth.seller.incorrect');
+      btn.disabled = false;
+      btn.textContent = State.t('auth.seller.unlock');
+    }
+  },
+
+  async _wizUploadImages(files) {
+    if (!files || !files.length) return;
+    const storeId = State.currentStoreId;
+    if (!storeId) { App.toast('No store selected', 'error'); return; }
+    try {
+      const data = await Api.images.upload(storeId, files);
+      const inputs = document.querySelectorAll('.wiz-img-url');
+      data.urls.forEach((url, i) => { if (inputs[i]) inputs[i].value = url; });
+      App.toast(`${data.count} image${data.count > 1 ? 's' : ''} uploaded!`, 'success');
+      inputs[0]?.dispatchEvent(new Event('input'));
+    } catch (err) {
+      App.toast(err.message || 'Upload failed', 'error');
+    }
+  },
+
+  _wizSaveDraft() {
+    try {
+      const data = Modals._wizD;
+      localStorage.setItem('em_product_draft', JSON.stringify(data));
+    } catch (e) {}
+  },
+
+  _wizGo(step) {
+    Modals._wizCollect();
+    Modals._wizSaveDraft();
+    Modals._wizRendering = true;
+    Modals._wizD.step = step;
+    const isEdit = !!Modals._wizProductId;
+    const total = 4;
+    const pageHtml = [Modals._wizP1, Modals._wizP2, Modals._wizP3, Modals._wizP4][step - 1]();
+    const fullHtml = Modals._wizStepDots(step, total) + pageHtml + (step < total ? Modals._wizNav(step, total, isEdit) : '');
+    const navHtml = step === total ? Modals._wizNav(step, total, isEdit) : '';
+    Modals.open(fullHtml + navHtml);
     setTimeout(() => {
-      document.querySelectorAll('.prod-img-url').forEach(inp => {
-        inp.addEventListener('input', () => {
-          const urls = [...document.querySelectorAll('.prod-img-url')].map(i => i.value.trim()).filter(Boolean);
-          const row = document.querySelector('.prod-img-preview-row');
-          if (row) row.innerHTML = urls.map(u => `<div style="width:48px;height:48px;border-radius:8px;border:1px solid var(--border);background:url(${u}) center/cover no-repeat var(--bg-surface);flex-shrink:0;"></div>`).join('');
-        });
-        inp.dispatchEvent(new Event('input'));
-      });
+      Modals._wizBindImgPreview();
+      Modals._wizRendering = false;
     }, 50);
+  },
+
+  _wizBindImgPreview() {
+    document.querySelectorAll('.wiz-img-url').forEach(inp => {
+      inp.addEventListener('input', () => {
+        if (Modals._wizRendering) return;
+        const urls = [...document.querySelectorAll('.wiz-img-url')].map(i => i.value.trim()).filter(Boolean);
+        const row = document.querySelector('.wiz-img-row');
+        if (row) row.innerHTML = urls.map((u, i) => `<div style="width:56px;height:56px;border-radius:8px;border:1px solid var(--border);background:url(${u}) center/cover no-repeat var(--bg-surface);flex-shrink:0;position:relative;"><span onclick="Modals._wizRemoveImg(${i})" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:var(--danger);color:white;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;">✕</span></div>`).join('');
+      });
+      inp.dispatchEvent(new Event('input'));
+    });
+  },
+
+  _wizRestoreDraft() {
+    try {
+      const raw = localStorage.getItem('em_product_draft');
+      if (raw) { return JSON.parse(raw); }
+    } catch (e) {}
+    return null;
+  },
+
+  openAddProduct(product = null) {
+    const store = State.stores[0] || {};
+    const isEdit = !!product;
+    let draft = null;
+    if (!isEdit) draft = Modals._wizRestoreDraft();
+    Modals._wizD = draft || {
+      title: isEdit ? product.title : '',
+      description: isEdit ? (product.description || '') : '',
+      price_etb: isEdit ? product.price_etb : '',
+      compare_price: isEdit ? (product.compare_price || '') : '',
+      stock_quantity: isEdit ? product.stock_quantity : 1,
+      category: isEdit ? product.category : '',
+      sub_category: isEdit ? (product.sub_category || '') : '',
+      tags: isEdit && Array.isArray(product.tags) ? product.tags.join(', ') : '',
+      specifications: isEdit ? (product.specifications || '') : '',
+      materials: isEdit ? (product.materials || '') : '',
+      image_urls: isEdit ? (Array.isArray(product.image_urls) ? [...product.image_urls] : []) : [],
+      condition: isEdit ? (product.condition || 'new') : 'new',
+      size: isEdit ? (product.size || '') : '',
+      product_code: isEdit ? (product.product_code || '') : Modals._genProductCode(),
+      barcode: isEdit ? (product.barcode || '') : Modals._genBarcode(),
+      show_product_code: true,
+      show_barcode: false,
+      self_delivery: store.self_delivery_enabled || false,
+      company_delivery: store.company_delivery_enabled || false,
+      delivery_radius: store.delivery_radius || 5,
+      min_delivery_days: 1,
+      assign_name: '',
+      assign_phone: '',
+      cash_on_delivery: store.cash_on_delivery !== false,
+      telebirr_enabled: store.telebirr_enabled !== false,
+      cbe_enabled: store.cbe_enabled || false,
+      is_published: !isEdit || product.is_published,
+      payment_locked: true,
+      step: 1
+    };
+    Modals._wizProductId = isEdit ? product.product_id : null;
+    if (draft) App.toast(State.t('seller.wizard.draftRestored'), 'info');
+    Modals._wizRendering = true;
+    const step = Modals._wizD.step || 1;
+    const total = 4;
+    const pageHtml = [Modals._wizP1, Modals._wizP2, Modals._wizP3, Modals._wizP4][step - 1]();
+    const fullHtml = Modals._wizStepDots(step, total) + pageHtml + Modals._wizNav(step, total, isEdit);
+    Modals.open(fullHtml);
+    setTimeout(() => {
+      Modals._wizBindImgPreview();
+      Modals._wizRendering = false;
+    }, 50);
+    // Auto-save every 30s
+    if (Modals._wizSaveTimer) clearInterval(Modals._wizSaveTimer);
+    Modals._wizSaveTimer = setInterval(() => {
+      Modals._wizCollect();
+      Modals._wizSaveDraft();
+    }, 30000);
   },
 
   openEditProduct(productId) {

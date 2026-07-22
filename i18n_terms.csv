@@ -824,6 +824,56 @@ seller.welcome.live60,Live in 60 Seconds,seller,Welcome benefit title,,No
 seller.welcome.live60Desc,"Name, payment, Telegram link — done.",seller,Welcome benefit desc,,No
 seller.welcome.slide,Slide to launch your medeb →,seller,Seller slide label,,No
 seller.welcome.sub,Zero commission. Direct payments. Ethiopia's marketplace.,seller,Seller welcome sub,,No
+seller.wizard.assignName,Name,seller,Wizard assign name placeholder,,No
+seller.wizard.assignPersonnel,Assign Delivery Personnel (optional),seller,Wizard assign label,,No
+seller.wizard.assignPhone,Phone,seller,Wizard assign phone placeholder,,No
+seller.wizard.back,Back,seller,Wizard back button,,No
+seller.wizard.barcode,Barcode,seller,Wizard barcode label,,No
+seller.wizard.barcodeDesc,Auto-generated barcode from product code.,seller,Wizard barcode desc,,No
+seller.wizard.categoryRequired,Please select a category,seller,Wizard category required error,,No
+seller.wizard.cbe,CBE Bank Transfer,seller,Wizard cbe label,,No
+seller.wizard.changeSettings,Change in Settings,seller,Wizard change settings link,,No
+seller.wizard.cod,Cash on Delivery,seller,Wizard cash on delivery label,,No
+seller.wizard.companyDelivery,Courier Delivery,seller,Wizard company delivery label,,No
+seller.wizard.condition,Condition,seller,Wizard condition label,,No
+seller.wizard.conditionNew,New,seller,Wizard condition option,,No
+seller.wizard.conditionRefurbished,Refurbished,seller,Wizard condition option,,No
+seller.wizard.conditionRepack,Repack,seller,Wizard condition option,,No
+seller.wizard.conditionSlightlyUsed,Slightly Used,seller,Wizard condition option,,No
+seller.wizard.conditionUsed,Used,seller,Wizard condition option,,No
+seller.wizard.deliveryTitle,Delivery,seller,Wizard delivery section title,,No
+seller.wizard.draftRestored,Draft restored — continue where you left off.,seller,Wizard draft restore,,No
+seller.wizard.draftSaved,Draft saved,seller,Wizard draft saved,,No
+seller.wizard.editTitle,Edit Product,seller,Wizard edit title,,No
+seller.wizard.enterPassword,Enter your seller password to change payment info.,seller,Wizard payment password prompt,,No
+seller.wizard.imageRequired,Add at least one product image,seller,Wizard image required error,,No
+seller.wizard.minDays,Min. delivery day,seller,Wizard min days label,,No
+seller.wizard.newTitle,New Product,seller,Wizard new title,,No
+seller.wizard.next,Next,seller,Wizard next button,,No
+seller.wizard.noDraft,Start fresh,seller,Wizard no draft option,,No
+seller.wizard.page1Desc,"Start with the essentials — name, photo, price, and category.",seller,Wizard page 1 desc,,No
+seller.wizard.page1Title,What are you selling?,seller,Wizard page 1 title,,No
+seller.wizard.page2Desc,"Description, condition, size, and tracking details.",seller,Wizard page 2 desc,,No
+seller.wizard.page2Title,Tell us more,seller,Wizard page 2 title,,No
+seller.wizard.page3Desc,How buyers receive items and how you get paid.,seller,Wizard page 3 desc,,No
+seller.wizard.page3Title,Delivery & Payment,seller,Wizard page 3 title,,No
+seller.wizard.page4Desc,Check everything looks right before going live.,seller,Wizard page 4 desc,,No
+seller.wizard.page4Title,Review & Publish,seller,Wizard page 4 title,,No
+seller.wizard.paymentLocked,Payment accounts are locked for security.,seller,Wizard payment locked note,,No
+seller.wizard.paymentTitle,Payment Methods,seller,Wizard payment section title,,No
+seller.wizard.productCode,Product Code,seller,Wizard product code label,,No
+seller.wizard.productCodeDesc,Auto-generated 8-character code for inventory tracking.,seller,Wizard product code desc,,No
+seller.wizard.publish,🚀 Publish to Hub,seller,Wizard publish button,,No
+seller.wizard.publishSuccess,Published! Item is live on the hub.,seller,Wizard publish success,,No
+seller.wizard.radius,Delivery radius,seller,Wizard radius label,,No
+seller.wizard.radiusKm,${n} km,seller,Wizard radius value,,No
+seller.wizard.saving,Saving draft…,seller,Wizard auto-save toast,,No
+seller.wizard.selfDelivery,Self-Delivery (you deliver),seller,Wizard self delivery label,,No
+seller.wizard.size,Size (if applicable),seller,Wizard size label,,No
+seller.wizard.sizeHint,"e.g. 42 EU, M, XL, One Size",seller,Wizard size placeholder,,No
+seller.wizard.step,Step ${s} of ${t},seller,Step indicator,,No
+seller.wizard.storeDefaults,Uses store defaults — change in Settings to update.,seller,Wizard store defaults note,,No
+seller.wizard.telebirr,Telebirr,seller,Wizard telebirr label,,No
 shared.addToCart,+ Add to Cart,shared,Add to cart button,,No
 shared.badgeSeller,Seller Studio,shared,Badge seller,,No
 shared.badgeShops,Verified Shops,shared,Badge shops,,No

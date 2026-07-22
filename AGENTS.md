@@ -2,7 +2,7 @@
 
 ## Project
 Ethiopian marketplace (vanilla-JS SPA + Express backend).  
-Version `1.3.0`, cache-bust via `?v=` with git SHA.
+Version `1.4.0`, cache-bust via `?v=` with git SHA.
 
 ## Active Objective
 Translate the app into **Amharic** with context-aware (not literal) translations.  
@@ -57,6 +57,33 @@ Translate the app into **Amharic** with context-aware (not literal) translations
 - **Notifications** wired for both buyer + seller via DB table + Telegram DM dual mode.
 
 ---
+
+---
+
+## Fixed (latest session)
+
+### Built: 4-Page Product Wizard
+Replaced the single-scroll add-product modal with a step-through 4-page wizard:
+- **Page 1 (Essentials):** Image upload, Title, Price, Category (visual grid)
+- **Page 2 (Details):** Description, Condition, Size, Materials, Stock, Product Code / Barcode (auto-gen toggles)
+- **Page 3 (Delivery & Payment):** Store defaults auto-filled; delivery radius/min-days/assign-editable; payment locked behind seller password
+- **Page 4 (Review & Approve):** Summary cards, edit links, publish
+- Auto-save draft to localStorage every 30s with restore prompt
+- +50 new i18n keys for wizard UI
+- DB columns added: `condition`, `size`, `product_code`, `barcode`, `delivery_radius`, `min_delivery_days`, `assign_name`, `assign_phone` (migration 1.9)
+
+### Previous fixes
+- **Wishlist items not displaying**: `toggleWishlist` now syncs `wishlistItems` in-memory; tab switch always refreshes from API (not only when null)
+- **TG photo auto-detect**: `captionHasPrice()` helper detects standalone numbers on their own line (no "Br" suffix needed)
+- **CI/CD**: GitHub Actions workflow added (`.github/workflows/ci.yml`) — JS syntax + i18n validation
+- **app.js split**: 2608→~1685 lines across `seller-registration.js`, `order-actions.js`, `store-settings.js`
+
+## Upcoming (discussed, not started)
+
+### Categories tab — new bottom nav item
+Insert between **Explore** and **Wishlist** in the buyer nav bar.
+Grid of category cards (icon + name) → drill into sub-categories → filtered listings.
+Consider: own tab vs sub-section within Explore.
 
 ## Quick Commands
 

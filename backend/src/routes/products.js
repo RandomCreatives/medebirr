@@ -217,7 +217,9 @@ router.post(
         store_id, title, description, price_etb, compare_price,
         sku, stock_quantity, category, sub_category, tags,
         image_urls, variants,         is_published = false, is_featured = false,
-        specifications, materials, shipping_info, duty_info, return_info
+        specifications, materials, shipping_info, duty_info, return_info,
+        condition, size, product_code, barcode,
+        delivery_radius, min_delivery_days, assign_name, assign_phone
       } = req.body;
 
       const result = await query(
@@ -225,14 +227,18 @@ router.post(
           store_id, title, description, price_etb, compare_price, sku,
           stock_quantity, category, sub_category, tags, image_urls, variants,
           is_published, is_featured, specifications, materials,
-          shipping_info, duty_info, return_info
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
+          shipping_info, duty_info, return_info,
+          condition, size, product_code, barcode,
+          delivery_radius, min_delivery_days, assign_name, assign_phone
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27)
         RETURNING *`,
         [store_id, title, description || null, price_etb, compare_price || null,
          sku || null, stock_quantity, category, sub_category || null,
          tags || [], image_urls || [], JSON.stringify(variants || []),
          is_published, is_featured, specifications || null,
-         materials || null, shipping_info || null, duty_info || null, return_info || null]
+         materials || null, shipping_info || null, duty_info || null, return_info || null,
+         condition || 'new', size || null, product_code || null, barcode || null,
+         delivery_radius || null, min_delivery_days || null, assign_name || null, assign_phone || null]
       );
 
       // If published and store has a linked group, broadcast to Telegram
@@ -285,7 +291,9 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
       title, description, price_etb, compare_price, sku,
       stock_quantity, category, sub_category, tags,
       image_urls, variants, is_published, is_featured,
-      specifications, materials, shipping_info, duty_info, return_info
+      specifications, materials, shipping_info, duty_info, return_info,
+      condition, size, product_code, barcode,
+      delivery_radius, min_delivery_days, assign_name, assign_phone
     } = req.body;
 
     const result = await query(
@@ -308,14 +316,25 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
         shipping_info = COALESCE($16, shipping_info),
         duty_info = COALESCE($17, duty_info),
         return_info = COALESCE($18, return_info),
+        condition = COALESCE($19, condition),
+        size = COALESCE($20, size),
+        product_code = COALESCE($21, product_code),
+        barcode = COALESCE($22, barcode),
+        delivery_radius = COALESCE($23, delivery_radius),
+        min_delivery_days = COALESCE($24, min_delivery_days),
+        assign_name = COALESCE($25, assign_name),
+        assign_phone = COALESCE($26, assign_phone),
         updated_at = NOW()
-       WHERE product_id = $19
+       WHERE product_id = $27
        RETURNING *`,
       [title, description, price_etb, compare_price, sku,
        stock_quantity, category, sub_category, tags,
        image_urls, variants ? JSON.stringify(variants) : null,
        is_published, is_featured, specifications,
-       materials, shipping_info, duty_info, return_info, req.params.productId]
+       materials, shipping_info, duty_info, return_info,
+       condition, size, product_code, barcode,
+       delivery_radius, min_delivery_days, assign_name, assign_phone,
+       req.params.productId]
     );
 
       // If just published (is_published toggled to true), broadcast to Telegram group

@@ -83,7 +83,7 @@ const SellerViews = {
       ` : ''}
 
       <button class="btn-primary" style="margin-top:14px;" onclick="Modals.openAddProduct()">
-        + Publish New Item to Hub
+        + ${State.t('seller.addProduct.title')}
       </button>
     `;
   },

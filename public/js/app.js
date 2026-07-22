@@ -1177,7 +1177,7 @@ const App = {
     data.store_id = State.currentStoreId;
     try {
       const resp = await Api.products.create(data);
-      this.toast('Item published to hub!', 'success');
+      this.toast(State.t('seller.wizard.publishSuccess'), 'success');
       if (resp.telegram_warning) this.toast(resp.telegram_warning, 'warning');
       Modals.close();
       const result = await Api.products.sellerList(State.currentStoreId, { limit: 200 });
@@ -1205,6 +1205,43 @@ const App = {
   },
 
   _getProductFormData() {
+    // Detect wizard mode — use Modals._wizD if available
+    if (typeof Modals._wizD !== 'undefined' && document.getElementById('wizTitle')) {
+      Modals._wizCollect();
+      const d = Modals._wizD;
+      if (!d.category) { this.toast(State.t('seller.wizard.categoryRequired'), 'error'); return null; }
+      const urls = d.image_urls.filter(Boolean);
+      if (!urls.length) { this.toast(State.t('seller.wizard.imageRequired'), 'error'); return null; }
+      Modals._wizSaveDraft();
+      localStorage.removeItem('em_product_draft');
+      return {
+        title: d.title,
+        description: d.description,
+        price_etb: parseFloat(d.price_etb) || 0,
+        compare_price: parseFloat(d.compare_price) || null,
+        stock_quantity: d.stock_quantity || 1,
+        category: d.category,
+        sub_category: d.sub_category || null,
+        tags: d.tags ? d.tags.split(',').map(t => t.trim()).filter(Boolean) : null,
+        image_urls: urls.length ? urls : null,
+        is_published: d.is_published !== false,
+        sku: d.product_code || null,
+        specifications: d.specifications || d.description || '',
+        materials: d.materials || '',
+        shipping_info: d.shipping_info || null,
+        duty_info: d.duty_info || null,
+        return_info: d.return_info || null,
+        condition: d.condition || 'new',
+        size: d.size || null,
+        product_code: d.product_code || null,
+        barcode: d.barcode || null,
+        delivery_radius: d.delivery_radius || null,
+        min_delivery_days: d.min_delivery_days || null,
+        assign_name: d.assign_name || null,
+        assign_phone: d.assign_phone || null
+      };
+    }
+    // Legacy mode — read from DOM directly
     const title = document.getElementById('prodTitle')?.value?.trim();
     const price = parseFloat(document.getElementById('prodPrice')?.value);
     const stock = parseInt(document.getElementById('prodStock')?.value);
