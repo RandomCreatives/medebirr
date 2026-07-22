@@ -701,7 +701,7 @@ seller.menu.verifiedMerchant,✅ Verified Merchant,seller,Verified merchant badg
 seller.menu.verifyAdmin,✅ Verify Admin,seller,Verify admin button,,No
 seller.nav.fromTg,From TG,seller,Seller bottom nav tab,,No
 seller.nav.hub,Hub,seller,Seller bottom nav tab,,No
-seller.nav.items,Items,seller,Seller bottom nav tab,,No
+seller.nav.items,Products,seller,Seller bottom nav tab,,No
 seller.nav.orders,Orders,seller,Seller bottom nav tab,,No
 seller.notif.emptyDesc,"New orders, dispatches, payouts and delivery updates will appear here.",seller,Seller notif empty desc,,No
 seller.notif.emptyTitle,No notifications yet,seller,Seller notif empty,,No

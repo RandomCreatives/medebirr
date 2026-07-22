@@ -442,7 +442,7 @@ add('notification','notification.emptyDesc','New orders, dispatches, payouts and
 // ===================== SELLER =====================
 add('seller','seller.nav.hub','Hub','Seller bottom nav tab',false);
 add('seller','seller.nav.fromTg','From TG','Seller bottom nav tab',false);
-add('seller','seller.nav.items','Items','Seller bottom nav tab',false);
+add('seller','seller.nav.items','Products','Seller bottom nav tab',false);
 add('seller','seller.nav.orders','Orders','Seller bottom nav tab',false);
 add('seller','seller.hub.title','Sales Hub','Dashboard section title',false);
 add('seller','seller.hub.fromTelegram',"'📋 From Telegram (${pending.length})'",'Dashboard pending header',false);

@@ -192,16 +192,69 @@ const SellerViews = {
     `;
   },
 
-  // ── Inventory / My Items ──────────────────────────
+  // ── Inventory / Products ─────────────────────────
+  _inventorySort(key) {
+    State.inventorySort = key;
+    this._renderInventoryList(document.getElementById('appBody'));
+  },
+
+  _inventoryFilter(key) {
+    State.inventoryFilter = key;
+    this._renderInventoryList(document.getElementById('appBody'));
+  },
+
+  _renderInventoryList(container) {
+    let prods = [...State.sellerProducts];
+    const sort = State.inventorySort || 'newest';
+    const filter = State.inventoryFilter || 'all';
+
+    // Filter
+    if (filter === 'live') prods = prods.filter(p => p.is_published);
+    else if (filter === 'draft') prods = prods.filter(p => !p.is_published);
+    else if (filter === 'lowstock') prods = prods.filter(p => (p.stock_quantity - (p.reserved_stock || 0)) <= 3);
+
+    // Sort
+    if (sort === 'az') prods.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+    else if (sort === 'ordered') prods.sort((a, b) => (b.order_count || 0) - (a.order_count || 0));
+    else if (sort === 'price') prods.sort((a, b) => (a.price_etb || 0) - (b.price_etb || 0));
+    else prods.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    // Preserve list container but replace content
+    const listEl = document.getElementById('prodList');
+    if (!listEl) return;
+    listEl.innerHTML = prods.length
+      ? prods.map(p => this._inventoryCard(p)).join('')
+      : `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No products ${filter !== 'all' ? 'in this filter' : 'yet'}</div><div class="empty-desc">Add your first product to start selling.</div></div>`;
+  },
+
   renderInventory(container) {
     const prods = State.sellerProducts;
+    const sort = State.inventorySort || 'newest';
+    const filter = State.inventoryFilter || 'all';
+    const sortPills = [
+      ['newest', 'Newest'], ['az', 'A–Z'], ['ordered', 'Most Ordered'], ['price', 'Price']
+    ];
+    const filterPills = [
+      ['all', 'All'], ['live', 'Live'], ['draft', 'Draft'], ['lowstock', 'Low Stock']
+    ];
     container.innerHTML = `
       <div class="section-header">
-        <span class="section-title">My Items (${prods.length})</span>
-        <button class="btn-primary" style="width:auto;padding:8px 14px;font-size:12px;" onclick="Modals.openAddProduct()">+ Add Item</button>
+        <span class="section-title">${State.t('seller.nav.items')} (${prods.length})</span>
+        <button class="btn-primary" style="width:auto;padding:8px 14px;font-size:12px;" onclick="Modals.openAddProduct()">+ Add Product</button>
       </div>
-      ${!prods.length ? `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No items yet</div><div class="empty-desc">Add your first product to start selling.</div></div>` : ''}
-      ${prods.map(p => this._inventoryCard(p)).join('')}
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+        ${sortPills.map(([k, label]) => `
+          <button onclick="SellerViews._inventorySort('${k}')" style="padding:5px 12px;border-radius:16px;border:1px solid ${sort === k ? 'var(--accent)' : 'var(--border)'};background:${sort === k ? 'var(--accent-soft)' : 'var(--bg-surface)'};color:${sort === k ? 'var(--accent)' : 'var(--text-secondary)'};font-size:11px;font-weight:${sort === k ? '700' : '500'};cursor:pointer;">${label}</button>
+        `).join('')}
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        ${filterPills.map(([k, label]) => `
+          <button onclick="SellerViews._inventoryFilter('${k}')" style="padding:4px 10px;border-radius:12px;border:none;background:${filter === k ? 'var(--accent)' : 'var(--bg-surface)'};color:${filter === k ? 'var(--accent-text)' : 'var(--text-secondary)'};font-size:10px;font-weight:600;cursor:pointer;">${label}</button>
+        `).join('')}
+      </div>
+      <div id="prodList">
+        ${prods.length ? prods.map(p => this._inventoryCard(p)).join('') : `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No products yet</div><div class="empty-desc">Add your first product to start selling.</div></div>`}
+      </div>
     `;
   },
 
@@ -209,34 +262,40 @@ const SellerViews = {
     const thumb = (Array.isArray(p.image_urls) && p.image_urls[0])
       ? `<div style="width:48px;height:48px;border-radius:8px;background:url(${p.image_urls[0]}) center/cover no-repeat var(--bg-surface);border:1px solid var(--border);flex-shrink:0;"></div>`
       : `<div style="width:48px;height:48px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📦</div>`;
+    const stock = p.stock_quantity - (p.reserved_stock || 0);
     return `
-      <div class="card" style="margin-bottom:10px;">
-        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;">
+      <div class="card" style="margin-bottom:10px;padding:12px;">
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:6px;">
           ${thumb}
           <div style="flex:1;min-width:0;">
-            <div class="card-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title}</div>
-            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${p.category}${p.sub_category ? ' · ' + p.sub_category : ''} · SKU: ${p.sku || 'N/A'}</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">👁 ${p.view_count || 0} views · ⭐ ${(Number(p.rating) || 0).toFixed(1)} (${p.rating_count || 0})</div>
+            <div style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:1px;">${p.category}${p.sub_category ? ' · ' + p.sub_category : ''}</div>
           </div>
-          <span style="font-size:11px;padding:3px 8px;border-radius:6px;${p.is_published ? 'background:rgba(16,185,129,0.15);color:var(--success)' : 'background:rgba(245,158,11,0.15);color:var(--warning)'}">
+          <span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;${p.is_published ? 'background:rgba(16,185,129,0.15);color:var(--success)' : 'background:rgba(245,158,11,0.15);color:var(--warning)'}">
             ${p.is_published ? '● Live' : '○ Draft'}
           </span>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
           <div>
-            <span style="font-size:16px;font-weight:900;color:var(--accent);">${State.formatETB(p.price_etb)}</span>
-            ${p.compare_price ? `<span style="font-size:11px;color:var(--text-muted);text-decoration:line-through;margin-left:6px;">${State.formatETB(p.compare_price)}</span>` : ''}
-            <span style="font-size:11px;color:var(--text-secondary);margin-left:8px;">Stock: ${p.stock_quantity - (p.reserved_stock || 0)}</span>
+            <span style="font-size:15px;font-weight:900;color:var(--accent);">${State.formatETB(p.price_etb)}</span>
+            ${p.compare_price ? `<span style="font-size:10px;color:var(--text-muted);text-decoration:line-through;margin-left:6px;">${State.formatETB(p.compare_price)}</span>` : ''}
           </div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn-secondary" style="width:auto;padding:7px 12px;font-size:11px;" onclick="Modals.openEditProduct('${p.product_id}')">✏️ Edit</button>
-            <button style="background:${p.is_published ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)'};border:1px solid ${p.is_published ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'};color:${p.is_published ? 'var(--warning)' : 'var(--success)'};padding:7px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.togglePublish('${p.product_id}',${p.is_published})">
-              ${p.is_published ? 'Unpublish' : 'Publish'}
-            </button>
-            <button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:7px 10px;border-radius:8px;font-size:11px;cursor:pointer;" onclick="App.confirmDeleteProduct('${p.product_id}','${(p.title||'').replace(/'/g,"\\'")}')">
-              🗑
-            </button>
-          </div>
+          <span style="font-size:11px;color:${stock <= 3 ? 'var(--danger)' : 'var(--text-secondary)'};font-weight:${stock <= 3 ? '700' : '400'};">Stock: ${stock}</span>
+        </div>
+        <div style="display:flex;gap:12px;font-size:11px;color:var(--text-muted);margin-bottom:8px;flex-wrap:wrap;">
+          <span>📦 ${p.order_count || 0} ordered</span>
+          <span>✅ ${p.paid_count || 0} paid</span>
+          <span>🚚 ${p.delivered_count || 0} delivered</span>
+          <span>👁 ${p.view_count || 0} views</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn-secondary" style="flex:1;padding:7px;font-size:11px;" onclick="Modals.openEditProduct('${p.product_id}')">${Icons.edit(14)} Edit</button>
+          <button style="flex:1;background:${p.is_published ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)'};border:1px solid ${p.is_published ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'};color:${p.is_published ? 'var(--warning)' : 'var(--success)'};padding:7px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.togglePublish('${p.product_id}',${p.is_published})">
+            ${p.is_published ? 'Unpublish' : 'Publish'}
+          </button>
+          <button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:7px 10px;border-radius:8px;font-size:11px;cursor:pointer;" onclick="App.confirmDeleteProduct('${p.product_id}','${(p.title||'').replace(/'/g,"\\'")}')">
+            ${Icons.trash(14)}
+          </button>
         </div>
       </div>
     `;

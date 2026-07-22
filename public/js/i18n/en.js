@@ -705,7 +705,7 @@ window.I18N_en = {
   'seller.menu.verifyAdmin': '✅ Verify Admin',
   'seller.nav.fromTg': 'From TG',
   'seller.nav.hub': 'Hub',
-  'seller.nav.items': 'Items',
+  'seller.nav.items': 'Products',
   'seller.nav.orders': 'Orders',
   'seller.notif.emptyDesc': 'New orders, dispatches, payouts and delivery updates will appear here.',
   'seller.notif.emptyTitle': 'No notifications yet',

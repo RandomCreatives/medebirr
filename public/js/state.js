@@ -74,6 +74,8 @@ const State = {
   pendingProducts: [],
   sellerUnlocked: false,
   storeDetail: null,
+  inventorySort: 'newest',
+  inventoryFilter: 'all',
   couponPolicy: null,
   conversations: null,
   unreadCount: 0,

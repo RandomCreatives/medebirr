@@ -137,10 +137,26 @@ router.get('/seller/:storeId', requireAuth, requireSellerOf('storeId'), async (r
     const offset = (page - 1) * limit;
     const result = await query(
       `SELECT p.*, s.store_name, s.store_slug, s.location_sub_city, s.verified_badge,
-              sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
+              sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold,
+              COALESCE(paid_counts.paid, 0) AS paid_count,
+              COALESCE(delivered_counts.delivered, 0) AS delivered_count
        FROM products p
        JOIN stores s ON p.store_id = s.store_id
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+       LEFT JOIN (
+         SELECT oi.product_id, COUNT(*) AS paid
+         FROM order_items oi
+         JOIN orders o ON oi.order_id = o.order_id
+         WHERE o.payment_status = 'paid'
+         GROUP BY oi.product_id
+       ) paid_counts ON p.product_id = paid_counts.product_id
+       LEFT JOIN (
+         SELECT oi.product_id, COUNT(*) AS delivered
+         FROM order_items oi
+         JOIN orders o ON oi.order_id = o.order_id
+         WHERE o.order_status = 'delivered'
+         GROUP BY oi.product_id
+       ) delivered_counts ON p.product_id = delivered_counts.product_id
        WHERE p.store_id = $1
        ORDER BY p.created_at DESC
        LIMIT $2 OFFSET $3`,
