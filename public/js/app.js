@@ -63,6 +63,9 @@ const App = {
             { timeout: 8000 }
           );
         }
+
+        // Start polling for order status updates (every 15s)
+        this._startOrderPolling();
       })
       .catch((err) => {
         console.warn('Auth/API error:', err.message);
@@ -1168,6 +1171,30 @@ const App = {
     } catch (err) {
       this.toast('Could not check order status', 'error');
     }
+  },
+
+  _startOrderPolling() {
+    clearInterval(this._orderPollTimer);
+    this._orderPollTimer = setInterval(async () => {
+      try {
+        if (State.role === 'buyer' && (State.currentTab === 'orders' || State.currentTab === 'profile')) {
+          await this.refreshOrders();
+          if (State.currentTab === 'orders') BuyerViews.renderOrders(document.getElementById('appBody'));
+        }
+        if (State.role === 'seller') {
+          if (State.currentTab === 'dispatch') {
+            const data = await Api.orders.storeOrders(State.currentStoreId, { limit: 200 });
+            State.storeOrders = data.orders || [];
+            SellerViews.renderDispatch(document.getElementById('appBody'));
+          }
+          if (State.currentTab === 'dashboard') {
+            const data = await Api.stores.stats(State.currentStoreId);
+            State.sellerStats = data;
+            SellerViews.renderDashboard(document.getElementById('appBody'));
+          }
+        }
+      } catch (_) {}
+    }, 15000);
   },
 
   // ── Seller Actions ────────────────────────────────

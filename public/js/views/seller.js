@@ -8,7 +8,7 @@ const SellerViews = {
   renderDashboard(container) {
     const stats = State.sellerStats;
     if (!stats) {
-      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">Loading stats...</div></div>`;
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">${State.t('seller.dash.loading')}</div></div>`;
       App.loadSellerStats();
       return;
     }
@@ -20,7 +20,7 @@ const SellerViews = {
     const tierBadge = { none: '', basic: '🟢 Basic', verified: '✅ Verified', trusted: '⭐ Trusted' };
     container.innerHTML = `
       <div class="section-header">
-        <span class="section-title">Sales Hub</span>
+        <span class="section-title">${State.t('seller.hub.title')}</span>
         <div style="display:flex;align-items:center;gap:14px;">
           <button class="hub-bell-btn" onclick="App.openSellerNotifications()" aria-label="Notifications" style="position:relative;">
             ${Icons.bell(22)}
@@ -33,41 +33,41 @@ const SellerViews = {
       <div class="stat-grid">
         <div class="stat-card">
           <div class="stat-value">${State.formatETB(orders.monthly_revenue)}</div>
-          <div class="stat-label">Revenue (30 Days)</div>
+          <div class="stat-label">${State.t('seller.dash.revenue')}</div>
         </div>
         <div class="stat-card">
           <div class="stat-value">${orders.monthly_orders || 0}</div>
-          <div class="stat-label">Orders (30 Days)</div>
+          <div class="stat-label">${State.t('seller.dash.orders')}</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" style="color:var(--warning);">${orders.pending_count || 0}</div>
-          <div class="stat-label">Pending Orders</div>
+          <div class="stat-label">${State.t('seller.dash.pendingOrders')}</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" style="color:#A78BFA;">${orders.dispatched_count || 0}</div>
-          <div class="stat-label">In Transit</div>
+          <div class="stat-label">${State.t('seller.dash.inTransit')}</div>
         </div>
       </div>
 
       ${pending.length ? `
       <div class="section-header" style="margin-top:6px;">
-        <span class="section-title" style="color:var(--accent);">📋 From Telegram (${pending.length})</span>
-        <span style="font-size:10px;color:var(--text-secondary);">Complete to publish</span>
+        <span class="section-title" style="color:var(--accent);">${State.t('seller.hub.fromTelegram', { pending })}</span>
+        <span style="font-size:10px;color:var(--text-secondary);">${State.t('seller.hub.completeToPublish')}</span>
       </div>
       ${pending.slice(0, 3).map(p => this._pendingProductCard(p)).join('')}
-      ${pending.length > 3 ? `<div style="text-align:center;"><span class="section-link" onclick="App.switchTab('pending')">View all ${pending.length} pending</span></div>` : ''}
+      ${pending.length > 3 ? `<div style="text-align:center;"><span class="section-link" onclick="App.switchTab('pending')">${State.t('seller.hub.viewAll', { pending })}</span></div>` : ''}
       ` : ''}
 
       <div class="section-header" style="margin-top:6px;">
-        <span class="section-title">Recent Orders</span>
-        <span class="section-link" onclick="App.switchTab('dispatch')">View All</span>
+        <span class="section-title">${State.t('seller.hub.recentOrders')}</span>
+        <span class="section-link" onclick="App.switchTab('dispatch')">${State.t('seller.hub.viewAllOrders')}</span>
       </div>
 
-      ${recentOrders.length ? recentOrders.map(o => this._recentOrderRow(o)).join('') : '<p style="font-size:13px;color:var(--text-secondary);">No orders yet. List your items to start selling.</p>'}
+      ${recentOrders.length ? recentOrders.map(o => this._recentOrderRow(o)).join('') : '<p style="font-size:13px;color:var(--text-secondary);">' + State.t('seller.hub.noOrders') + '</p>'}
 
       ${reviews.length ? `
       <div class="section-header" style="margin-top:16px;">
-        <span class="section-title">⭐ Recent Reviews</span>
+        <span class="section-title">${State.t('seller.hub.recentReviews')}</span>
         <span style="font-size:11px;color:var(--warning);">${store?.rating ? Number(store.rating).toFixed(1) : '—'} avg · ${store?.rating_count || 0} total</span>
       </div>
       ${reviews.slice(0, 3).map(r => `
@@ -93,20 +93,20 @@ const SellerViews = {
       ? `<div style="width:56px;height:56px;border-radius:8px;background:url(${p.image_urls[0]}) center/cover no-repeat var(--bg-surface);border:1px solid var(--border);flex-shrink:0;"></div>`
       : `<div style="width:56px;height:56px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📸</div>`;
     const timeAgo = this._timeAgo(p.detected_at);
-    const priceStr = p.price_etb ? State.formatETB(p.price_etb) : 'No price';
+    const priceStr = p.price_etb ? State.formatETB(p.price_etb) : State.t('seller.pending.noPrice');
     return `
       <div class="card" style="margin-bottom:10px;padding:12px;">
         <div style="display:flex;gap:10px;align-items:flex-start;">
           ${thumb}
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title || 'Untitled Product'}</div>
+            <div style="font-size:13px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title || State.t('seller.pending.untitled')}</div>
             <div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:2px;">${priceStr}</div>
-            <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${timeAgo} · ${p.auto_detected ? 'Auto-detected' : '/sell command'}</div>
+            <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${timeAgo} · ${p.auto_detected ? State.t('seller.pending.autoDetected') : State.t('seller.pending.sellCommand')}</div>
           </div>
         </div>
         <div style="display:flex;gap:6px;margin-top:10px;">
-          <button class="btn-primary" style="flex:1;padding:8px;font-size:11px;" onclick="Modals.openCompletePending('${p.pending_id}')">📝 Complete</button>
-          <button class="btn-secondary" style="flex:1;padding:8px;font-size:11px;" onclick="App.discardPending('${p.pending_id}')">✕ Discard</button>
+          <button class="btn-primary" style="flex:1;padding:8px;font-size:11px;" onclick="Modals.openCompletePending('${p.pending_id}')">${State.t('seller.pending.complete')}</button>
+          <button class="btn-secondary" style="flex:1;padding:8px;font-size:11px;" onclick="App.discardPending('${p.pending_id}')">${State.t('seller.pending.discard')}</button>
         </div>
       </div>
     `;
@@ -144,17 +144,17 @@ const SellerViews = {
     const pending = State.pendingProducts || [];
     container.innerHTML = `
       <div class="section-header">
-        <span class="section-title">📋 From Telegram (${pending.length})</span>
-        <span class="section-link" onclick="App.refreshPendingProducts()">↻ Refresh</span>
+        <span class="section-title">${State.t('seller.pending.title', { pending })}</span>
+        <span class="section-link" onclick="App.refreshPendingProducts()">${State.t('seller.pending.refresh')}</span>
       </div>
       <p style="font-size:11px;color:var(--text-secondary);margin:-4px 0 12px;line-height:1.4;">
-        Products detected from your Telegram group. Complete the details to publish them to Medebirr and broadcast back to your group.
+        ${State.t('seller.pending.desc')}
       </p>
       ${!pending.length ? `
         <div class="empty-state">
           <div class="empty-icon">📭</div>
-          <div class="empty-title">No pending products</div>
-          <div class="empty-desc">Post a product image in your Telegram group to get started. The bot will detect it automatically.</div>
+          <div class="empty-title">${State.t('seller.pending.noPending')}</div>
+          <div class="empty-desc">${State.t('seller.pending.noPendingDesc')}</div>
         </div>
       ` : pending.map(p => this._pendingProductCardFull(p)).join('')}
     `;
@@ -166,7 +166,7 @@ const SellerViews = {
       ? `<div style="width:64px;height:64px;border-radius:8px;background:url(${imgs[0]}) center/cover no-repeat var(--bg-surface);border:1px solid var(--border);flex-shrink:0;"></div>`
       : `<div style="width:64px;height:64px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📸</div>`;
     const timeAgo = this._timeAgo(p.detected_at);
-    const priceStr = p.price_etb ? State.formatETB(p.price_etb) : 'No price set';
+    const priceStr = p.price_etb ? State.formatETB(p.price_etb) : State.t('seller.pending.noPrice');
     const statusColor = p.status === 'completed' ? 'var(--success)' : 'var(--warning)';
     return `
       <div class="card" style="margin-bottom:10px;padding:12px;">
@@ -174,19 +174,19 @@ const SellerViews = {
           ${thumb}
           <div style="flex:1;min-width:0;">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-              <div style="font-size:14px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${p.title || 'Untitled Product'}</div>
+              <div style="font-size:14px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${p.title || State.t('seller.pending.untitled')}</div>
               <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:${statusColor}22;color:${statusColor};flex-shrink:0;margin-left:6px;">${p.status}</span>
             </div>
             <div style="font-size:13px;color:var(--accent);font-weight:700;margin-top:2px;">${priceStr}</div>
-            <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${timeAgo} · ${imgs.length} image${imgs.length !== 1 ? 's' : ''} · ${p.auto_detected ? 'Auto-detected' : '/sell command'}</div>
+            <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${timeAgo} · ${State.t('seller.pending.imageCount', { imgs })} · ${p.auto_detected ? State.t('seller.pending.autoDetected') : State.t('seller.pending.sellCommand')}</div>
             ${p.caption ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.4;max-height:40px;overflow:hidden;">${p.caption.slice(0, 120)}${p.caption.length > 120 ? '...' : ''}</div>` : ''}
           </div>
         </div>
         <div style="display:flex;gap:6px;margin-top:10px;">
           <button class="btn-primary" style="flex:1;padding:8px;font-size:11px;" onclick="Modals.openCompletePending('${p.pending_id}')">
-            ${p.status === 'completed' ? '🚀 Publish' : '📝 Complete'}
+            ${p.status === 'completed' ? State.t('seller.pending.publish') : State.t('seller.pending.complete')}
           </button>
-          <button class="btn-secondary" style="padding:8px 12px;font-size:11px;" onclick="App.discardPending('${p.pending_id}')">✕ Discard</button>
+          <button class="btn-secondary" style="padding:8px 12px;font-size:11px;" onclick="App.discardPending('${p.pending_id}')">${State.t('seller.pending.discard')}</button>
         </div>
       </div>
     `;
@@ -224,36 +224,32 @@ const SellerViews = {
     if (!listEl) return;
     listEl.innerHTML = prods.length
       ? prods.map(p => this._inventoryCard(p)).join('')
-      : `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No products ${filter !== 'all' ? 'in this filter' : 'yet'}</div><div class="empty-desc">Add your first product to start selling.</div></div>`;
+      : `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">${filter !== 'all' ? State.t('seller.inventory.noProductsFilter') : State.t('seller.inventory.noItems')}</div><div class="empty-desc">${State.t('seller.inventory.noItemsDesc')}</div></div>`;
   },
 
   renderInventory(container) {
     const prods = State.sellerProducts;
     const sort = State.inventorySort || 'newest';
     const filter = State.inventoryFilter || 'all';
-    const sortPills = [
-      ['newest', 'Newest'], ['az', 'A–Z'], ['ordered', 'Most Ordered'], ['price', 'Price']
-    ];
-    const filterPills = [
-      ['all', 'All'], ['live', 'Live'], ['draft', 'Draft'], ['lowstock', 'Low Stock']
-    ];
+    const sortKeys = [['newest','seller.inventory.sortNewest'],['az','seller.inventory.sortAz'],['ordered','seller.inventory.sortOrdered'],['price','seller.inventory.sortPrice']];
+    const filterKeys = [['all','seller.inventory.filterAll'],['live','seller.inventory.filterLive'],['draft','seller.inventory.filterDraft'],['lowstock','seller.inventory.filterLowStock']];
     container.innerHTML = `
       <div class="section-header">
-        <span class="section-title">${State.t('seller.nav.items')} (${prods.length})</span>
-        <button class="btn-primary" style="width:auto;padding:8px 14px;font-size:12px;" onclick="Modals.openAddProduct()">+ Add Product</button>
+        <span class="section-title">${State.t('seller.inventory.title', { prods })}</span>
+        <button class="btn-primary" style="width:auto;padding:8px 14px;font-size:12px;" onclick="Modals.openAddProduct()">${State.t('seller.inventory.add')}</button>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
-        ${sortPills.map(([k, label]) => `
-          <button onclick="SellerViews._inventorySort('${k}')" style="padding:5px 12px;border-radius:16px;border:1px solid ${sort === k ? 'var(--accent)' : 'var(--border)'};background:${sort === k ? 'var(--accent-soft)' : 'var(--bg-surface)'};color:${sort === k ? 'var(--accent)' : 'var(--text-secondary)'};font-size:11px;font-weight:${sort === k ? '700' : '500'};cursor:pointer;">${label}</button>
+        ${sortKeys.map(([k, key]) => `
+          <button onclick="SellerViews._inventorySort('${k}')" style="padding:5px 12px;border-radius:16px;border:1px solid ${sort === k ? 'var(--accent)' : 'var(--border)'};background:${sort === k ? 'var(--accent-soft)' : 'var(--bg-surface)'};color:${sort === k ? 'var(--accent)' : 'var(--text-secondary)'};font-size:11px;font-weight:${sort === k ? '700' : '500'};cursor:pointer;">${State.t(key)}</button>
         `).join('')}
       </div>
       <div style="display:flex;gap:6px;margin-bottom:12px;">
-        ${filterPills.map(([k, label]) => `
-          <button onclick="SellerViews._inventoryFilter('${k}')" style="padding:4px 10px;border-radius:12px;border:none;background:${filter === k ? 'var(--accent)' : 'var(--bg-surface)'};color:${filter === k ? 'var(--accent-text)' : 'var(--text-secondary)'};font-size:10px;font-weight:600;cursor:pointer;">${label}</button>
+        ${filterKeys.map(([k, key]) => `
+          <button onclick="SellerViews._inventoryFilter('${k}')" style="padding:4px 10px;border-radius:12px;border:none;background:${filter === k ? 'var(--accent)' : 'var(--bg-surface)'};color:${filter === k ? 'var(--accent-text)' : 'var(--text-secondary)'};font-size:10px;font-weight:600;cursor:pointer;">${State.t(key)}</button>
         `).join('')}
       </div>
       <div id="prodList">
-        ${prods.length ? prods.map(p => this._inventoryCard(p)).join('') : `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No products yet</div><div class="empty-desc">Add your first product to start selling.</div></div>`}
+        ${prods.length ? prods.map(p => this._inventoryCard(p)).join('') : `<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">${State.t('seller.inventory.noItems')}</div><div class="empty-desc">${State.t('seller.inventory.noItemsDesc')}</div></div>`}
       </div>
     `;
   },
@@ -272,7 +268,7 @@ const SellerViews = {
             <div style="font-size:11px;color:var(--text-secondary);margin-top:1px;">${p.category}${p.sub_category ? ' · ' + p.sub_category : ''}</div>
           </div>
           <span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;${p.is_published ? 'background:rgba(16,185,129,0.15);color:var(--success)' : 'background:rgba(245,158,11,0.15);color:var(--warning)'}">
-            ${p.is_published ? '● Live' : '○ Draft'}
+            ${p.is_published ? State.t('seller.inventory.live') : State.t('seller.inventory.draft')}
           </span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -280,18 +276,18 @@ const SellerViews = {
             <span style="font-size:15px;font-weight:900;color:var(--accent);">${State.formatETB(p.price_etb)}</span>
             ${p.compare_price ? `<span style="font-size:10px;color:var(--text-muted);text-decoration:line-through;margin-left:6px;">${State.formatETB(p.compare_price)}</span>` : ''}
           </div>
-          <span style="font-size:11px;color:${stock <= 3 ? 'var(--danger)' : 'var(--text-secondary)'};font-weight:${stock <= 3 ? '700' : '400'};">Stock: ${stock}</span>
+          <span style="font-size:11px;color:${stock <= 3 ? 'var(--danger)' : 'var(--text-secondary)'};font-weight:${stock <= 3 ? '700' : '400'};">${State.t('seller.inventory.stock', { stock })}</span>
         </div>
         <div style="display:flex;gap:12px;font-size:11px;color:var(--text-muted);margin-bottom:8px;flex-wrap:wrap;">
-          <span>📦 ${p.order_count || 0} ordered</span>
-          <span>✅ ${p.paid_count || 0} paid</span>
-          <span>🚚 ${p.delivered_count || 0} delivered</span>
-          <span>👁 ${p.view_count || 0} views</span>
+          <span>${State.t('seller.inventory.orderedCount', { p })}</span>
+          <span>${State.t('seller.inventory.paidCount', { p })}</span>
+          <span>${State.t('seller.inventory.deliveredCount', { p })}</span>
+          <span>${State.t('seller.inventory.viewsCount', { p })}</span>
         </div>
         <div style="display:flex;gap:6px;">
-          <button class="btn-secondary" style="flex:1;padding:7px;font-size:11px;" onclick="Modals.openEditProduct('${p.product_id}')">${Icons.edit(14)} Edit</button>
+          <button class="btn-secondary" style="flex:1;padding:7px;font-size:11px;" onclick="Modals.openEditProduct('${p.product_id}')">${Icons.edit(14)} ${State.t('seller.inventory.edit')}</button>
           <button style="flex:1;background:${p.is_published ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)'};border:1px solid ${p.is_published ? 'rgba(245,158,11,0.3)' : 'rgba(16,185,129,0.3)'};color:${p.is_published ? 'var(--warning)' : 'var(--success)'};padding:7px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.togglePublish('${p.product_id}',${p.is_published})">
-            ${p.is_published ? 'Unpublish' : 'Publish'}
+            ${p.is_published ? State.t('seller.inventory.unpublish') : State.t('seller.inventory.publish')}
           </button>
           <button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:7px 10px;border-radius:8px;font-size:11px;cursor:pointer;" onclick="App.confirmDeleteProduct('${p.product_id}','${(p.title||'').replace(/'/g,"\\'")}')">
             ${Icons.trash(14)}
@@ -310,7 +306,7 @@ const SellerViews = {
     const store = State.storeDetail || State.stores[0];
     const cp = State.couponPolicy || { share_required:3, share_discount:5, share_coupon_active:false, group_min_members:3, group_discount:10, group_buy_active:false, coupon_validity_days:7 };
     if (!store) {
-      container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚙️</div><div class="empty-title">No store registered</div></div>`;
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚙️</div><div class="empty-title">${State.t('seller.menu.noStore')}</div></div>`;
       return;
     }
 
@@ -711,25 +707,25 @@ const SellerViews = {
 
     // ── Section registry (grouped into 5 categories) ──
     const sections = {
-      identity:     { title: 'Store Identity & Profile',     icon: Icons.store,    desc: 'Name, logo, code & share',     body: identity },
-      policies:     { title: 'Store Policies & Legal Docs',  icon: Icons.file,     desc: 'Returns, payments & fees',     body: policies },
-      staff:        { title: 'Staff Roles & Permissions',    icon: Icons.users,    desc: 'Invite managers & staff',     body: staff },
-      coupons:      { title: 'Coupons & Discounts',          icon: Icons.tag,      desc: 'Share-to-save promotions',     body: coupons },
-      groupBuy:     { title: 'Group Buy Settings',           icon: Icons.users,    desc: 'Bulk-buy discounts',           body: groupBuy },
-      shipping:     { title: 'Shipping & Delivery Rules',    icon: Icons.truck,    desc: 'Fees & delivery options',      body: shipping, badge: 'NEW' },
-      automation:   { title: 'Automation (Stock & Routing)', icon: Icons.zap,      desc: 'Group, auto-detect & alerts',  body: automationClean },
-      payout:       { title: 'Payout & Bank Details',        icon: Icons.wallet,   desc: 'Telebirr & CBE accounts',      body: payout },
-      tax:          { title: 'Tax Config & Invoices',        icon: Icons.receipt,  desc: 'VAT, TIN & auto-invoice',      body: tax, badge: 'NEW' },
-      security:     { title: 'Account Security (2FA)',       icon: Icons.lock,     desc: 'Password & 2FA',               body: security },
-      notifications:{ title: 'Notification Preferences',     icon: Icons.bell,     desc: 'Order & stock alerts',         body: notifications, badge: 'NEW' }
+      identity:     { title: State.t('seller.menu.storeIdentity'), icon: Icons.store, desc: State.t('seller.menu.storeIdentityDesc'), body: identity },
+      policies:     { title: State.t('seller.menu.storePolicies'),  icon: Icons.file,  desc: State.t('seller.menu.storePoliciesDesc'), body: policies },
+      staff:        { title: State.t('seller.menu.staffRoles'),     icon: Icons.users, desc: State.t('seller.menu.staffRolesDesc'),  body: staff },
+      coupons:      { title: State.t('seller.menu.coupons'),        icon: Icons.tag,   desc: State.t('seller.menu.couponsDesc'),    body: coupons },
+      groupBuy:     { title: State.t('seller.menu.groupBuy'),       icon: Icons.users, desc: State.t('seller.menu.groupBuyDesc'),   body: groupBuy },
+      shipping:     { title: State.t('seller.menu.shipping'),       icon: Icons.truck, desc: State.t('seller.menu.shippingDesc'),   body: shipping, badge: 'NEW' },
+      automation:   { title: State.t('seller.menu.automation'),     icon: Icons.zap,   desc: State.t('seller.menu.automationDesc'), body: automationClean },
+      payout:       { title: State.t('seller.menu.payout'),         icon: Icons.wallet,desc: State.t('seller.menu.payoutDesc'),     body: payout },
+      tax:          { title: State.t('seller.menu.tax'),            icon: Icons.receipt,desc: State.t('seller.menu.taxDesc'),       body: tax, badge: 'NEW' },
+      security:     { title: State.t('seller.menu.security'),       icon: Icons.lock,  desc: State.t('seller.menu.securityDesc'),   body: security },
+      notifications:{ title: State.t('seller.menu.notifications'),  icon: Icons.bell,  desc: State.t('seller.menu.notificationsDesc'),body: notifications, badge: 'NEW' }
     };
 
     const groups = [
-      { key: 'setup',     title: 'Setup & Branding',    sub: 'Get Started',       icon: Icons.store,  sections: ['identity', 'policies', 'staff'] },
-      { key: 'sales',     title: 'Sales & Promotion',   sub: 'Attract Customers', icon: Icons.target, sections: ['coupons', 'groupBuy'] },
-      { key: 'orders',    title: 'Order Management',    sub: 'Fulfill Orders',    icon: Icons.truck,  sections: ['shipping', 'automation'] },
-      { key: 'money',     title: 'Money & Earnings',    sub: 'Get Paid',          icon: Icons.wallet, sections: ['payout', 'tax'] },
-      { key: 'security',  title: 'Security & Access',   sub: 'Protect the Shop',  icon: Icons.shield, sections: ['security', 'notifications'] }
+      { key: 'setup',     title: State.t('seller.menu.groupSetup'),    sub: State.t('seller.menu.groupSetupSub'),    icon: Icons.store,  sections: ['identity', 'policies', 'staff'] },
+      { key: 'sales',     title: State.t('seller.menu.groupSales'),    sub: State.t('seller.menu.groupSalesSub'),    icon: Icons.target, sections: ['coupons', 'groupBuy'] },
+      { key: 'orders',    title: State.t('seller.menu.groupOrders'),   sub: State.t('seller.menu.groupOrdersSub'),   icon: Icons.truck,  sections: ['shipping', 'automation'] },
+      { key: 'money',     title: State.t('seller.menu.groupMoney'),    sub: State.t('seller.menu.groupMoneySub'),    icon: Icons.wallet, sections: ['payout', 'tax'] },
+      { key: 'security',  title: State.t('seller.menu.groupSecurity'), sub: State.t('seller.menu.groupSecuritySub'), icon: Icons.shield, sections: ['security', 'notifications'] }
     ];
 
     const iconCell = (svg) => `<span class="menu-icon">${svg}</span>`;
@@ -829,9 +825,9 @@ const SellerViews = {
     const items = feed.concat(eta).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
     NotificationFeed.render(container, items, {
       onBack: 'App.backToSellerHub()',
-      title: 'Store Notifications',
-      emptyTitle: 'No notifications yet',
-      emptyDesc: 'New orders, dispatches, payouts and delivery updates will appear here.',
+      title: State.t('seller.notifs.title'),
+      emptyTitle: State.t('seller.notifs.emptyTitle'),
+      emptyDesc: State.t('seller.notifs.emptyDesc'),
       role: 'seller'
     });
   },
@@ -841,15 +837,15 @@ const SellerViews = {
     const orders = State.storeOrders || [];
     if (!orders.length) {
       container.innerHTML = `
-        <div class="section-header"><span class="section-title">📦 Orders</span></div>
-        <div class="empty-state"><div class="empty-icon">🛵</div><div class="empty-title">No orders yet</div><div class="empty-desc">Orders from your store will appear here.</div></div>`;
+        <div class="section-header"><span class="section-title">📦 ${State.t('seller.dispatch.title')}</span></div>
+        <div class="empty-state"><div class="empty-icon">🛵</div><div class="empty-title">${State.t('seller.dispatch.noOrders')}</div><div class="empty-desc">${State.t('seller.dispatch.noOrdersDesc')}</div></div>`;
       return;
     }
     const awaiting = orders.filter(o => o.order_status === 'confirmed' && o.payment_status === 'paid').length;
     container.innerHTML = `
       <div class="section-header">
-        <span class="section-title">📦 Orders</span>
-        <span style="font-size:11px;color:var(--warning);">${awaiting} awaiting dispatch</span>
+        <span class="section-title">📦 ${State.t('seller.dispatch.title')}</span>
+        <span style="font-size:11px;color:var(--warning);">${State.t('seller.dispatch.awaiting', { awaiting })}</span>
       </div>
       ${orders.map(o => this._dispatchCard(o)).join('')}
     `;
@@ -863,13 +859,14 @@ const SellerViews = {
     const addrStr = [addr.sub_city, addr.woreda, addr.house_number, addr.landmark].filter(Boolean).join(', ');
     const provider = o.delivery_provider || 'rider';
     const providerBadge = provider === 'self'
-      ? `<div style="margin-top:6px;font-size:11px;color:var(--success);font-weight:800;">🏪 Self-delivery (you)</div>`
+      ? `<div style="margin-top:6px;font-size:11px;color:var(--success);font-weight:800;">${State.t('seller.dispatch.selfDelivery')}</div>`
       : provider === 'company'
-        ? `<div style="margin-top:6px;font-size:11px;color:#60A5FA;font-weight:800;">🚚 Delivery Co: ${o.rider_name || ''}</div>`
-        : o.rider_name ? `<div style="margin-top:6px;font-size:11px;color:#A78BFA;">🛵 Rider: ${o.rider_name} · ${o.rider_phone}</div>` : '';
+        ? `<div style="margin-top:6px;font-size:11px;color:#60A5FA;font-weight:800;">${State.t('seller.dispatch.company', { o })}</div>`
+        : o.rider_name ? `<div style="margin-top:6px;font-size:11px;color:#A78BFA;">${State.t('seller.dispatch.rider', { o })}</div>` : '';
     const statusBadge = {
-      pending: '⏳ Pending', confirmed: '✅ Confirmed', dispatched: '🚚 Dispatched',
-      delivered: '📦 Delivered', cancelled: '✕ Cancelled'
+      pending: State.t('seller.dispatch.pending'), confirmed: State.t('seller.dispatch.confirmed'),
+      dispatched: State.t('seller.dispatch.dispatched'), delivered: State.t('seller.dispatch.delivered'),
+      cancelled: State.t('seller.dispatch.cancelled')
     }[o.order_status] || o.order_status;
     return `
       <div class="dispatch-card">

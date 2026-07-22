@@ -576,17 +576,34 @@ seller.hub.recentReviews,⭐ Recent Reviews,seller,Dashboard reviews header,,No
 seller.hub.title,Sales Hub,seller,Dashboard section title,,No
 seller.hub.viewAll,'View all ${pending.length} pending',seller,Dashboard view all,,No
 seller.hub.viewAllOrders,View All,seller,Dashboard view all orders,,No
-seller.inventory.add,+ Add Item,seller,Inventory add button,,No
+seller.inventory.add,+ Add Product,seller,Inventory add button,,No
+seller.inventory.delivered,${count} delivered,seller,Inventory delivered label,,No
+seller.inventory.deliveredCount,🚚 ${p.delivered_count || 0} delivered,seller,Inventory stats row,,No
 seller.inventory.draft,○ Draft,seller,Inventory draft badge,,No
-seller.inventory.edit,✏️ Edit,seller,Inventory edit button,,No
+seller.inventory.edit,Edit,seller,Inventory edit button,,No
+seller.inventory.filterAll,All,seller,Filter chip,,No
+seller.inventory.filterDraft,Draft,seller,Filter chip,,No
+seller.inventory.filterLive,Live,seller,Filter chip,,No
+seller.inventory.filterLowStock,Low Stock,seller,Filter chip,,No
 seller.inventory.live,● Live,seller,Inventory live badge,,No
-seller.inventory.noItems,No items yet,seller,Inventory empty title,,No
+seller.inventory.noItems,No products yet,seller,Inventory empty title,,No
 seller.inventory.noItemsDesc,Add your first product to start selling.,seller,Inventory empty desc,,No
+seller.inventory.noProductsFilter,No products in this filter,seller,Filter empty state,,No
+seller.inventory.ordered,${count} ordered,seller,Inventory ordered label,,No
+seller.inventory.orderedCount,📦 ${p.order_count || 0} ordered,seller,Inventory stats row,,No
+seller.inventory.paid,${count} paid,seller,Inventory paid label,,No
+seller.inventory.paidCount,✅ ${p.paid_count || 0} paid,seller,Inventory stats row,,No
 seller.inventory.publish,Publish,seller,Inventory publish button,,No
 seller.inventory.sku,SKU: ${p.sku || 'N/A'},seller,Inventory sku line,,No
-seller.inventory.stock,Stock: ${p.stock_quantity - (p.reserved_stock || 0)},seller,Inventory stock line,,No
-seller.inventory.title,'My Items (${prods.length})',seller,Inventory header,,No
+seller.inventory.sortAz,A–Z,seller,Sort pill,,No
+seller.inventory.sortNewest,Newest,seller,Sort pill,,No
+seller.inventory.sortOrdered,Most Ordered,seller,Sort pill,,No
+seller.inventory.sortPrice,Price,seller,Sort pill,,No
+seller.inventory.stock,Stock: ${stock},seller,Inventory stock line,,No
+seller.inventory.title,'Products (${prods.length})',seller,Inventory header,,No
 seller.inventory.unpublish,Unpublish,seller,Inventory unpublish button,,No
+seller.inventory.views,${count} views,seller,Inventory views label,,No
+seller.inventory.viewsCount,👁 ${p.view_count || 0} views,seller,Inventory stats row,,No
 seller.menu.accountPassword,🔑 Account Password,seller,Account password title,,No
 seller.menu.accountPasswordDesc,Used to confirm sensitive actions like payout changes and shop deletion.,seller,Account password desc,,No
 seller.menu.accountSettings,👤 Account &amp; Settings,seller,Account settings title,,No
@@ -596,6 +613,8 @@ seller.menu.autoDetect,🔍 Auto-Detect Products,seller,Auto-detect title,,No
 seller.menu.autoDetectDesc,"Any photo with a price in your group becomes a pending product. When OFF, only /sell commands create products.",seller,Auto-detect desc,,No
 seller.menu.autoInvoice,🧾 Auto-Invoice,seller,Auto-invoice title,,No
 seller.menu.autoInvoiceDesc,Attach a PDF invoice to every completed order email.,seller,Auto-invoice desc,,No
+seller.menu.automation,Automation (Stock & Routing),seller,Settings section title,,No
+seller.menu.automationDesc,"Group, auto-detect & alerts",seller,Settings section desc,,No
 seller.menu.cashEnabled,💵 Cash on Delivery,seller,Cash enabled checkbox,,No
 seller.menu.cbeEnabled,🏦 CBE Bank Transfer,seller,CBE enabled checkbox,,No
 seller.menu.cbeName,CBE Account Name,seller,CBE name label,,No
@@ -606,6 +625,8 @@ seller.menu.connected,"✅ Connected: <strong style=""color:var(--text-primary);
 seller.menu.copyCode,📋 Copy,seller,Copy store code button,,No
 seller.menu.copyLink,🔗 Copy Store Link,seller,Copy store link button,,No
 seller.menu.couponValid,Coupon Valid (days),seller,Coupon valid label,,No
+seller.menu.coupons,Coupons & Discounts,seller,Settings section title,,No
+seller.menu.couponsDesc,Share-to-save promotions,seller,Settings section desc,,No
 seller.menu.couponsDesc2,Grow sales with share-to-save coupons. Customers earn a coupon when they share a product N times.,seller,Coupons desc (alt),,No
 seller.menu.dangerZone,⚠️ Danger Zone,seller,Danger zone label,,No
 seller.menu.deleteShop,🗑 Delete My Shop &amp; Medebirr Account,seller,Delete shop button,,No
@@ -625,10 +646,22 @@ seller.menu.group.protect,Protect the Shop,seller,Settings group sub,,No
 seller.menu.group.sales,Sales & Promotion,seller,Settings group,,No
 seller.menu.group.security,Security & Access,seller,Settings group,,No
 seller.menu.group.setup,Setup & Branding,seller,Settings group,,No
+seller.menu.groupBuy,Group Buy Settings,seller,Settings section title,,No
+seller.menu.groupBuyDesc,Bulk-buy discounts,seller,Settings section desc,,No
 seller.menu.groupBuyDesc2,Customers can form a group to buy together and get a discount.,seller,Group buy desc (alt),,No
 seller.menu.groupBuying,👥 Group Buying,seller,Group buy title,,No
 seller.menu.groupBuyingDesc,Customers can form a group to buy together and get a discount.,seller,Group buy desc,,No
 seller.menu.groupDiscount,Group Discount %,seller,Group discount label,,No
+seller.menu.groupMoney,Money & Earnings,seller,Settings group title,,No
+seller.menu.groupMoneySub,Get Paid,seller,Settings group subtitle,,No
+seller.menu.groupOrders,Order Management,seller,Settings group title,,No
+seller.menu.groupOrdersSub,Fulfill Orders,seller,Settings group subtitle,,No
+seller.menu.groupSales,Sales & Promotion,seller,Settings group title,,No
+seller.menu.groupSalesSub,Attract Customers,seller,Settings group subtitle,,No
+seller.menu.groupSecurity,Security & Access,seller,Settings group title,,No
+seller.menu.groupSecuritySub,Protect the Shop,seller,Settings group subtitle,,No
+seller.menu.groupSetup,Setup & Branding,seller,Settings group title,,No
+seller.menu.groupSetupSub,Get Started,seller,Settings group subtitle,,No
 seller.menu.inviteManager,+ Invite Manager,seller,Invite manager button,,No
 seller.menu.inviteStaff,+ Invite Staff,seller,Invite staff button,,No
 seller.menu.logout,Log Out,seller,Seller logout button,,No
@@ -643,10 +676,14 @@ seller.menu.noRatings,No ratings yet,seller,No ratings badge,,No
 seller.menu.noStore,No store registered,seller,Seller menu empty,,No
 seller.menu.notConnected,⚠️ No group connected yet. Connect a group to auto-broadcast your products.,seller,TG not connected note,,No
 seller.menu.notifPrefIntro,Choose how Medebirr keeps you and your buyers informed.,seller,Notif pref intro,,No
+seller.menu.notifications,Notification Preferences,seller,Settings section title,,No
+seller.menu.notificationsDesc,Order & stock alerts,seller,Settings section desc,,No
 seller.menu.owner,👤 Owner,seller,Owner role,,No
 seller.menu.ownerDesc,Full access — you. Receives payouts and can delete the shop.,seller,Owner desc,,No
 seller.menu.passwordResetSent,Password reset link sent to your Telegram,seller,Password reset toast,,No
 seller.menu.paymentMethodsAccepted,Payment Methods Accepted,seller,Policy payment methods label,,No
+seller.menu.payout,Payout & Bank Details,seller,Settings section title,,No
+seller.menu.payoutDesc,Telebirr & CBE accounts,seller,Settings section desc,,No
 seller.menu.payoutTitle,These details are shown to buyers at checkout so they can pay you. Keep them up to date.,seller,Payout intro,,No
 seller.menu.pendingVerification,⏳ Pending Verification,seller,Pending verification badge,,No
 seller.menu.policyDesc,Policy Description (shown to buyers at checkout),seller,Policy desc label,,No
@@ -673,16 +710,28 @@ seller.menu.section.security,Account Security (2FA),seller,Settings section,,No
 seller.menu.section.shipping,Shipping & Delivery Rules,seller,Settings section,,No
 seller.menu.section.staff,Staff Roles & Permissions,seller,Settings section,,No
 seller.menu.section.tax,Tax Config & Invoices,seller,Settings section,,No
+seller.menu.security,Account Security (2FA),seller,Settings section title,,No
+seller.menu.securityDesc,Password & 2FA,seller,Settings section desc,,No
 seller.menu.selfDelivery,🏪 Self-Delivery,seller,Self-delivery title,,No
 seller.menu.selfDeliveryDesc,You deliver orders yourself instead of using a rider.,seller,Self-delivery desc,,No
 seller.menu.shareStore,📲 Share Your Store,seller,Share store label,,No
 seller.menu.shareToSave,📤 Share-to-Save Coupons,seller,Coupons section title,,No
 seller.menu.shareToSaveDesc,Customers earn a coupon when they share a product N times.,seller,Coupons desc,,No
 seller.menu.sharesRequired,Shares Required,seller,Shares required label,,No
+seller.menu.shipping,Shipping & Delivery Rules,seller,Settings section title,,No
+seller.menu.shippingDesc,Fees & delivery options,seller,Settings section desc,,No
 seller.menu.shippingIntro,Control how your products are delivered and what buyers pay for shipping.,seller,Shipping intro,,No
 seller.menu.staffComingSoon,Staff invites coming soon,seller,Staff coming soon toast,,No
 seller.menu.staffIntro,Invite team members and assign roles. (Staff management is provisioned per store — contact Medebirr support to enable seats for your shop.),seller,Staff intro,,No
+seller.menu.staffRoles,Staff Roles & Permissions,seller,Settings section title,,No
+seller.menu.staffRolesDesc,Invite managers & staff,seller,Settings section desc,,No
 seller.menu.storeCode,Store Code,seller,Store code label,,No
+seller.menu.storeIdentity,Store Identity & Profile,seller,Settings section title,,No
+seller.menu.storeIdentityDesc,"Name, logo, code & share",seller,Settings section desc,,No
+seller.menu.storePolicies,Store Policies & Legal Docs,seller,Settings section title,,No
+seller.menu.storePoliciesDesc,"Returns, payments & fees",seller,Settings section desc,,No
+seller.menu.tax,Tax Config & Invoices,seller,Settings section title,,No
+seller.menu.taxDesc,"VAT, TIN & auto-invoice",seller,Settings section desc,,No
 seller.menu.taxIntro,Configure how tax is shown to buyers and whether invoices are auto-generated.,seller,Tax intro,,No
 seller.menu.taxNumber,Tax Number / TIN,seller,TIN label,,No
 seller.menu.taxNumberPlaceholder,TIN / VAT no.,seller,TIN placeholder,,No
@@ -706,6 +755,9 @@ seller.nav.orders,Orders,seller,Seller bottom nav tab,,No
 seller.notif.emptyDesc,"New orders, dispatches, payouts and delivery updates will appear here.",seller,Seller notif empty desc,,No
 seller.notif.emptyTitle,No notifications yet,seller,Seller notif empty,,No
 seller.notif.title,Store Notifications,seller,Seller notif title,,No
+seller.notifs.emptyDesc,"New orders, dispatches, payouts and delivery updates will appear here.",seller,Notif center empty desc,,No
+seller.notifs.emptyTitle,No notifications yet,seller,Notif center empty,,No
+seller.notifs.title,Store Notifications,seller,Notif center title,,No
 seller.openStudio,Open Studio →,seller,Open studio button,,No
 seller.payout.failed,Save failed — retry to continue,seller,Payout error,,No
 seller.payout.resume,Stopped at ${Math.round(pct)}% — tap save to resume,seller,Payout resume,,No

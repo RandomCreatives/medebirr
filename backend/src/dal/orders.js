@@ -4,7 +4,6 @@
  * write inline SQL. Schema changes touch one file, not 14 routes.
  */
 const { query, getClient } = require('../db');
-
 // ── Queries ──────────────────────────────────────────────
 
 function getById(orderId) {
