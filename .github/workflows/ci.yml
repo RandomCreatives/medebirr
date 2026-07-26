@@ -17,10 +17,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Check JS syntax (public + root)
         run: |
@@ -33,7 +32,7 @@ jobs:
         run: node scripts/validate-i18n.js
 
       - name: Install backend deps
-        run: cd backend && npm ci
+        run: cd backend && npm install
 
       - name: Run unit tests
         run: npm test
