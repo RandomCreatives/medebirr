@@ -228,84 +228,68 @@ router.post('/telebirr/webhook', retryOnDeadlock(async (req, res, next) => {
         [JSON.stringify(payload), outTradeNo]
       );
 
-      // Mark order paid
-      await query(
-        `UPDATE orders SET
-          payment_status = 'paid', order_status = 'confirmed',
-          telebirr_tx_id = $1, updated_at = NOW()
-         WHERE order_id = $2`,
-        [transactionNo, tx.order_id]
-      );
-
-      // Actual stock deduction (remove reservation, reduce actual stock)
-      // Skip if already deducted in a previous payment attempt
+      // Idempotency: skip if already paid
       const orderStatus = await query('SELECT payment_status FROM orders WHERE order_id = $1', [tx.order_id]);
-      if (orderStatus.rows[0].payment_status !== 'paid') {
-        await inventory.deductStock(tx.order_id);
-      } else {
+      if (orderStatus.rows[0].payment_status === 'paid') {
         console.log(`⏭️ Stock already deducted for order ${tx.order_id}, skipping`);
-      }
-
-      console.log(`✅ Telebirr payment confirmed: Order ${tx.order_id}, TX: ${transactionNo}`);
-
-      // Generate QR code + PDF receipt for the confirmed order
-      try {
-        await generateQRAndReceipt(tx.order_id);
-      } catch (e) {
-        console.warn('QR/Receipt generation failed:', e.message);
-      }
-
-      // Notify seller via Telegram bot (private DM, not group)
-      try {
-        const tgService = require('../services/telegram');
-        const orderFull = await query(
-          `SELECT o.*, s.tg_group_id, s.admin_tg_user_id, u.first_name, u.last_name, u.username
-           FROM orders o
-           JOIN stores s ON o.store_id = s.store_id
-           JOIN users u ON o.buyer_tg_user_id = u.tg_user_id
-           WHERE o.order_id = $1`,
-          [tx.order_id]
+        res.json({ code: 'SUCCESS', msg: 'Already processed' });
+      } else {
+        // Mark order paid
+        await query(
+          `UPDATE orders SET
+            payment_status = 'paid', order_status = 'confirmed',
+            telebirr_tx_id = $1, updated_at = NOW()
+           WHERE order_id = $2`,
+          [transactionNo, tx.order_id]
         );
-        const items = await query('SELECT * FROM order_items WHERE order_id = $1', [tx.order_id]);
-        const ord = orderFull.rows[0];
-        if (ord) {
-          // ROUTE TO PRIVATE DM (Preferred)
-          if (ord.admin_tg_user_id) {
-            await tgService.notifySellerNewOrder(ord.admin_tg_user_id, ord, ord, items.rows);
-          } else if (ord.tg_group_id) {
-            // Safe fallback: send to group, but let's notify seller of privacy risk
-            console.warn(`Privacy Warning: Routing order notification for #${ord.order_ref} to public group.`);
-            const sanitizedBuyer = { first_name: 'Buyer', last_name: '', username: '' };
-            const sanitizedOrd = {
-              ...ord,
-              delivery_address: JSON.stringify({
-                sub_city: ord.location_sub_city || 'Addis Ababa',
-                phone: 'REDACTED (View in Seller Studio)'
-              })
-            };
-            await tgService.notifySellerNewOrder(ord.tg_group_id, sanitizedOrd, sanitizedBuyer, items.rows);
+
+        // Actual stock deduction (remove reservation, reduce actual stock)
+        await inventory.deductStock(tx.order_id);
+
+        console.log(`✅ Telebirr payment confirmed: Order ${tx.order_id}, TX: ${transactionNo}`);
+
+        // Generate QR code + PDF receipt for the confirmed order
+        try { await generateQRAndReceipt(tx.order_id); } catch (e) { console.warn('QR/Receipt generation failed:', e.message); }
+
+        // Notify seller via Telegram bot (private DM, not group)
+        try {
+          const tgService = require('../services/telegram');
+          const orderFull = await query(
+            `SELECT o.*, s.tg_group_id, s.admin_tg_user_id, u.first_name, u.last_name, u.username
+             FROM orders o
+             JOIN stores s ON o.store_id = s.store_id
+             JOIN users u ON o.buyer_tg_user_id = u.tg_user_id
+             WHERE o.order_id = $1`,
+            [tx.order_id]
+          );
+          const items = await query('SELECT * FROM order_items WHERE order_id = $1', [tx.order_id]);
+          const ord = orderFull.rows[0];
+          if (ord) {
+            if (ord.admin_tg_user_id) {
+              await tgService.notifySellerNewOrder(ord.admin_tg_user_id, ord, ord, items.rows);
+            } else if (ord.tg_group_id) {
+              console.warn(`Privacy Warning: Routing order notification for #${ord.order_ref} to public group.`);
+              const sanitizedBuyer = { first_name: 'Buyer', last_name: '', username: '' };
+              const sanitizedOrd = { ...ord, delivery_address: JSON.stringify({ sub_city: ord.location_sub_city || 'Addis Ababa', phone: 'REDACTED (View in Seller Studio)' }) };
+              await tgService.notifySellerNewOrder(ord.tg_group_id, sanitizedOrd, sanitizedBuyer, items.rows);
+            }
           }
-        }
-      } catch (e) {
-        console.warn('Seller notification failed:', e.message);
+        } catch (e) { console.warn('Seller notification failed:', e.message); }
+
+        // Notify buyer
+        try {
+          const notif = require('../services/notifications');
+          const buyerOrder = await query('SELECT * FROM orders WHERE order_id = $1', [tx.order_id]);
+          await notif.notifyOrderStatus(buyerOrder.rows[0], 'confirmed');
+        } catch (_) {}
+
+        // Notify seller of the new paid order
+        try {
+          const notif = require('../services/notifications');
+          const fullOrder = await query('SELECT o.*, u.first_name, u.last_name, u.username FROM orders o JOIN users u ON o.buyer_tg_user_id = u.tg_user_id WHERE o.order_id = $1', [tx.order_id]);
+          if (fullOrder.rows[0]) await notif.notifyNewOrder(fullOrder.rows[0].store_id, fullOrder.rows[0], fullOrder.rows[0]);
+        } catch (_) {}
       }
-
-      // Notify buyer
-      try {
-        const notif = require('../services/notifications');
-        const buyerOrder = await query('SELECT * FROM orders WHERE order_id = $1', [tx.order_id]);
-        await notif.notifyOrderStatus(buyerOrder.rows[0], 'confirmed');
-      } catch (_) {}
-
-      // Notify seller of the new paid order
-      try {
-        const notif = require('../services/notifications');
-        const fullOrder = await query(
-          'SELECT o.*, u.first_name, u.last_name, u.username FROM orders o JOIN users u ON o.buyer_tg_user_id = u.tg_user_id WHERE o.order_id = $1',
-          [tx.order_id]
-        );
-        if (fullOrder.rows[0]) await notif.notifyNewOrder(fullOrder.rows[0].store_id, fullOrder.rows[0], fullOrder.rows[0]);
-      } catch (_) {}
     } else {
       await query(
         `UPDATE payment_transactions SET status = 'failed', gateway_response = $1 WHERE gateway_tx_ref = $2`,
@@ -346,17 +330,16 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
        ON CONFLICT DO NOTHING`,
       [order_id, `CASH-${order_id}`, orderResult.rows[0].total_etb]
     );
-      await query(
-        `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed', updated_at = NOW() WHERE order_id = $1`,
-        [order_id]
-      );
-
       // Skip if already deducted in a previous payment attempt
       const orderStatus = await query('SELECT payment_status FROM orders WHERE order_id = $1', [order_id]);
       if (orderStatus.rows[0].payment_status !== 'paid') {
+        await query(
+          `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed', updated_at = NOW() WHERE order_id = $1`,
+          [order_id]
+        );
         await inventory.deductStock(order_id);
       } else {
-        console.log(`⏭️ Stock already deducted for order ${order_id}, skipping`);
+        console.log(`⏭️ Payment already processed for order ${order_id}, skipping`);
       }
 
     // Generate QR + receipt for confirmed order
@@ -453,19 +436,18 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
        gateway === 'telebirr' ? order.telebirr_merchant_id : order.cbe_account_number]
     );
 
-    await query(
-      `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed',
-        transaction_code = $1, payment_tx_ref = $2, payment_proof = $3, updated_at = NOW()
-       WHERE order_id = $4`,
-      [txRef, txRef, paymentProof ? JSON.stringify(paymentProof) : null, orderId]
-    );
-
     // Skip if already deducted in a previous payment attempt
     const orderStatus = await query('SELECT payment_status FROM orders WHERE order_id = $1', [orderId]);
     if (orderStatus.rows[0].payment_status !== 'paid') {
+      await query(
+        `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed',
+          transaction_code = $1, payment_tx_ref = $2, payment_proof = $3, updated_at = NOW()
+         WHERE order_id = $4`,
+        [txRef, txRef, paymentProof ? JSON.stringify(paymentProof) : null, orderId]
+      );
       await inventory.deductStock(orderId);
     } else {
-      console.log(`⏭️ Stock already deducted for order ${orderId}, skipping`);
+      console.log(`⏭️ Payment already processed for order ${orderId}, skipping`);
     }
 
     try { await generateQRAndReceipt(orderId); } catch (e) { console.warn('QR/Receipt failed:', e.message); }

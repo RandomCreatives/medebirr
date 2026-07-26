@@ -48,6 +48,11 @@ add('auth','auth.logout.yes','Log Out','Logout confirm button',false);
 add('auth','auth.switchAccount','Switch Account','Switch account button',false);
 add('auth','auth.onboarding.welcome','✓ Welcome!','Onboarding completed label',false);
 
+// ===================== BRAND =====================
+add('brand','brand.loadingTagline','Ethiopia\'s Free Shopping Experience','Loading screen tagline',false);
+add('brand','brand.onboardingTagline','Ethiopia\'s Telegram Marketplace','Onboarding tagline',false);
+add('brand','brand.slideToEnter','Slide to enter →','Onboarding slide label',false);
+
 // ===================== BUYER =====================
 add('buyer','buyer.explore.itemsFrom','${filtered.length} items from verified sellers','Explore header count',false);
 add('buyer','buyer.explore.featured','⭐ Featured','Sort option',false);
@@ -190,8 +195,8 @@ add('buyer','buyer.orders.all','All','Order filter tab',false);
 add('buyer','buyer.orders.active','Active','Order filter tab',false);
 add('buyer','buyer.orders.completed','Completed','Order filter tab',false);
 add('buyer','buyer.orders.cancelled','Cancelled','Order filter tab',false);
-add('buyer','buyer.orders.noOrders','No ${filter === \'all\' ? \'\' : filter} orders','Orders empty title',false);
-add('buyer','buyer.orders.noOrdersDesc','${filter === \'all\' ? \'Your purchase history will appear here.\' : \'No orders match this filter.\'}','Orders empty desc',false);
+add('buyer','buyer.orders.noOrders','No ${filter} orders','Orders empty title',false);
+add('buyer','buyer.orders.noOrdersDesc','${message}','Orders empty desc',false);
 add('buyer','buyer.orders.promoCoupon','🎟️ Promo Coupon Saved: -${State.formatETB(o.discount_etb)}','Order promo line',false);
 add('buyer','buyer.orders.showMyQR','📱 Show My QR','Order show QR button',false);
 add('buyer','buyer.orders.scanRider','📷 Scan Rider\'s QR','Order scan rider button',false);
@@ -243,6 +248,11 @@ add('buyer','buyer.settings.chatAlertsDesc','Messages from sellers and support',
 add('buyer','buyer.settings.security','Security','Settings group title',false);
 add('buyer','buyer.settings.biometric','Biometric Login','Settings toggle label',false);
 add('buyer','buyer.settings.biometricDesc','FaceID or Fingerprint authentication','Settings toggle desc',false);
+add('buyer','buyer.settings.performance','Performance','Settings group title',false);
+add('buyer','buyer.settings.clearCache','Clear App Cache','Settings action label',false);
+add('buyer','buyer.settings.clearCacheDesc','Free up storage and refresh cached data','Settings action desc',false);
+add('buyer','buyer.settings.appVersion','Medebirr v1.0.0','Settings version info',true);
+add('buyer','buyer.settings.appTagline','Ethiopia\'s Free Shopping Experience','Settings tagline',false);
 add('buyer','buyer.help.center','Help Center','Help — placeholder section',false);
 add('buyer','buyer.privacy.policy','Privacy Policy','Privacy — placeholder section',false);
 add('buyer','buyer.cart.qtyMax','Only ${maxStock} units available in stock for ${product.title}!','Cart max stock toast',false);
@@ -871,6 +881,17 @@ add('seller','seller.profileModal.deleteStore','🗑️ Delete this store','Prof
 add('seller','seller.profileModal.openShop','🏪 Open a Shop on Medebirr — Free','Profile modal open shop',false);
 add('seller','seller.profileModal.myOrders','📦 My Orders & Deliveries','Profile modal orders',false);
 add('seller','seller.profileModal.switchAccount','⇄ Switch Account','Profile modal switch',false);
+add('seller','seller.settings.twoFactor','🔐 Two-Factor Auth (2FA)','Seller settings 2FA label',false);
+add('seller','seller.settings.twoFactorDesc','Require a Telegram code on every login to your seller account.','Seller settings 2FA desc',false);
+add('seller','seller.settings.accountPassword','🔑 Account Password','Seller settings password label',false);
+add('seller','seller.settings.accountPasswordDesc','Used to confirm sensitive actions like payout changes and shop deletion.','Seller settings password desc',false);
+add('seller','seller.settings.resetPassword','Reset Password','Seller settings reset button',false);
+add('seller','seller.settings.dangerZone','⚠️ Danger Zone','Seller settings danger zone title',false);
+add('seller','seller.settings.dangerZoneDesc','Deleting your shop permanently unpublishes all its products and removes it from Medebirr. This cannot be undone. You cannot delete the shop while it has active (paid, undelivered) orders.','Seller settings danger zone desc',false);
+add('seller','seller.settings.deleteShop','🗑 Delete My Shop &amp; Medebirr Account','Seller settings delete button',false);
+add('seller','seller.settings.newOrderAlerts','🔔 New Order Alerts','Seller settings new order alerts label',false);
+add('seller','seller.settings.newOrderAlertsDesc','Ping you in Telegram the moment a new order lands.','Seller settings new order alerts desc',false);
+add('seller','seller.settings.logOut','Log Out','Seller settings logout button',false);
 add('seller','seller.welcome.launch','Launch Your Medeb','Seller welcome title',false);
 add('seller','seller.welcome.sub','Zero commission. Direct payments. Ethiopia\'s marketplace.','Seller welcome sub',false);
 add('seller','seller.welcome.keepBirr','Keep Every Birr','Welcome benefit title',false);
@@ -1075,7 +1096,7 @@ for (const r of rows) {
 }
 
 // ===================== SORT =====================
-const catOrder = ['auth','buyer','checkout','delivery','notification','seller','shared','general'];
+const catOrder = ['auth','brand','buyer','checkout','delivery','notification','seller','shared','general'];
 out.sort((a,b) => {
   const ca = catOrder.indexOf(a[0]), cb = catOrder.indexOf(b[0]);
   if (ca !== cb) return ca - cb;

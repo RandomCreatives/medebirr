@@ -762,8 +762,8 @@ const BuyerViews = {
         ${filtered.length ? filtered.map(o => this._orderCardDetailed(o)).join('') : `
           <div class="empty-state" style="padding:30px 20px;">
            <div class="empty-icon">📦</div>
-           <div class="empty-title">${State.t('buyer.orders.noOrders', { filter })}</div>
-           <div class="empty-desc">${State.t('buyer.orders.noOrdersDesc', { filter })}</div>
+           <div class="empty-title">${State.t('buyer.orders.noOrders', { filter: filter === 'all' ? '' : filter })}</div>
+           <div class="empty-desc">${State.t('buyer.orders.noOrdersDesc', { message: filter === 'all' ? 'Your purchase history will appear here.' : 'No orders match this filter.' })}</div>
           </div>
         `}
       </div>
@@ -1010,11 +1010,11 @@ const BuyerViews = {
 
       <!-- Performance -->
       <div class="settings-group">
-        <div class="settings-group-title">Performance</div>
+        <div class="settings-group-title">${State.t('buyer.settings.performance')}</div>
         <div class="settings-action-row" onclick="BuyerViews._clearCache()">
           <div class="settings-action-info">
-            <div class="settings-action-label">Clear App Cache</div>
-            <div class="settings-action-desc">Free up storage and refresh cached data</div>
+            <div class="settings-action-label">${State.t('buyer.settings.clearCache')}</div>
+            <div class="settings-action-desc">${State.t('buyer.settings.clearCacheDesc')}</div>
           </div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
@@ -1022,14 +1022,14 @@ const BuyerViews = {
 
       <!-- App Info -->
       <div class="settings-app-info">
-        <div>Medebirr v1.0.0</div>
-        <div style="color:var(--text-muted);">Ethiopia's Free Shopping Experience</div>
+        <div>${State.t('buyer.settings.appVersion')}</div>
+        <div style="color:var(--text-muted);">${State.t('buyer.settings.appTagline')}</div>
       </div>
 
       <!-- Logout -->
       <button class="settings-logout-btn" onclick="BuyerViews._confirmLogout()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Log Out
+        ${State.t('auth.logout.yes')}
       </button>
     `;
   },
