@@ -15,7 +15,7 @@ const router = express.Router();
  */
 async function generateQRAndReceipt(orderId) {
   const orderResult = await query(
-    `SELECT o.*, s.store_name, s.location_sub_city, s.business_phone
+    `SELECT o.*, s.store_name, s.location_sub_city, s.business_phone, s.admin_tg_user_id
      FROM orders o JOIN stores s ON o.store_id = s.store_id
      WHERE o.order_id = $1`,
     [orderId]
@@ -287,7 +287,7 @@ router.post('/telebirr/webhook', retryOnDeadlock(async (req, res, next) => {
         try {
           const notif = require('../services/notifications');
           const fullOrder = await query('SELECT o.*, u.first_name, u.last_name, u.username FROM orders o JOIN users u ON o.buyer_tg_user_id = u.tg_user_id WHERE o.order_id = $1', [tx.order_id]);
-          if (fullOrder.rows[0]) await notif.notifyNewOrder(fullOrder.rows[0].store_id, fullOrder.rows[0], fullOrder.rows[0]);
+          if (fullOrder.rows[0]) await notif.notifyNewOrder({ store_id: fullOrder.rows[0].store_id }, fullOrder.rows[0], fullOrder.rows[0]);
         } catch (_) {}
       }
     } else {
@@ -373,7 +373,7 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
         'SELECT o.*, u.first_name, u.last_name, u.username FROM orders o JOIN users u ON o.buyer_tg_user_id = u.tg_user_id WHERE o.order_id = $1',
         [order_id]
       );
-      if (fullOrder.rows[0]) await notif.notifyNewOrder(fullOrder.rows[0].store_id, fullOrder.rows[0], fullOrder.rows[0]);
+      if (fullOrder.rows[0]) await notif.notifyNewOrder({ store_id: fullOrder.rows[0].store_id }, fullOrder.rows[0], fullOrder.rows[0]);
     } catch (_) {}
 
     res.json({ message: 'Cash payment confirmed. Order confirmed.' });
@@ -475,7 +475,7 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
         'SELECT o.*, u.first_name, u.last_name, u.username FROM orders o JOIN users u ON o.buyer_tg_user_id = u.tg_user_id WHERE o.order_id = $1',
         [orderId]
       );
-      if (fullOrder.rows[0]) await notif.notifyNewOrder(fullOrder.rows[0].store_id, fullOrder.rows[0], fullOrder.rows[0]);
+      if (fullOrder.rows[0]) await notif.notifyNewOrder({ store_id: fullOrder.rows[0].store_id }, fullOrder.rows[0], fullOrder.rows[0]);
     } catch (_) {}
   }
 

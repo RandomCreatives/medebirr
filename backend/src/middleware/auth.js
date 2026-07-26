@@ -66,7 +66,7 @@ const requireAuth = async (req, res, next) => {
 
     // Fetch fresh user data
     const result = await query(
-      'SELECT tg_user_id, first_name, last_name, username, language, is_active, is_premium, telegram_data',
+      'SELECT user_id, tg_user_id, first_name, last_name, username, language_code, is_active, email, phone, mfa_enabled FROM users WHERE tg_user_id = $1',
       [decoded.tg_user_id]
     );
     if (result.rows.length === 0) {
