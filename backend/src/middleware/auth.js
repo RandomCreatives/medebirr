@@ -66,7 +66,7 @@ const requireAuth = async (req, res, next) => {
 
     // Fetch fresh user data
     const result = await query(
-      'SELECT * FROM users WHERE tg_user_id = $1 AND is_active = TRUE',
+      'SELECT tg_user_id, first_name, last_name, username, language, is_active, is_premium, telegram_data',
       [decoded.tg_user_id]
     );
     if (result.rows.length === 0) {

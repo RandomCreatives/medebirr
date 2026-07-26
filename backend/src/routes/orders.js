@@ -7,6 +7,7 @@ const inventory = require('../services/inventory');
 const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
+const { retryOnDeadlock } = require('../utils/retry');
 
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
@@ -39,15 +40,35 @@ router.post(
     body('payment_method').isIn(['telebirr', 'cbe', 'cash']),
     body('coupon_code').optional({ values: 'falsy' }).isString()
   ],
-  async (req, res, next) => {
+  retryOnDeadlock(async (req, res, next) => {
     const client = await getClient();
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
 
       const { store_id, items, delivery_address, payment_method, address_id, delivery_method, coupon_code,
-              delivery_latitude, delivery_longitude } = req.body;
+              delivery_latitude, delivery_longitude, idempotency_key } = req.body;
       const isPickup = delivery_method === 'pickup';
+
+      // Idempotency: if a key was provided, check for existing order
+      if (idempotency_key) {
+        const existing = await query(
+          'SELECT order_id, order_ref FROM orders WHERE payment_tx_ref = $1 AND buyer_tg_user_id = $2',
+          [idempotency_key, req.user.tg_user_id]
+        );
+        if (existing.rows.length > 0) {
+          const orderResult = await query(
+            `SELECT o.*, s.store_name, s.store_slug, s.tg_channel_username, s.admin_tg_user_id, s.telebirr_merchant_id,
+                    s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address
+             FROM orders o JOIN stores s ON o.store_id = s.store_id WHERE o.order_id = $1`,
+            [existing.rows[0].order_id]
+          );
+          const itemsResult = await query('SELECT * FROM order_items WHERE order_id = $1', [existing.rows[0].order_id]);
+          client.release();
+          return res.json({ order: { ...orderResult.rows[0], items: itemsResult.rows } });
+        }
+      }
+
       await client.query('BEGIN');
 
       // Get store & policy
@@ -198,14 +219,15 @@ router.post(
       // Create order
       const orderRef = generateOrderRef();
       const deliveryOtp = generateOTP(4);
+      const ik = idempotency_key || null;
       const orderResult = await client.query(
         `INSERT INTO orders (
           order_ref, buyer_tg_user_id, store_id, address_id, delivery_address,
           subtotal_etb, delivery_fee_etb, total_etb, payment_method,
           payment_status, order_status, policy_snapshot, delivery_method,
           coupon_code, discount_etb, delivery_otp,
-          delivery_latitude, delivery_longitude
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11,$12,$13,$14,$15,$16)
+          delivery_latitude, delivery_longitude, payment_tx_ref
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11,$12,$13,$14,$15,$16,$17)
         RETURNING *`,
         [orderRef, req.user.tg_user_id, store_id, address_id || null,
          JSON.stringify(delivery_address), subtotal, deliveryFee, total,
@@ -213,7 +235,8 @@ router.post(
          appliedCoupon ? appliedCoupon.code : null, discountAmount,
          deliveryOtp,
          delivery_latitude != null ? Number(delivery_latitude) : null,
-         delivery_longitude != null ? Number(delivery_longitude) : null]
+         delivery_longitude != null ? Number(delivery_longitude) : null,
+         ik]
       );
       const order = orderResult.rows[0];
 
@@ -265,7 +288,7 @@ router.post(
       client.release();
     }
   }
-);
+));
 
 /**
  * GET /api/v1/orders
@@ -583,7 +606,7 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
 
     // Verify seller owns the store
     const orderCheck = await query(
-      `SELECT o.order_id, o.buyer_tg_user_id, o.payment_status, s.admin_tg_user_id,
+      `SELECT o.order_id, o.buyer_tg_user_id, o.payment_status, o.total_etb, s.admin_tg_user_id,
               s.store_name, s.business_phone
        FROM orders o JOIN stores s ON o.store_id = s.store_id
        WHERE o.order_id = $1`,
@@ -672,7 +695,7 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
  * PUT /api/v1/orders/:orderId/confirm-delivery
  * Buyer confirms delivery (QR handshake)
  */
-router.put('/:orderId/confirm-delivery', requireAuth, async (req, res, next) => {
+router.put('/:orderId/confirm-delivery', requireAuth, retryOnDeadlock(async (req, res, next) => {
   try {
     const orderCheck = await query(
       'SELECT order_id, buyer_tg_user_id, order_status FROM orders WHERE order_id = $1',
@@ -721,13 +744,13 @@ router.put('/:orderId/confirm-delivery', requireAuth, async (req, res, next) => 
   } catch (err) {
     next(err);
   }
-});
+}));
 
 /**
  * PATCH /api/v1/orders/:orderId/cancel
  * Buyer cancels a pending or confirmed order
  */
-router.patch('/:orderId/cancel', requireAuth, async (req, res, next) => {
+router.patch('/:orderId/cancel', requireAuth, retryOnDeadlock(async (req, res, next) => {
   try {
     const orderCheck = await query(
       'SELECT order_id, buyer_tg_user_id, order_status FROM orders WHERE order_id = $1',
@@ -775,7 +798,7 @@ router.patch('/:orderId/cancel', requireAuth, async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
+}));
 
 /**
  * PATCH /api/v1/orders/:orderId/cancel-seller

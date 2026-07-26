@@ -20,6 +20,14 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
+  // PostgreSQL deadlock — the operation was retried already
+  if (err.code === '40P01') {
+    console.error('💀 Deadlock not resolved after retries:', err.message);
+    return res.status(503).json({
+      error: 'Conflict — please try again'
+    });
+  }
+
   // Validation errors from express-validator
   if (err.type === 'validation') {
     return res.status(422).json({ error: 'Validation failed', errors: err.errors });

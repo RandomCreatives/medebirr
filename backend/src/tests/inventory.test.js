@@ -98,6 +98,7 @@ test('deductStock reduces stock_quantity AND reserved_stock for every item', () 
 test('releaseReservedStock only touches reserved_stock (never stock_quantity)', () => {
   const { query, calls } = makeMockQuery();
   mockQuery = query;
+  mockClient = makeMockClient({ query, calls });
   return inventory.releaseReservedStock('o1').then(() => {
     const updates = calls.filter(c => /UPDATE products/.test(c.text));
     assert(updates.length === 2, 'expected 2 product updates');

@@ -6,6 +6,7 @@ const { query } = require('../db');
 const qrService = require('../services/qrcode');
 const receiptService = require('../services/receipt');
 const inventory = require('../services/inventory');
+const { retryOnDeadlock } = require('../utils/retry');
 
 const router = express.Router();
 
@@ -186,7 +187,7 @@ router.post('/telebirr/initiate', requireAuth, async (req, res, next) => {
  * POST /api/v1/payments/telebirr/webhook
  * Telebirr payment notification (webhook from Ethio Telecom)
  */
-router.post('/telebirr/webhook', async (req, res, next) => {
+router.post('/telebirr/webhook', retryOnDeadlock(async (req, res, next) => {
   try {
     const payload = req.body;
     const receivedSign = payload.sign;
@@ -237,7 +238,13 @@ router.post('/telebirr/webhook', async (req, res, next) => {
       );
 
       // Actual stock deduction (remove reservation, reduce actual stock)
-      await inventory.deductStock(tx.order_id);
+      // Skip if already deducted in a previous payment attempt
+      const orderStatus = await query('SELECT payment_status FROM orders WHERE order_id = $1', [tx.order_id]);
+      if (orderStatus.rows[0].payment_status !== 'paid') {
+        await inventory.deductStock(tx.order_id);
+      } else {
+        console.log(`⏭️ Stock already deducted for order ${tx.order_id}, skipping`);
+      }
 
       console.log(`✅ Telebirr payment confirmed: Order ${tx.order_id}, TX: ${transactionNo}`);
 
@@ -318,7 +325,7 @@ router.post('/telebirr/webhook', async (req, res, next) => {
     console.error('Telebirr webhook error:', err);
     res.json({ code: 'FAIL', msg: err.message });
   }
-});
+}));
 
 /**
  * POST /api/v1/payments/cash/confirm
@@ -339,12 +346,18 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
        ON CONFLICT DO NOTHING`,
       [order_id, `CASH-${order_id}`, orderResult.rows[0].total_etb]
     );
-    await query(
-      `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed', updated_at = NOW() WHERE order_id = $1`,
-      [order_id]
-    );
+      await query(
+        `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed', updated_at = NOW() WHERE order_id = $1`,
+        [order_id]
+      );
 
-    await inventory.deductStock(order_id);
+      // Skip if already deducted in a previous payment attempt
+      const orderStatus = await query('SELECT payment_status FROM orders WHERE order_id = $1', [order_id]);
+      if (orderStatus.rows[0].payment_status !== 'paid') {
+        await inventory.deductStock(order_id);
+      } else {
+        console.log(`⏭️ Stock already deducted for order ${order_id}, skipping`);
+      }
 
     // Generate QR + receipt for confirmed order
     try { await generateQRAndReceipt(order_id); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
@@ -447,7 +460,13 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
       [txRef, txRef, paymentProof ? JSON.stringify(paymentProof) : null, orderId]
     );
 
-    await inventory.deductStock(orderId);
+    // Skip if already deducted in a previous payment attempt
+    const orderStatus = await query('SELECT payment_status FROM orders WHERE order_id = $1', [orderId]);
+    if (orderStatus.rows[0].payment_status !== 'paid') {
+      await inventory.deductStock(orderId);
+    } else {
+      console.log(`⏭️ Stock already deducted for order ${orderId}, skipping`);
+    }
 
     try { await generateQRAndReceipt(orderId); } catch (e) { console.warn('QR/Receipt failed:', e.message); }
 
@@ -456,7 +475,7 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
       if (order.admin_tg_user_id) {
         await tgService.tgCall('sendMessage', {
           chat_id: order.admin_tg_user_id,
-          text: `💰 *Payment Received!*\n\nOrder *${order.order_ref}* — Br ${Number(order.total_etb).toLocaleString()}\nMethod: ${gateway.toUpperCase()}\nTransaction Code: \`${transactionCode || txRef}\`\n\nPlease prepare for dispatch.`,
+          text: `💰 *Payment Received!*\n\nOrder *${order.order_ref}* — Br ${Number(order.total_etb).toLocaleString()}\nMethod: ${gateway.toUpperCase()}\nTransaction Code: \`${(transactionCode || txRef).replace(/\./g, '\\.')}\`\n\nPlease prepare for dispatch.`,
           parse_mode: 'MarkdownV2'
         });
       }

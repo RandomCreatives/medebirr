@@ -84,28 +84,49 @@ function insert(orderData) {
   const { orderRef, buyerTgId, storeId, addressId, deliveryAddress,
           subtotal, deliveryFee, total, paymentMethod,
           policySnapshot, deliveryMethod, couponCode, discount,
-          deliveryOtp, deliveryLat, deliveryLng } = orderData;
+          deliveryOtp, deliveryLat, deliveryLng, idempotencyKey } = orderData;
   return query(
     `INSERT INTO orders (
        order_ref, buyer_tg_user_id, store_id, address_id, delivery_address,
        subtotal_etb, delivery_fee_etb, total_etb, payment_method,
        payment_status, order_status, policy_snapshot, delivery_method,
        coupon_code, discount_etb, delivery_otp,
-       delivery_latitude, delivery_longitude
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11,$12,$13,$14,$15,$16)
+       delivery_latitude, delivery_longitude, payment_tx_ref
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11,$12,$13,$14,$15,$16,$17)
      RETURNING *`,
     [orderRef, buyerTgId, storeId, addressId, JSON.stringify(deliveryAddress),
      subtotal, deliveryFee, total, paymentMethod,
      JSON.stringify(policySnapshot), deliveryMethod, couponCode, discount,
-     deliveryOtp, deliveryLat, deliveryLng]
+     deliveryOtp, deliveryLat, deliveryLng, idempotencyKey || null]
   );
 }
 
+const ORDER_COLUMNS = new Set([
+  'order_status', 'payment_status', 'order_ref', 'buyer_tg_user_id', 'store_id',
+  'address_id', 'delivery_address', 'subtotal_etb', 'delivery_fee_etb', 'total_etb',
+  'payment_method', 'policy_snapshot', 'delivery_method', 'coupon_code', 'discount_etb',
+  'delivery_otp', 'delivery_latitude', 'delivery_longitude',
+  'transaction_code', 'payment_tx_ref', 'payment_proof',
+  'rider_name', 'rider_phone', 'dispatch_note', 'delivery_provider',
+  'cancel_reason', 'cancelled_at', 'buyer_confirmed_at', 'delivered_at',
+  'updated_at', 'qr_token', 'qr_data', 'qr_scan_attempts',
+  'qr_verified_by_rider', 'qr_verified_by_buyer', 'receipt_pdf_url',
+  'telebirr_tx_id', 'cbe_tx_id'
+]);
+
+function validateColumn(name) {
+  if (!ORDER_COLUMNS.has(name)) {
+    throw new Error(`Invalid order column: ${name}`);
+  }
+}
+
 function updateStatus(orderId, status, extraFields = {}) {
-  const sets = [`order_status = '${status}'`, 'updated_at = NOW()'];
-  const params = [orderId];
-  let idx = 2;
+  validateColumn('order_status');
+  const sets = [`order_status = $2`, 'updated_at = NOW()'];
+  const params = [orderId, status];
+  let idx = 3;
   for (const [col, val] of Object.entries(extraFields)) {
+    validateColumn(col);
     sets.push(`${col} = $${idx++}`);
     params.push(val);
   }
@@ -116,6 +137,7 @@ function updateStatus(orderId, status, extraFields = {}) {
 }
 
 function setField(orderId, field, value) {
+  validateColumn(field);
   return query(
     `UPDATE orders SET ${field} = $2, updated_at = NOW() WHERE order_id = $1`,
     [orderId, value]

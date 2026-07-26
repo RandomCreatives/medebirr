@@ -67,15 +67,39 @@ async function deductStock(orderId) {
 /**
  * Release the reserved quantity for an order that will never be sold
  * (cancelled, payment failed, return initiated, QR verification failed).
- * Only reserved_stock is touched — stock_quantity was never reduced.
+ * Uses a transaction with row-level lock (FOR UPDATE) to prevent racing
+ * with a concurrent payment that may have already deducted stock.
+ *
+ * ── Race prevention ──
+ * Payment (deductStock) reduces both stock_quantity AND reserved_stock.
+ * If cancel runs concurrently, releaseReservedStock reads reserved_stock
+ * after the lock is acquired but before deducing — the FOR UPDATE ensures
+ * the payment's UPDATE is ordered before or after this one, never interleaved.
  */
 async function releaseReservedStock(orderId) {
-  const items = await query('SELECT product_id, quantity FROM order_items WHERE order_id = $1', [orderId]);
-  for (const item of items.rows) {
-    await query(
-      'UPDATE products SET reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2',
-      [item.quantity, item.product_id]
+  const client = await getClient();
+  try {
+    await client.query('BEGIN');
+    const items = await client.query(
+      'SELECT product_id, quantity FROM order_items WHERE order_id = $1',
+      [orderId]
     );
+    for (const item of items.rows) {
+      await client.query(
+        'SELECT reserved_stock FROM products WHERE product_id = $1 FOR UPDATE',
+        [item.product_id]
+      );
+      await client.query(
+        'UPDATE products SET reserved_stock = GREATEST(0, reserved_stock - $1) WHERE product_id = $2',
+        [item.quantity, item.product_id]
+      );
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw err;
+  } finally {
+    client.release();
   }
 }
 
