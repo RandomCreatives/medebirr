@@ -276,8 +276,7 @@ const CheckoutPage = {
     const total = this._total();
     const methods = [];
     if (pkg.telebirrEnabled !== false) methods.push({ id: 'telebirr', label: 'Telebirr', icon: Icons.wallet(24), color: 'var(--accent)', bg: 'rgba(252,205,4,0.08)', border: 'rgba(252,205,4,0.3)' });
-    if (pkg.cbeEnabled !== false) methods.push({ id: 'cbe', label: 'CBE', icon: Icons.credit(24), color: '#60A5FA', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.3)' });
-    if (pkg.otherBanks && pkg.otherBanks.length > 0) methods.push({ id: 'other_bank', label: 'Other Banks', icon: Icons.credit(24), color: '#A78BFA', bg: 'rgba(167,139,250,0.08)', border: 'rgba(167,139,250,0.3)' });
+    if (pkg.cbeEnabled !== false || (pkg.otherBanks && pkg.otherBanks.length > 0)) methods.push({ id: 'cbe', label: 'CBE', icon: Icons.credit(24), color: '#60A5FA', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.3)' });
     if (pkg.cashEnabled !== false) methods.push({ id: 'cash', label: 'Cash on Delivery', icon: Icons.wallet(24), color: 'var(--success)', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' });
 
     document.getElementById('checkoutPage').innerHTML = `
@@ -407,7 +406,9 @@ const CheckoutPage = {
     } else if (this._paymentMethod === 'cbe') {
       const cbeNum = pkg.cbeAccountNumber || '100023491823';
       const cbeName = pkg.cbeAccountName || '';
-      area.innerHTML = `
+      const banks = pkg.otherBanks || [];
+      if (!this._selectedOtherBank && banks.length > 0) this._selectedOtherBank = banks[0];
+      let html = `
         <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:12px;padding:16px;">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
             ${Icons.credit(22, '#60A5FA')}
@@ -422,29 +423,10 @@ const CheckoutPage = {
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
             <span style="display:inline-block;background:var(--bg-main);padding:6px 12px;border-radius:6px;font-family:monospace;font-size:16px;color:#60A5FA;font-weight:900;letter-spacing:1px;">${cbeNum}</span>
             <button type="button" onclick="CheckoutPage._copyText('${cbeNum}','Account copied!')" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:6px 12px;color:#60A5FA;font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
-          </div>
-          <hr style="border:none;border-top:1px solid rgba(59,130,246,0.2);margin:12px 0;">
-          <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Upload Payment Screenshot</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <label style="flex:1;background:var(--bg-main);border:1px dashed var(--border);border-radius:8px;padding:10px;text-align:center;cursor:pointer;font-size:11px;color:var(--text-secondary);">
-              ${this._screenshotData ? '✅ Screenshot captured' : '📸 Tap to upload screenshot'}
-              <input type="file" accept="image/*" style="display:none;" onchange="CheckoutPage._onScreenshot(this)" />
-            </label>
-          </div>
-          <div style="margin-top:8px;font-size:11px;color:var(--text-secondary);text-align:center;">
-            Or enter TX code manually:
-            <input class="form-input" id="coTxCode" placeholder="e.g. FT26194204812" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg-main);border:1px solid var(--border);padding:8px;border-radius:6px;color:white;font-family:monospace;font-size:12px;" />
-          </div>
-        </div>`;
-    } else if (this._paymentMethod === 'other_bank') {
-      const banks = pkg.otherBanks || [];
-      if (!this._selectedOtherBank && banks.length > 0) this._selectedOtherBank = banks[0];
-      area.innerHTML = `
-        <div style="background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.3);border-radius:12px;padding:16px;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-            ${Icons.credit(22, '#A78BFA')}
-            <div style="font-weight:800;color:#A78BFA;font-size:14px;">Bank Transfer</div>
-          </div>
+          </div>`;
+      if (banks.length > 0) {
+        html += `<hr style="border:none;border-top:1px solid rgba(59,130,246,0.2);margin:12px 0;">
+          <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Other Banks</div>
           <div class="form-group" style="margin-bottom:10px;">
             <label class="form-label" style="font-size:11px;">Choose Bank</label>
             <select class="form-select" id="coOtherBankSelect" onchange="CheckoutPage._selectedOtherBank = pkg.otherBanks[this.selectedIndex];CheckoutPage._renderPaymentDetails();" style="background:var(--bg-main);border:1px solid var(--border);border-radius:6px;padding:8px;color:white;font-size:12px;width:100%;">
@@ -459,22 +441,26 @@ const CheckoutPage = {
             <div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Bank</div>
             <div style="font-size:14px;font-weight:800;color:white;">${this._selectedOtherBank.bank_name}</div>
             <div style="font-size:11px;color:var(--text-secondary);margin:6px 0 2px;">Account Number</div>
-            <div style="font-size:15px;font-weight:900;color:#A78BFA;font-family:monospace;letter-spacing:1px;">${this._selectedOtherBank.account_number}</div>
+            <div style="font-size:15px;font-weight:900;color:#60A5FA;font-family:monospace;letter-spacing:1px;">${this._selectedOtherBank.account_number}</div>
             <div style="font-size:11px;color:var(--text-secondary);margin:6px 0 2px;">Account Holder</div>
             <div style="font-size:12px;color:var(--text-primary);">${this._selectedOtherBank.account_holder}</div>
           </div>
-          <button type="button" onclick="CheckoutPage._copyText('${this._selectedOtherBank.account_number}','Account copied!')" style="width:100%;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.3);border-radius:8px;padding:8px;color:#A78BFA;font-size:12px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy Account Number</button>
-          <hr style="border:none;border-top:1px solid rgba(167,139,250,0.2);margin:12px 0;">
+          <button type="button" onclick="CheckoutPage._copyText('${this._selectedOtherBank.account_number}','Account copied!')" style="width:100%;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:8px;color:#60A5FA;font-size:12px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy Account Number</button>` : ''}`;
+      }
+      html += `<hr style="border:none;border-top:1px solid rgba(59,130,246,0.2);margin:12px 0;">
           <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Upload Payment Screenshot</div>
-          <label style="display:block;background:var(--bg-main);border:1px dashed var(--border);border-radius:8px;padding:10px;text-align:center;cursor:pointer;font-size:11px;color:var(--text-secondary);">
-            ${this._screenshotData ? '✅ Screenshot captured' : '📸 Tap to upload screenshot'}
-            <input type="file" accept="image/*" style="display:none;" onchange="CheckoutPage._onScreenshot(this)" />
-          </label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <label style="flex:1;background:var(--bg-main);border:1px dashed var(--border);border-radius:8px;padding:10px;text-align:center;cursor:pointer;font-size:11px;color:var(--text-secondary);">
+              ${this._screenshotData ? '✅ Screenshot captured' : '📸 Tap to upload screenshot'}
+              <input type="file" accept="image/*" style="display:none;" onchange="CheckoutPage._onScreenshot(this)" />
+            </label>
+          </div>
           <div style="margin-top:8px;font-size:11px;color:var(--text-secondary);text-align:center;">
             Or enter TX code manually:
             <input class="form-input" id="coTxCode" placeholder="e.g. FT26194204812" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg-main);border:1px solid var(--border);padding:8px;border-radius:6px;color:white;font-family:monospace;font-size:12px;" />
-          </div>` : ''}
+          </div>
         </div>`;
+      area.innerHTML = html;
     } else {
       area.innerHTML = `
         <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:16px;text-align:center;">
@@ -581,7 +567,7 @@ const CheckoutPage = {
 
   // ── Step 3: Review & Confirm Order ─────────────────────────────────────────
   _goStep3() {
-    if (['telebirr', 'cbe', 'other_bank'].includes(this._paymentMethod)) {
+    if (['telebirr', 'cbe'].includes(this._paymentMethod)) {
       const txCode = document.getElementById('coTxCode')?.value?.trim() || this._txCode;
       this._txCode = txCode;
     }
@@ -603,11 +589,11 @@ const CheckoutPage = {
       ? `🏪 <strong>Store Pickup</strong> at ${pkg.shopName}<br/><span style="font-size:11px;color:var(--text-secondary);">${pkg.physicalAddress || 'Bole Commercial Center'}</span>`
       : `🛵 <strong>Home Delivery</strong> to ${this._subCity}<br/><span style="font-size:11px;color:var(--text-secondary);">${this._landmark || 'Sub-city delivery'}</span>`;
 
+    const payLabel = this._paymentMethod === 'cbe' && this._selectedOtherBank ? this._selectedOtherBank.bank_name : (this._paymentMethod === 'cbe' ? 'CBE Bank Transfer' : '');
     const paySummary = this._paymentMethod === 'telebirr'
       ? `📱 <strong>Telebirr Transfer</strong><br/><span style="font-size:11px;color:var(--text-secondary);">TX ID: ${this._txCode || 'Pending at handover'}</span>`
-      : (this._paymentMethod === 'cbe' ? `🏦 <strong>CBE Bank Transfer</strong><br/><span style="font-size:11px;color:var(--text-secondary);">TX ID: ${this._txCode || 'Pending at handover'}</span>`
-      : (this._paymentMethod === 'other_bank' ? `🏦 <strong>${this._selectedOtherBank ? this._selectedOtherBank.bank_name : 'Bank'} Transfer</strong><br/><span style="font-size:11px;color:var(--text-secondary);">TX ID: ${this._txCode || 'Pending at handover'}</span>`
-      : `💵 <strong>Cash on Delivery</strong><br/><span style="font-size:11px;color:var(--text-secondary);">Pay upon item inspection</span>`));
+      : (this._paymentMethod === 'cbe' ? `🏦 <strong>${payLabel}</strong><br/><span style="font-size:11px;color:var(--text-secondary);">TX ID: ${this._txCode || 'Pending at handover'}</span>`
+      : `💵 <strong>Cash on Delivery</strong><br/><span style="font-size:11px;color:var(--text-secondary);">Pay upon item inspection</span>`);
 
     document.getElementById('checkoutPage').innerHTML = `
       <div class="co-topbar">
@@ -734,7 +720,7 @@ const CheckoutPage = {
         orderId = order.order_id;
         orderRef = order.order_ref;
 
-        if (['telebirr', 'cbe', 'other_bank'].includes(this._paymentMethod)) {
+        if (['telebirr', 'cbe'].includes(this._paymentMethod)) {
           const proof = this._screenshotData ? { screenshot: this._screenshotData, tx_ref: this._txCode } : null;
           await Api.payments.confirmTx(order.order_id, this._txCode || `TXN-${Date.now()}`, proof);
         } else {
@@ -786,7 +772,7 @@ const CheckoutPage = {
             ${State.t('checkout.successInfo')}
           </div>
 
-          ${['telebirr', 'cbe', 'other_bank'].includes(this._paymentMethod) ? `
+          ${['telebirr', 'cbe'].includes(this._paymentMethod) ? `
           <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:14px;margin-bottom:16px;font-size:12px;color:#93C5FD;text-align:left;line-height:1.7;">
             ${State.t('checkout.verifyPayment')}
             <a href="https://t.me/medebirrbot?start=verify_order_${orderId}" target="_blank"
