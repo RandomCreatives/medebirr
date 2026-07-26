@@ -12,6 +12,18 @@ const App = {
     try { localStorage.setItem('em_theme', dark ? 'dark' : 'light'); } catch (_) {}
   },
 
+  // ── Localize static HTML elements ────────────────
+  _localizeStatic() {
+    const loadingTag = document.querySelector('.logo-sub');
+    if (loadingTag) loadingTag.textContent = State.t('brand.loadingTagline');
+    const onboardTag = document.querySelector('.onboard-tagline');
+    if (onboardTag) onboardTag.textContent = State.t('brand.onboardingTagline');
+    const onboardBrand = document.querySelector('.onboard-brand');
+    if (onboardBrand) onboardBrand.textContent = State.t('auth.login.title');
+    const slideLabel = document.getElementById('slideLabel');
+    if (slideLabel) slideLabel.textContent = State.t('brand.slideToEnter');
+  },
+
   // ── Bootstrap ─────────────────────────────────────
   async init() {
     if (window.Telegram?.WebApp) {
@@ -30,6 +42,9 @@ const App = {
     // Restore language preference
     const savedLang = localStorage.getItem('em_lang');
     if (savedLang && State.languages.includes(savedLang)) State.language = savedLang;
+
+    // Localize static HTML (loading screen, onboarding)
+    this._localizeStatic();
 
     // ── Phase 1: Show UI instantly with cached data ──────────────
     // Restore cached user + products so the screen renders in <100ms
@@ -199,46 +214,46 @@ const App = {
       document.getElementById('loadingScreen').innerHTML = `
         <div style="width:100%;max-width:400px;padding:24px 20px;text-align:center;">
           <div class="logo-mark" style="margin:0 auto 10px auto;">M</div>
-          <div style="font-size:20px;font-weight:900;margin-bottom:4px;">መደብር | Medebirr</div>
-          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:24px;">Ethiopia's Telegram Marketplace</div>
+          <div style="font-size:20px;font-weight:900;margin-bottom:4px;">${State.t('auth.login.title')}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:24px;">${State.t('auth.login.tagline')}</div>
 
           <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:18px;padding:20px;text-align:left;margin-bottom:16px;">
             <div style="background:var(--accent-soft);border:1px solid var(--accent-border);border-radius:10px;padding:12px;margin-bottom:16px;">
-              <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:4px;">📱 Open in Telegram for full experience</div>
-              <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;">Real users authenticate via Telegram automatically — no sign up needed. This browser preview is for testing only.</div>
+              <div style="font-size:13px;font-weight:800;color:var(--accent);margin-bottom:4px;">${State.t('auth.login.openTelegram')}</div>
+              <div style="font-size:11px;color:var(--text-secondary);line-height:1.5;">${State.t('auth.login.openTelegramDesc')}</div>
             </div>
 
-            <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Test as a demo user</div>
+            <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">${State.t('auth.login.testAsDemo')}</div>
 
             <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
               <button onclick="App._loginAs(12893412)" style="background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
                 <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3B82F6,#1D4ED8);display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:14px;flex-shrink:0;">M</div>
-                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--text-primary);">Mike Fikadu</div><div style="font-size:10px;color:var(--text-secondary);">Buyer · Bole, Addis Ababa</div></div>
-                <span style="font-size:10px;background:rgba(59,130,246,0.2);color:#60A5FA;padding:2px 8px;border-radius:20px;font-weight:700;">BUYER</span>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--text-primary);">${State.t('auth.login.mike')}</div><div style="font-size:10px;color:var(--text-secondary);">${State.t('auth.login.mikeRole')}</div></div>
+                <span style="font-size:10px;background:rgba(59,130,246,0.2);color:#60A5FA;padding:2px 8px;border-radius:20px;font-weight:700;">${State.t('auth.login.buyerBadge')}</span>
               </button>
               <button onclick="App._loginAs(98760002)" style="background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
                 <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#FCCD04,#F59E0B);display:flex;align-items:center;justify-content:center;font-weight:800;color:#111;font-size:14px;flex-shrink:0;">A</div>
-                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--text-primary);">Abebe Girma</div><div style="font-size:10px;color:var(--text-secondary);">Seller · Bole Apple & Tech Hub</div></div>
-                <span style="font-size:10px;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:20px;font-weight:700;">SELLER</span>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--text-primary);">${State.t('auth.login.abebe')}</div><div style="font-size:10px;color:var(--text-secondary);">${State.t('auth.login.abebeRole')}</div></div>
+                <span style="font-size:10px;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:20px;font-weight:700;">${State.t('auth.login.sellerBadge')}</span>
               </button>
               <button onclick="App._loginAs(98760004)" style="background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;text-align:left;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
                 <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#10B981,#059669);display:flex;align-items:center;justify-content:center;font-weight:800;color:white;font-size:14px;flex-shrink:0;">D</div>
-                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--text-primary);">Dawit Alemu</div><div style="font-size:10px;color:var(--text-secondary);">Seller · Kaffa & Sidama Roastery</div></div>
-                <span style="font-size:10px;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:20px;font-weight:700;">SELLER</span>
+                <div style="flex:1;"><div style="font-size:13px;font-weight:800;color:var(--text-primary);">${State.t('auth.login.dawit')}</div><div style="font-size:10px;color:var(--text-secondary);">${State.t('auth.login.dawitRole')}</div></div>
+                <span style="font-size:10px;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:20px;font-weight:700;">${State.t('auth.login.sellerBadge')}</span>
               </button>
             </div>
 
             <div style="border-top:1px solid var(--border);padding-top:14px;">
-              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">Or enter any Telegram User ID</div>
+              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:8px;">${State.t('auth.login.orEnterId')}</div>
               <div style="display:flex;gap:8px;">
-                <input id="customTgId" type="number" placeholder="Telegram ID e.g. 12893412" style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-primary);font-size:12px;outline:none;"/>
-                <button onclick="App._loginWithCustomId()" style="background:var(--accent);color:var(--accent-text);border:none;border-radius:8px;padding:9px 14px;font-weight:800;font-size:12px;cursor:pointer;">Go →</button>
+                <input id="customTgId" type="number" placeholder="${State.t('auth.login.idPlaceholder')}" style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-primary);font-size:12px;outline:none;"/>
+                <button onclick="App._loginWithCustomId()" style="background:var(--accent);color:var(--accent-text);border:none;border-radius:8px;padding:9px 14px;font-weight:800;font-size:12px;cursor:pointer;">${State.t('auth.login.go')}</button>
               </div>
             </div>
           </div>
 
           <div style="font-size:10px;color:var(--text-muted);">
-            <a href="https://t.me/medebirrbot" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700;">Open @medebirrbot in Telegram →</a>
+            <a href="https://t.me/medebirrbot" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:700;">${State.t('auth.login.openBot')}</a>
           </div>
         </div>
       `;
@@ -252,7 +267,7 @@ const App = {
         <div style="text-align:center;">
           <div class="logo-mark" style="margin:0 auto 16px auto;">M</div>
           <div class="loading-spinner"></div>
-          <div style="margin-top:12px;font-size:13px;color:#9DA3AE;">Signing in...</div>
+          <div style="margin-top:12px;font-size:13px;color:#9DA3AE;">${State.t('auth.login.signingIn')}</div>
         </div>`;
       App._loginResolve(userId);
       App._loginResolve = null;
@@ -261,7 +276,7 @@ const App = {
 
   _loginWithCustomId() {
     const id = parseInt(document.getElementById('customTgId')?.value, 10);
-    if (!id || id < 1) { alert('Enter a valid Telegram User ID'); return; }
+    if (!id || id < 1) { alert(State.t('auth.login.invalidId')); return; }
     this._loginAs(id);
   },
 
@@ -412,7 +427,7 @@ const App = {
         // Completed
         thumb.style.left = maxSlide + 'px';
         track.classList.add('done');
-        label.textContent = '✓ Welcome!';
+        label.textContent = State.t('auth.onboarding.welcome');
         label.style.opacity = 1;
         setTimeout(() => this._onboardFinish(), 400);
       } else {
@@ -1601,28 +1616,25 @@ const App = {
       <div class="modal-handle"></div>
       <div style="text-align:center;padding:8px 0 16px 0;">
         <div style="font-size:40px;margin-bottom:14px;">⚠️</div>
-        <div style="font-size:17px;font-weight:900;margin-bottom:8px;color:var(--danger);">Delete Store?</div>
+        <div style="font-size:17px;font-weight:900;margin-bottom:8px;color:var(--danger);">${State.t('seller.deleteStore.confirm')}</div>
         <div style="font-size:13px;color:var(--text-secondary);line-height:1.7;margin-bottom:20px;">
-          You are about to permanently delete<br/>
-          <strong style="color:white;">${storeName}</strong><br/>
-          This will unpublish all products and disconnect the Telegram group.<br/>
-          <strong style="color:var(--danger);">This cannot be undone.</strong>
+          ${State.t('seller.deleteStore.body', { storeName })}
         </div>
 
         <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:12px;margin-bottom:20px;font-size:12px;color:var(--text-secondary);text-align:left;line-height:1.8;">
-          ✗ All products will be unpublished<br/>
-          ✗ Telegram group will be disconnected<br/>
-          ✓ Order history is preserved for reference<br/>
-          ✓ You can open a new store anytime
+          ${State.t('seller.deleteStore.unpublishNote')}<br/>
+          ${State.t('seller.deleteStore.disconnectNote')}<br/>
+          ${State.t('seller.deleteStore.historyNote')}<br/>
+          ${State.t('seller.deleteStore.reopenNote')}
         </div>
 
         <div style="display:flex;gap:10px;">
           <button class="btn-secondary" onclick="Modals.close();App.openProfileModal();" style="flex:1;">
-            Cancel
+            ${State.t('shared.btn.cancel')}
           </button>
           <button onclick="App.deleteStore('${storeId}','${storeName.replace(/'/g,'\\\'')}')"
             style="flex:1;background:var(--danger);color:white;border:none;padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:800;cursor:pointer;">
-            🗑️ Delete Store
+            ${State.t('seller.deleteStore.delete')}
           </button>
         </div>
       </div>
@@ -1631,15 +1643,13 @@ const App = {
 
   async deleteStore(storeId, storeName) {
     try {
-      this.toast('Deleting store...', 'info');
+      this.toast(State.t('seller.deleteStore.deleting'), 'info');
       await Api.stores.delete(storeId);
 
-      // Remove from state
       State.stores = State.stores.filter(s => s.store_id !== storeId);
       if (State.currentStoreId === storeId) {
         State.currentStoreId = State.stores[0]?.store_id || null;
       }
-      // Switch back to buyer mode if no stores left
       if (State.stores.length === 0) {
         State.role = 'buyer';
         State.currentTab = 'explore';
@@ -1649,18 +1659,17 @@ const App = {
         <div class="modal-handle"></div>
         <div style="text-align:center;padding:20px 0;">
           <div style="font-size:48px;margin-bottom:14px;">✅</div>
-          <div style="font-size:17px;font-weight:900;margin-bottom:8px;">Store Deleted</div>
+          <div style="font-size:17px;font-weight:900;margin-bottom:8px;">${State.t('seller.deleteStore.deleted')}</div>
           <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.6;">
-            <strong style="color:white;">${storeName}</strong> has been deleted.<br/>
-            All products have been unpublished.
+            ${State.t('seller.deleteStore.deletedBody', { storeName })}
           </div>
-          <button class="btn-primary" onclick="Modals.close();">Done</button>
+          <button class="btn-primary" onclick="Modals.close();">${State.t('seller.deleteStore.done')}</button>
         </div>
       `);
       this.render();
     } catch (err) {
       Modals.close();
-      this.toast(err.message || 'Failed to delete store', 'error');
+      this.toast(err.message || State.t('seller.deleteStore.failed'), 'error');
     }
   },
 
@@ -1681,7 +1690,7 @@ const App = {
           <div style="font-size:12px;color:var(--text-secondary);">${u.username ? '@'+u.username : 'Telegram User'}</div>
           <div style="margin-top:4px;">
             <span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:800;${isSeller ? 'background:rgba(252,205,4,0.2);color:#FCCD04;' : 'background:rgba(59,130,246,0.2);color:#60A5FA;'}">
-              ${isSeller ? '🏬 Verified Seller' : '🛒 Buyer'}
+              ${isSeller ? State.t('seller.profileModal.verifiedSeller') : State.t('seller.profileModal.buyer')}
             </span>
           </div>
         </div>
@@ -1691,24 +1700,24 @@ const App = {
 
       ${isSeller ? `
       <div style="margin:14px 0;">
-        <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">Your Stores</div>
+        <div style="font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">${State.t('seller.profileModal.yourStores')}</div>
         ${State.stores.map(s => `
           <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
               <div>
                 <div style="font-size:13px;font-weight:800;">${s.store_name}</div>
                 <div style="font-size:11px;color:${s.status==='verified'?'var(--success)':'var(--warning)'};">
-                  ${s.status==='verified'?'✓ Verified':'⏳ Pending Verification'}
+                  ${s.status==='verified'?State.t('seller.menu.verifiedMerchant'):State.t('seller.profileModal.pendingVerification')}
                 </div>
                 ${s.tg_channel_username ? `<div style="font-size:11px;color:var(--text-secondary);">📢 @${s.tg_channel_username}</div>` : ''}
               </div>
               <button onclick="App.toggleRole();Modals.close();" style="background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.3);color:#FCCD04;padding:7px 12px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">
-                Open Studio →
+                ${State.t('seller.profileModal.openStudio')}
               </button>
             </div>
             <button onclick="App.confirmDeleteStore('${s.store_id}','${s.store_name.replace(/'/g,'\\\'')}')"
               style="width:100%;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--danger);padding:8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">
-              🗑️ Delete this store
+              ${State.t('seller.profileModal.deleteStore')}
             </button>
           </div>`).join('')}
       </div>
@@ -1717,16 +1726,16 @@ const App = {
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
         ${!isSeller ? `
         <button onclick="Modals.close();App.openRegisterStoreModal();" class="btn-primary" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.35);color:var(--success);">
-          🏪 Open a Shop on Medebirr — Free
+          ${State.t('seller.profileModal.openShop')}
         </button>` : ''}
 
         <button onclick="App.switchTab('orders');Modals.close();" class="btn-secondary">
-          📦 My Orders & Deliveries
+          ${State.t('seller.profileModal.myOrders')}
         </button>
 
         ${!window.Telegram?.WebApp?.initData ? `
         <button onclick="App._switchUser();Modals.close();" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:11px;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;width:100%;">
-          ⇄ Switch Account
+          ${State.t('seller.profileModal.switchAccount')}
         </button>` : ''}
       </div>
     `);

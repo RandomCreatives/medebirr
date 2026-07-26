@@ -1007,7 +1007,7 @@ const Modals = {
       <div class="wiz-section-card" style="margin-bottom:12px;">
         <div class="wiz-section-head">
           <span class="wiz-section-title">${Icons.truck(18)} ${State.t('seller.wizard.deliveryTitle')}</span>
-          <span class="wiz-section-link" onclick="Modals.close();setTimeout(()=>{App.switchTab('settings');SellerViews._openSettingsGroup('delivery')},200)">${State.t('seller.wizard.changeSettings')}</span>
+          <span class="wiz-section-link" onclick="Modals.close();setTimeout(()=>{App.switchTab('settings');SellerViews._openSettingsSection('shipping')},200)">${State.t('seller.wizard.changeSettings')}</span>
         </div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">${deliveryLabel[deliveryMode]} ${d.self_delivery ? '· ' + State.t('seller.wizard.radiusKm',{n:d.delivery_radius}) : ''}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
@@ -1140,7 +1140,7 @@ const Modals = {
     const d = Modals._wizD;
     if (!d.payment_locked) {
       Modals.close();
-      setTimeout(() => { App.switchTab('settings'); SellerViews._openSettingsGroup('payout'); }, 200);
+      setTimeout(() => { App.switchTab('settings'); SellerViews._openSettingsSection('payout'); }, 200);
       return;
     }
     const store = State.stores[0];
@@ -1177,7 +1177,7 @@ const Modals = {
         Modals._wizD.payment_locked = false;
         App.toast('Payment info unlocked — change in Settings.', 'success');
         Modals.close();
-        setTimeout(() => { App.switchTab('settings'); SellerViews._openSettingsGroup('payout'); }, 200);
+        setTimeout(() => { App.switchTab('settings'); SellerViews._openSettingsSection('payout'); }, 200);
       }
     } catch (err) {
       errEl.style.display = 'block';

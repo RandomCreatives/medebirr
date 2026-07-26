@@ -515,6 +515,10 @@ const CheckoutPage = {
   _renderStep3() {
     this._step = 3;
     const pkg = this._pkg;
+    if (!pkg) {
+      document.getElementById('checkoutPage').innerHTML = `<div style="padding:40px;text-align:center;color:var(--error);font-size:14px;">Checkout session expired. Please try again.</div>`;
+      return;
+    }
     const sub = this._subtotal();
     const del = this._deliveryMethod === 'pickup' ? 0 : this._deliveryFee;
     const total = this._total();
@@ -622,15 +626,19 @@ const CheckoutPage = {
       </div>
     `;
 
-    const pkg = this._pkg;
-    const isPickup = this._deliveryMethod === 'pickup';
-    const deliveryAddress = isPickup
-      ? { sub_city: pkg.location || 'Store', house_number: 'Customer pickup from store', phone: this._phone }
-      : { sub_city: this._subCity, landmark: this._landmark, phone: this._phone };
-
-    const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
-
     try {
+      const pkg = this._pkg;
+      if (!pkg || !pkg.items) {
+        if (App && typeof App.toast === 'function') App.toast(State.t('checkout.orderFailed'), 'error');
+        this._renderStep3();
+        return;
+      }
+      const isPickup = this._deliveryMethod === 'pickup';
+      const deliveryAddress = isPickup
+        ? { sub_city: pkg.location || 'Store', house_number: 'Customer pickup from store', phone: this._phone }
+        : { sub_city: this._subCity, landmark: this._landmark, phone: this._phone };
+
+      const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
       let order = null;
       let orderId = null;
       let orderRef = null;
@@ -670,9 +678,12 @@ const CheckoutPage = {
       this._loadReceipt(orderId);
 
     } catch (err) {
-      if (App && typeof App.toast === 'function') App.toast(err.message || State.t('checkout.orderFailed'), 'error');
-      // Restore Step 3
-      this._renderStep3();
+      try {
+        if (App && typeof App.toast === 'function') App.toast(err.message || State.t('checkout.orderFailed'), 'error');
+        this._renderStep3();
+      } catch (e) {
+        console.warn('Checkout error handler failed:', e);
+      }
     }
   },
 

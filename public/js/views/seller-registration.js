@@ -31,29 +31,29 @@ App._showSellerWelcome = function() {
         <div class="fo-brand-logo">M</div>
         <div class="fo-brand-name">Medebirr</div>
       </div>
-      <div class="fo-title">Launch Your Medeb</div>
-      <div class="fo-sub">Zero commission. Direct payments. Ethiopia's marketplace.</div>
+      <div class="fo-title">${State.t('seller.welcome.launch')}</div>
+      <div class="fo-sub">${State.t('seller.welcome.sub')}</div>
 
       <div style="margin-bottom:20px;">
         <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;">
           <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">💰</div>
           <div>
-            <div style="font-size:12px;font-weight:800;color:white;">Keep Every Birr</div>
-            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Buyers pay you directly. No middleman, no delay.</div>
+            <div style="font-size:12px;font-weight:800;color:white;">${State.t('seller.welcome.keepBirr')}</div>
+            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">${State.t('seller.welcome.keepBirrDesc')}</div>
           </div>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;">
           <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📢</div>
           <div>
-            <div style="font-size:12px;font-weight:800;color:white;">Auto-Broadcast</div>
-            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Post in Telegram. Bot lists it. Buyers purchase.</div>
+            <div style="font-size:12px;font-weight:800;color:white;">${State.t('seller.welcome.autoBroadcast')}</div>
+            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">${State.t('seller.welcome.autoBroadcastDesc')}</div>
           </div>
         </div>
         <div style="display:flex;gap:10px;align-items:flex-start;">
           <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🚀</div>
           <div>
-            <div style="font-size:12px;font-weight:800;color:white;">Live in 60 Seconds</div>
-            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Name, payment, Telegram link — done.</div>
+            <div style="font-size:12px;font-weight:800;color:white;">${State.t('seller.welcome.live60')}</div>
+            <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">${State.t('seller.welcome.live60Desc')}</div>
           </div>
         </div>
       </div>
@@ -67,7 +67,7 @@ App._showSellerWelcome = function() {
           <div class="slide-thumb" id="sellerSlideThumb">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
-          <div class="slide-label" id="sellerSlideLabel">Slide to launch your medeb →</div>
+          <div class="slide-label" id="sellerSlideLabel">${State.t('seller.welcome.slide')}</div>
         </div>
       </div>
     </div>
@@ -115,7 +115,7 @@ App._initSellerSlideToOpen = function() {
       thumb.style.left = maxLeft() + 'px';
       track.classList.add('done');
       const label = document.getElementById('sellerSlideLabel');
-      if (label) { label.textContent = '✓ Launching...'; label.style.opacity = 1; }
+      if (label) { label.textContent = State.t('seller.welcome.launching'); label.style.opacity = 1; }
       setTimeout(() => this._showSellerTerms(), 350);
     } else {
       thumb.style.left = '4px';
@@ -145,29 +145,29 @@ App._showSellerTerms = function() {
         <div class="fo-brand-logo">M</div>
         <div class="fo-brand-name">Medebirr</div>
       </div>
-      <div class="fo-title">Terms &amp; Conditions</div>
-      <div class="fo-sub" style="margin-bottom:14px;">Please review before launching your Medeb</div>
+      <div class="fo-title">${State.t('seller.terms.title')}</div>
+      <div class="fo-sub" style="margin-bottom:14px;">${State.t('seller.terms.sub')}</div>
 
       <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;padding:14px;max-height:260px;overflow-y:auto;font-size:11px;color:var(--text-secondary);line-height:1.7;">
-        <div style="font-weight:800;color:white;margin-bottom:6px;">1. Seller Responsibilities</div>
+        <div style="font-weight:800;color:white;margin-bottom:6px;">${State.t('seller.terms.sellerResponsibilities')}</div>
         You are solely responsible for your store's products, pricing, and customer service. All listings must be accurate and comply with Ethiopian law.
 
-        <div style="font-weight:800;color:white;margin:10px 0 6px;">2. Payments</div>
+        <div style="font-weight:800;color:white;margin:10px 0 6px;">${State.t('seller.terms.payments')}</div>
         Payments are made directly from buyers to you via Telebirr, CBE, or cash. Medebirr does not hold, escrow, or process your funds. You receive 100% of the sale price.
 
-        <div style="font-weight:800;color:white;margin:10px 0 6px;">3. Zero Commission</div>
+        <div style="font-weight:800;color:white;margin:10px 0 6px;">${State.t('seller.terms.zeroCommission')}</div>
         Medebirr charges zero commission on sales. The platform is free for sellers. Transaction fees from Telebirr/CBE are borne by the buyer.
 
-        <div style="font-weight:800;color:white;margin:10px 0 6px;">4. Product Listings</div>
+        <div style="font-weight:800;color:white;margin:10px 0 6px;">${State.t('seller.terms.listings')}</div>
         Products must be legal, accurately described, and available. Counterfeit, prohibited, or misleading items are grounds for immediate removal.
 
-        <div style="font-weight:800;color:white;margin:10px 0 6px;">5. Store Suspension</div>
+        <div style="font-weight:800;color:white;margin:10px 0 6px;">${State.t('seller.terms.suspension')}</div>
         Medebirr reserves the right to suspend stores that violate these terms, engage in fraud, or receive repeated buyer complaints.
 
-        <div style="font-weight:800;color:white;margin:10px 0 6px;">6. Data &amp; Privacy</div>
+        <div style="font-weight:800;color:white;margin:10px 0 6px;">${State.t('seller.terms.dataPrivacy')}</div>
         Your store information (name, phone, category) is displayed to buyers. Personal data is not sold to third parties. See our full Privacy Policy for details.
 
-        <div style="font-weight:800;color:white;margin:10px 0 6px;">7. Limitation of Liability</div>
+        <div style="font-weight:800;color:white;margin:10px 0 6px;">${State.t('seller.terms.liability')}</div>
         Medebirr is a marketplace platform. We are not a party to transactions between buyers and sellers. Disputes must be resolved directly between parties.
       </div>
     </div>
@@ -178,16 +178,16 @@ App._showSellerTerms = function() {
       <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:16px;" onclick="event.stopPropagation()">
         <input type="checkbox" id="sellerTosCheck" style="accent-color:var(--accent);width:18px;height:18px;margin-top:1px;flex-shrink:0;"/>
         <span style="font-size:11px;color:var(--text-secondary);line-height:1.5;">
-          I have read and agree to Medebirr's <strong style="color:white;">Terms &amp; Conditions</strong> and understand my responsibilities as a seller.
+          ${State.t('seller.terms.agree')}
         </span>
       </label>
       <button id="sellerTosBtn" onclick="App._confirmSellerTerms()" disabled
         style="width:100%;padding:14px;border-radius:12px;border:none;font-size:14px;font-weight:800;cursor:pointer;transition:all 0.2s;
         background:var(--border);color:var(--text-muted);pointer-events:none;">
-        Launch My Medeb
+        ${State.t('seller.terms.launch')}
       </button>
       <button onclick="App._closeFloat()" style="width:100%;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--text-secondary);font-size:12px;font-weight:600;cursor:pointer;margin-top:6px;">
-        Go Back
+        ${State.t('seller.terms.goBack')}
       </button>
     </div>
   `);
@@ -223,127 +223,125 @@ App.openRegisterStoreModal_ = function() {
   const botUsername = 'medebirrbot';
   Modals.open(`
     <div class="modal-handle"></div>
-    <div class="modal-title">🏪 Open Your Shop on Medebirr</div>
+    <div class="modal-title">${State.t('seller.register.title')}</div>
     <p style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;line-height:1.5;">
-      List your products, reach buyers across Ethiopia. Zero commission. Payments land directly in your account.
+      ${State.t('seller.register.intro')}
     </p>
 
     <!-- Wizard Progress Bar -->
     <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg-surface);padding:10px 14px;border-radius:8px;margin-bottom:18px;border:1px solid var(--border);">
-      <div id="regStepBadge1" style="font-size:11px;font-weight:800;color:var(--accent);">1. Profile</div>
+      <div id="regStepBadge1" style="font-size:11px;font-weight:800;color:var(--accent);">${State.t('seller.register.step1')}</div>
       <div style="width:20px;height:1px;background:var(--border);"></div>
-      <div id="regStepBadge2" style="font-size:11px;font-weight:700;color:var(--text-muted);">2. Security</div>
+      <div id="regStepBadge2" style="font-size:11px;font-weight:700;color:var(--text-muted);">${State.t('seller.register.step2')}</div>
       <div style="width:20px;height:1px;background:var(--border);"></div>
-      <div id="regStepBadge3" style="font-size:11px;font-weight:700;color:var(--text-muted);">3. Telegram Group</div>
+      <div id="regStepBadge3" style="font-size:11px;font-weight:700;color:var(--text-muted);">${State.t('seller.register.step3')}</div>
     </div>
 
     <!-- ── CARD STEP 1: STORE PROFILE ── -->
     <div id="regStepCard1" style="display:block;">
-      <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Step 1 — Store Profile Details</div>
+      <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">${State.t('seller.register.profileStep')}</div>
 
       <div class="form-group">
-        <label class="form-label">Store / Shop Name</label>
-        <input class="form-input" id="regStoreName" placeholder="e.g. Bole Fashion House"/>
+        <label class="form-label">${State.t('seller.register.storeName')}</label>
+        <input class="form-input" id="regStoreName" placeholder="${State.t('seller.register.storeNamePlaceholder')}"/>
       </div>
 
       <div class="form-group">
-        <label class="form-label">What do you sell?</label>
+        <label class="form-label">${State.t('seller.register.whatSell')}</label>
         <select class="form-select" id="regCategory">
-          <option value="fashion">👗 Fashion & Traditional Clothing</option>
-          <option value="electronics">📱 Electronics & Phones</option>
-          <option value="groceries">☕ Coffee, Food & Groceries</option>
-          <option value="footwear">👟 Footwear</option>
-          <option value="furniture">🪑 Furniture & Home</option>
-          <option value="beauty">💄 Beauty & Personal Care</option>
-          <option value="other">📦 Other</option>
+          <option value="fashion">${State.t('seller.register.catFashion')}</option>
+          <option value="electronics">${State.t('seller.register.catElectronics')}</option>
+          <option value="groceries">${State.t('seller.register.catGroceries')}</option>
+          <option value="footwear">${State.t('seller.register.catFootwear')}</option>
+          <option value="furniture">${State.t('seller.register.catFurniture')}</option>
+          <option value="beauty">${State.t('seller.register.catBeauty')}</option>
+          <option value="other">${State.t('seller.register.catOther')}</option>
         </select>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
         <div class="form-group">
-          <label class="form-label">Sub-City</label>
+          <label class="form-label">${State.t('seller.register.subCity')}</label>
           <select class="form-select" id="regSubCity">
-            ${['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio','Outside Addis'].map(s=>`<option>${s}</option>`).join('')}
+            ${['Bole','Kirkos','Yeka','Lideta','Gulele','Nifas Silk','Addis Ketema','Akaki Kality','Lemi Kura','Kolfe Keranio','Outside Addis'].map(s=>`<option>${s === 'Outside Addis' ? State.t('seller.register.outsideAddis') : s}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Business Phone</label>
-          <input class="form-input" id="regPhone" type="tel" placeholder="+251 9XX XXX XXX"/>
+          <label class="form-label">${State.t('seller.register.businessPhone')}</label>
+          <input class="form-input" id="regPhone" type="tel" placeholder="${State.t('seller.register.phonePlaceholder')}"/>
         </div>
       </div>
 
       <button class="btn-primary" onclick="App._nextRegStep(1, 2)" style="margin-top:8px;">
-        Next: Financials &amp; Password →
+        ${State.t('seller.register.nextFinancials')}
       </button>
     </div>
 
     <!-- ── CARD STEP 2: TELEBIRR & PASSWORD ── -->
     <div id="regStepCard2" style="display:none;">
-      <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Step 2 — Payments &amp; Security</div>
+      <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">${State.t('seller.register.paymentsStep')}</div>
 
       <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:white;line-height:1.5;">
-        💡 <strong>Direct Seller Checkout:</strong> Buyers transfer money directly to your Telebirr shortcode or account during checkout. Zero platform commission or escrow delay!
+        ${State.t('seller.register.directCheckout')}
       </div>
 
       <div class="form-group">
-        <label class="form-label">Your Telebirr Shortcode / Phone</label>
-        <input class="form-input" id="regTelebirr" type="tel" placeholder="e.g. 891204 or +251 9XX XXX XXX"/>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Displayed to buyers upon order placement.</div>
+        <label class="form-label">${State.t('seller.register.telebirrShortcode')}</label>
+        <input class="form-input" id="regTelebirr" type="tel" placeholder="${State.t('seller.register.telebirrPlaceholder')}"/>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${State.t('seller.register.telebirrNote')}</div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">🔑 Seller Studio Password</label>
-        <input class="form-input" id="regPassword" type="password" placeholder="Minimum 4 characters" style="font-family:monospace;"/>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Required to unlock and manage your Seller Studio dashboard.</div>
+        <label class="form-label">${State.t('seller.register.password')}</label>
+        <input class="form-input" id="regPassword" type="password" placeholder="${State.t('seller.register.passwordPlaceholder')}" style="font-family:monospace;"/>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${State.t('seller.register.passwordNote')}</div>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn-secondary" onclick="App._showRegStep(1)" style="flex:1;">← Back</button>
-        <button class="btn-primary" onclick="App._nextRegStep(2, 3)" style="flex:2;">Next: Connect Telegram →</button>
+        <button class="btn-secondary" onclick="App._showRegStep(1)" style="flex:1;">${State.t('seller.register.back')}</button>
+        <button class="btn-primary" onclick="App._nextRegStep(2, 3)" style="flex:2;">${State.t('seller.register.nextTelegram')}</button>
       </div>
     </div>
 
     <!-- ── CARD STEP 3: TELEGRAM GROUP & LAUNCH ── -->
     <div id="regStepCard3" style="display:none;">
-      <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Step 3 — Connect Your Telegram Group</div>
+      <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">${State.t('seller.register.telegramStep')}</div>
 
       <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:white;line-height:1.5;">
-        📢 When connected, products published in your Seller Studio automatically post to your Telegram channel/group with an interactive <strong>Buy Now</strong> button!
+        ${State.t('seller.register.autoPost')}
       </div>
 
       <div class="form-group">
-        <label class="form-label">Telegram Group / Channel Username</label>
+        <label class="form-label">${State.t('seller.register.groupUsername')}</label>
         <div style="position:relative;">
           <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;">@</span>
-          <input class="form-input" id="regGroupUsername" placeholder="e.g. BoleAppleDeals" style="padding-left:28px;"/>
+          <input class="form-input" id="regGroupUsername" placeholder="${State.t('seller.register.groupPlaceholder')}" style="padding-left:28px;"/>
         </div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">Must be a public channel or group where the bot is added as admin.</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${State.t('seller.register.groupNote')}</div>
       </div>
 
       <!-- Make bot admin instructions -->
       <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;">
-        <div style="font-size:11px;font-weight:800;color:white;margin-bottom:6px;">📋 How to add @${botUsername} as admin:</div>
+        <div style="font-size:11px;font-weight:800;color:white;margin-bottom:6px;">${State.t('seller.register.addAdmin')}</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.7;">
-          1. Open your Telegram group or channel → <strong>Administrators</strong><br/>
-          2. Tap <strong>Add Administrator</strong> &amp; search <strong style="color:var(--accent);">@${botUsername}</strong><br/>
-          3. Enable <strong>Post Messages</strong> &amp; save!
+          ${State.t('seller.register.addAdminSteps')}
         </div>
       </div>
 
       <div id="groupVerifyResult" style="display:none;margin-bottom:10px;"></div>
       <button id="verifyGroupBtn" style="display:none;margin-bottom:12px;width:100%;" class="btn-secondary" onclick="App._verifyGroupLink()">
-        ✅ Verify @${botUsername} is Admin
+        ${State.t('seller.register.verifyAdmin')}
       </button>
 
       <div class="form-group">
-        <label class="form-label">Brief Description (optional)</label>
-        <textarea class="form-textarea" id="regDesc" placeholder="What makes your shop special?" style="height:60px;"></textarea>
+        <label class="form-label">${State.t('seller.register.briefDesc')}</label>
+        <textarea class="form-textarea" id="regDesc" placeholder="${State.t('seller.register.briefPlaceholder')}" style="height:60px;"></textarea>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:14px;">
-        <button class="btn-secondary" onclick="App._showRegStep(2)" style="flex:1;">← Back</button>
+        <button class="btn-secondary" onclick="App._showRegStep(2)" style="flex:1;">${State.t('seller.register.back')}</button>
         <button class="btn-primary" onclick="App.submitRegisterStore()" style="flex:2;background:var(--success);color:white;">
-          🚀 Launch My Store Free!
+          ${State.t('seller.register.launchFree')}
         </button>
       </div>
     </div>
@@ -371,7 +369,7 @@ App._nextRegStep = function(fromStep, toStep) {
   if (fromStep === 1) {
     const name = document.getElementById('regStoreName')?.value?.trim();
     if (!name) {
-      App.toast('Please enter your store / shop name to proceed', 'error');
+      App.toast(State.t('seller.register.nameRequired'), 'error');
       document.getElementById('regStoreName')?.focus();
       return;
     }
@@ -379,13 +377,13 @@ App._nextRegStep = function(fromStep, toStep) {
     const telebirr = document.getElementById('regTelebirr')?.value?.trim();
     const pwd = document.getElementById('regPassword')?.value?.trim();
     if (!telebirr || !pwd) {
-      App.toast('Please enter your Telebirr account and seller password', 'error');
+      App.toast(State.t('seller.register.accountRequired'), 'error');
       if (!telebirr) document.getElementById('regTelebirr')?.focus();
       else document.getElementById('regPassword')?.focus();
       return;
     }
     if (pwd.length < 4) {
-      App.toast('Seller password must be at least 4 characters long', 'error');
+      App.toast(State.t('seller.register.passwordLength'), 'error');
       document.getElementById('regPassword')?.focus();
       return;
     }
@@ -402,14 +400,14 @@ App._verifyGroupLink = async function() {
 
   if (resultEl) {
     resultEl.style.display = 'block';
-    resultEl.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">🔍 Checking...</div>`;
+    resultEl.innerHTML = `<div style="padding:10px;font-size:12px;color:var(--text-secondary);">${State.t('shared.loading')}</div>`;
   }
   if (verifyBtn) verifyBtn.disabled = true;
 
   // We need a store_id — check if store is already registered
   const storeId = State.currentStoreId;
   if (!storeId) {
-    if (resultEl) resultEl.innerHTML = `<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--warning);">Register your store first, then verify the group.</div>`;
+    if (resultEl) resultEl.innerHTML = `<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px;font-size:12px;color:var(--warning);">${State.t('seller.register.registerFirst')}</div>`;
     if (verifyBtn) verifyBtn.disabled = false;
     return;
   }
@@ -418,8 +416,7 @@ App._verifyGroupLink = async function() {
     const result = await Api.bot.verifyGroup(storeId, groupUsername);
     if (resultEl) resultEl.innerHTML = `
       <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:12px;font-size:12px;color:var(--success);margin-bottom:10px;">
-        ✅ <strong>Verified!</strong> @medebirrbot is admin of <strong style="color:white;">${result.chatTitle}</strong><br/>
-        <span style="color:var(--text-secondary);">Products will now auto-post to this group when published.</span>
+        ${State.t('seller.register.verified', { result })}
       </div>`;
   } catch (err) {
     const hint = err.data?.hint || 'Make sure the bot is added as admin first.';
@@ -428,7 +425,7 @@ App._verifyGroupLink = async function() {
         ❌ ${err.message}<br/>
         <span style="color:var(--text-secondary);margin-top:4px;display:block;">${hint}</span>
       </div>`;
-    if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = '🔄 Try Again'; }
+    if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = State.t('seller.register.tryAgain'); }
   }
 };
 
@@ -441,11 +438,11 @@ App.submitRegisterStore = async function() {
   const groupUsername = document.getElementById('regGroupUsername')?.value?.trim();
   const sellerPassword = document.getElementById('regPassword')?.value?.trim();
 
-  if (!storeName) { App.toast('Store name is required', 'error'); return; }
-  if (!phone)     { App.toast('Business phone is required', 'error'); return; }
+  if (!storeName) { App.toast(State.t('seller.register.storeRequired'), 'error'); return; }
+  if (!phone)     { App.toast(State.t('seller.register.phoneRequired'), 'error'); return; }
 
   try {
-    App.toast('Registering your store...', 'info');
+    App.toast(State.t('seller.register.registering'), 'info');
     const data = await Api.stores.create({
       store_name: storeName,
       location_sub_city: subCity,
@@ -485,7 +482,7 @@ App.submitRegisterStore = async function() {
       } catch (e) {
         groupVerifyMsg = `<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
           <div style="font-size:16px;">⚠️</div>
-          <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">Add @medebirrbot as admin in your group, then re-verify from settings.</div>
+          <div style="font-size:11px;color:var(--text-secondary);line-height:1.4;">${State.t('seller.register.addBotAdmin')}</div>
         </div>`;
       }
     }
@@ -503,31 +500,31 @@ App.submitRegisterStore = async function() {
       <div class="fo-section" style="text-align:center;">
         <div style="font-size:48px;margin-bottom:12px;">🎉</div>
         <div class="fo-title">${storeName}</div>
-        <div class="fo-sub" style="margin-bottom:16px;">Your Medeb is now live!</div>
+        <div class="fo-sub" style="margin-bottom:16px;">${State.t('seller.register.live')}</div>
 
         <div style="text-align:left;background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:20px;">
           <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
             <div style="font-size:16px;">✅</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Store profile created & verified</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${State.t('seller.register.profileCreated')}</div>
           </div>
           <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;">
             <div style="font-size:16px;">✅</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Telebirr payment linked</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${State.t('seller.register.telebirrLinked')}</div>
           </div>
           ${groupVerifyMsg || `<div style="display:flex;gap:8px;align-items:flex-start;">
             <div style="font-size:16px;">📦</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Ready to add products</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${State.t('seller.register.readyProducts')}</div>
           </div>`}
         </div>
 
         <button class="btn-primary" onclick="App._closeFloat();App.render();" style="width:100%;padding:14px;border-radius:12px;font-size:14px;font-weight:800;background:var(--accent);color:var(--accent-text);">
-          Enter Seller Studio →
+          ${State.t('seller.register.enterStudio')}
         </button>
       </div>
     `);
 
   } catch (err) {
-    App.toast(err.message || 'Registration failed', 'error');
+    App.toast(err.message || State.t('seller.register.failed'), 'error');
   }
 };
 

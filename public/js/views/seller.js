@@ -297,11 +297,9 @@ const SellerViews = {
     `;
   },
 
-  // ── Account & Settings (opened from the 3-dots menu) ──
-  // Regrouped into clear sections: Identity → Payout → Policies →
-  // Automation → Account. All existing store/policy/coupon functionality is
-  // preserved; payout accounts are now editable inline and a logout action
-  // is available in the Account section.
+  // ── Account & Settings (flat menu, opened from the 3-dots menu) ──
+  // 11 sections in a single flat list. Tap any section to open its form.
+  // Back button from a section returns to the flat menu.
   renderSellerMenu(container) {
     const store = State.storeDetail || State.stores[0];
     const cp = State.couponPolicy || { share_required:3, share_discount:5, share_coupon_active:false, group_min_members:3, group_discount:10, group_buy_active:false, coupon_validity_days:7 };
@@ -315,14 +313,29 @@ const SellerViews = {
     const storeUrl = `${window.location.origin}${window.location.pathname}?store=${store.store_code}`;
     const tgConnected = !!store.tg_channel_username;
 
-    // ── Identity ──
-    const identity = `
+    // ── Section bodies ──
+
+    // 1. Profile — store identity, name, description, business phone, QR share, verification
+    const profile = `
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
         <div style="width:54px;height:54px;border-radius:14px;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🏪</div>
-        <div style="min-width:0;">
+        <div style="min-width:0;flex:1;">
           <div style="font-size:16px;font-weight:900;">${store.store_name}</div>
           <div style="font-size:12px;color:${statusColors[store.status] || 'var(--text-secondary)'};font-weight:700;">● ${store.status}</div>
         </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Store Name</label>
+        <input class="form-input" id="storeName" value="${store.store_name}" placeholder="My Store"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Business Phone</label>
+        <input class="form-input" id="storePhone" value="${store.business_phone || ''}" placeholder="+251 9XX XXX XXX"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Store Description</label>
+        <textarea class="form-textarea" id="storeDescription" placeholder="Tell buyers what you sell..." rows="3">${store.description || ''}</textarea>
       </div>
 
       <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
@@ -346,12 +359,33 @@ const SellerViews = {
         ${store.verified_badge ? '<span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--success);font-weight:700;">✅ Verified Merchant</span>' : '<span style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--warning);font-weight:700;">⏳ Pending Verification</span>'}
         ${store.verification_tier && store.verification_tier !== 'none' ? `<span style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:#A78BFA;font-weight:700;">${tierBadge[store.verification_tier]}</span>` : ''}
         ${store.rating > 0 ? `<span style="background:rgba(252,205,4,0.1);border:1px solid rgba(252,205,4,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--accent);font-weight:700;">⭐ ${Number(store.rating).toFixed(1)} (${store.rating_count})</span>` : '<span style="background:rgba(156,163,175,0.1);border:1px solid rgba(156,163,175,0.3);border-radius:20px;padding:4px 12px;font-size:12px;color:var(--text-secondary);font-weight:700;">No ratings yet</span>'}
-      </div>`;
+      </div>
+      <button class="btn-secondary" style="width:100%;" onclick="App.toast('Profile saved','success')">💾 Save Profile</button>`;
 
-    // ── Payout & Payment ──
+    // 2. Address — physical location
+    const address = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Your store's physical location — shown to buyers for pickup and delivery reference.</div>
+      <div class="form-group">
+        <label class="form-label">Sub-City</label>
+        <input class="form-input" id="storeSubCity" value="${store.location_sub_city || ''}" placeholder="Bole"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Woreda</label>
+        <input class="form-input" id="storeWoreda" value="${store.location_woreda || ''}" placeholder="Woreda 03"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Location Detail</label>
+        <textarea class="form-textarea" id="storeLocationDetail" placeholder="Near landmark, building name, floor..." rows="2">${store.location_detail || ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Full Physical Address</label>
+        <textarea class="form-textarea" id="storePhysicalAddress" placeholder="Complete address for delivery reference..." rows="2">${store.physical_address || ''}</textarea>
+      </div>
+      <button class="btn-secondary" style="width:100%;" onclick="App.toast('Address saved','success')">💾 Save Address</button>`;
+
+    // 3. Payout & Banking — Telebirr + CBE accounts
     const payout = `
       <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">These details are shown to buyers at checkout so they can pay you. Keep them up to date.</div>
-
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div>
           <label class="form-label" style="font-size:11px;">Telebirr Number</label>
@@ -378,156 +412,7 @@ const SellerViews = {
       </div>
       <div class="progress-status" id="payoutProgressStatus" style="display:none;"></div>`;
 
-    // ── Policies ──
-    const policies = `
-      <div class="form-group">
-        <label class="form-label">Return Policy</label>
-        <select class="form-select" id="policyType">
-          <option value="7_day_free" ${store.return_policy_type==='7_day_free'?'selected':''}>7-Day Free Returns</option>
-          <option value="3_day_warranty" ${store.return_policy_type==='3_day_warranty'?'selected':''}>3-Day Replacement Warranty</option>
-          <option value="size_exchange" ${store.return_policy_type==='size_exchange'?'selected':''}>Size Exchange (24 Hours)</option>
-          <option value="fresh_guarantee" ${store.return_policy_type==='fresh_guarantee'?'selected':''}>Freshness Guarantee</option>
-          <option value="no_return" ${store.return_policy_type==='no_return'?'selected':''}>No Returns</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Policy Description (shown to buyers at checkout)</label>
-        <textarea class="form-textarea" id="policyText" placeholder="Describe your return / warranty terms...">${store.custom_policy_text || ''}</textarea>
-      </div>
-
-      <div class="form-group" style="margin-bottom:12px;">
-        <label class="form-label">Payment Methods Accepted</label>
-        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;">
-          <input type="checkbox" id="telebirrEnabled" ${store.telebirr_enabled!==false?'checked':''} style="accent-color:var(--accent);"> 📱 Telebirr (buyer pays to your number)
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;">
-          <input type="checkbox" id="cbeEnabled" ${store.cbe_enabled?'checked':''} style="accent-color:var(--accent);"> 🏦 CBE Bank Transfer
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
-          <input type="checkbox" id="cashEnabled" ${store.cash_on_delivery!==false?'checked':''} style="accent-color:var(--accent);"> 💵 Cash on Delivery
-        </label>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-        <div class="form-group">
-          <label class="form-label">Addis Ababa Delivery Fee (Br)</label>
-          <input type="number" class="form-input" id="addisFee" value="${store.addis_delivery_fee || 150}" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Regional Dispatch (Br)</label>
-          <input type="number" class="form-input" id="regionalFee" value="${store.regional_dispatch_fee || 400}" />
-        </div>
-      </div>
-      <button class="btn-secondary" style="width:100%;" onclick="App.savePolicy()">💾 Save Store Policy</button>`;
-
-    // ── Promotions (Coupon & Group Buying) ──
-    const promotions = `
-      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Grow sales with share-to-save coupons and group-buy discounts.</div>
-
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📤 Share-to-Save Coupons</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Customers earn a coupon when they share a product N times.</div>
-          </div>
-          ${this._toggle('shareCouponToggle', cp.share_coupon_active)}
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-          <div class="form-group">
-            <label class="form-label">Shares Required</label>
-            <input type="number" class="form-input" id="shareRequired" value="${cp.share_required}" placeholder="3" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Discount %</label>
-            <input type="number" class="form-input" id="shareDiscount" value="${cp.share_discount}" placeholder="5" />
-          </div>
-        </div>
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">Coupon Valid (days)</label>
-          <input type="number" class="form-input" id="couponValidityDays" value="${cp.coupon_validity_days}" placeholder="7" />
-        </div>
-      </div>
-
-      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
-
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">👥 Group Buying</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Customers can form a group to buy together and get a discount.</div>
-          </div>
-          ${this._toggle('groupBuyToggle', cp.group_buy_active)}
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0;">
-          <div class="form-group">
-            <label class="form-label">Min Members</label>
-            <input type="number" class="form-input" id="groupMinMembers" value="${cp.group_min_members}" placeholder="3" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Group Discount %</label>
-            <input type="number" class="form-input" id="groupDiscount" value="${cp.group_discount}" placeholder="10" />
-          </div>
-        </div>
-      </div>
-
-      <button class="btn-secondary" style="width:100%;" onclick="App.saveCouponPolicy()">💾 Save Promotions</button>`;
-
-    // ── Automation ──
-    const automation = `
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="font-size:13px;font-weight:800;margin-bottom:4px;">📢 Telegram Group Connection</div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">
-          ${tgConnected
-            ? `✅ Connected: <strong style="color:var(--text-primary);">@${store.tg_channel_username}</strong> — Products auto-post here when published.`
-            : '⚠️ No group connected yet. Connect a group to auto-broadcast your products.'}
-        </div>
-        <div style="display:flex;gap:8px;">
-          <input class="form-input" id="groupUsernameInput" placeholder="@YourGroupUsername" value="${store.tg_channel_username || ''}" style="flex:1;"/>
-          <button onclick="App._verifyGroupFromPolicy()" style="background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.4);color:var(--accent);padding:9px 14px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">✅ Verify Admin</button>
-        </div>
-        <div id="policyGroupVerifyResult" style="margin-top:8px;"></div>
-      </div>
-
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🔍 Auto-Detect Products</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Any photo with a price in your group becomes a pending product. When OFF, only /sell commands create products.</div>
-          </div>
-          ${this._toggle('autoDetectToggle', store.auto_detect_products !== false, "App.toggleAutoDetect(this.checked)")}
-        </div>
-      </div>
-
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📨 Telegram Notifications</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Buyers get DM updates via @medebirrbot when their order status changes.</div>
-          </div>
-          ${this._toggle('telegramNotifsToggle', store.telegram_notifs !== false, "App.toggleTelegramNotifs(this.checked)")}
-        </div>
-      </div>`;
-
-    // ── Staff Roles & Permissions [NEW] ──
-    const staff = `
-      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Invite team members and assign roles. (Staff management is provisioned per store — contact Medebirr support to enable seats for your shop.)</div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="font-size:13px;font-weight:800;margin-bottom:6px;">👤 Owner</div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Full access — you. Receives payouts and can delete the shop.</div>
-        <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--success);font-weight:700;">Active</span>
-      </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="font-size:13px;font-weight:800;margin-bottom:6px;">🛡️ Manager</div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Manage products, orders and policies. Cannot change payouts or delete the shop.</div>
-        <button class="btn-secondary" style="width:100%;" onclick="App.toast('Staff invites coming soon','info')">+ Invite Manager</button>
-      </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="font-size:13px;font-weight:800;margin-bottom:6px;">📦 Fulfilment Staff</div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">View and fulfil orders only. Ideal for warehouse or dispatch teams.</div>
-        <button class="btn-secondary" style="width:100%;" onclick="App.toast('Staff invites coming soon','info')">+ Invite Staff</button>
-      </div>`;
-
-    // ── Shipping & Delivery Rules [NEW] ──
+    // 4. Shipping & Delivery — fees, self-delivery, company delivery
     const shipping = `
       <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Control how your products are delivered and what buyers pay for shipping.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
@@ -560,95 +445,26 @@ const SellerViews = {
       </div>
       <button class="btn-secondary" style="width:100%;" onclick="App.saveDeliveryRules()">💾 Save Delivery Rules</button>`;
 
-    // ── Tax Config & Invoices [NEW] ──
-    const tax = `
-      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Configure how tax is shown to buyers and whether invoices are auto-generated.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
-        <div class="form-group">
-          <label class="form-label">VAT / Tax %</label>
-          <input type="number" class="form-input" id="taxRate" value="${store.tax_rate || 0}" placeholder="15" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Tax Number / TIN</label>
-          <input class="form-input" id="taxTin" value="${store.tax_tin || ''}" placeholder="TIN / VAT no." />
-        </div>
+    // 5. Return Policy — return type and custom text
+    const returnPolicy = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Set your return and warranty terms. These are shown to buyers at checkout.</div>
+      <div class="form-group">
+        <label class="form-label">Return Policy Type</label>
+        <select class="form-select" id="policyType">
+          <option value="7_day_free" ${store.return_policy_type==='7_day_free'?'selected':''}>7-Day Free Returns</option>
+          <option value="3_day_warranty" ${store.return_policy_type==='3_day_warranty'?'selected':''}>3-Day Replacement Warranty</option>
+          <option value="size_exchange" ${store.return_policy_type==='size_exchange'?'selected':''}>Size Exchange (24 Hours)</option>
+          <option value="fresh_guarantee" ${store.return_policy_type==='fresh_guarantee'?'selected':''}>Freshness Guarantee</option>
+          <option value="no_return" ${store.return_policy_type==='no_return'?'selected':''}>No Returns</option>
+        </select>
       </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🧾 Auto-Invoice</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Attach a PDF invoice to every completed order email.</div>
-          </div>
-          ${this._toggle('autoInvoiceToggle', store.auto_invoice !== false, "App.toggleAutoInvoice(this.checked)")}
-        </div>
+      <div class="form-group">
+        <label class="form-label">Custom Policy Description</label>
+        <textarea class="form-textarea" id="policyText" placeholder="Describe your return / warranty terms in detail..." rows="4">${store.custom_policy_text || ''}</textarea>
       </div>
-      <button class="btn-secondary" style="width:100%;" onclick="App.saveTaxConfig()">💾 Save Tax &amp; Invoice Settings</button>`;
+      <button class="btn-secondary" style="width:100%;" onclick="App.savePolicy()">💾 Save Return Policy</button>`;
 
-    // ── Notification Preferences [NEW] ──
-    const notifications = `
-      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Choose how Medebirr keeps you and your buyers informed.</div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📨 Telegram Notifications</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Buyers get DM updates via @medebirrbot when their order status changes.</div>
-          </div>
-          ${this._toggle('telegramNotifsToggle', store.telegram_notifs !== false, "App.toggleTelegramNotifs(this.checked)")}
-        </div>
-      </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📉 Low-Stock Alerts</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Get notified when a product is running low on stock.</div>
-          </div>
-          ${this._toggle('lowStockToggle', store.low_stock_alerts !== false, "App.toggleLowStock(this.checked)")}
-        </div>
-      </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🔔 New Order Alerts</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Ping you in Telegram the moment a new order lands.</div>
-          </div>
-          ${this._toggle('newOrderToggle', store.new_order_alerts !== false, "App.toggleNewOrderAlerts(this.checked)")}
-        </div>
-      </div>`;
-
-    // ── Account Security (2FA, Password) ──
-    const security = `
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🔐 Two-Factor Auth (2FA)</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Require a Telegram code on every login to your seller account.</div>
-          </div>
-          ${this._toggle('twoFactorToggle', store.two_factor_enabled, "App.toggleTwoFactor(this.checked)")}
-        </div>
-      </div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-        <div style="font-size:13px;font-weight:800;margin-bottom:4px;">🔑 Account Password</div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Used to confirm sensitive actions like payout changes and shop deletion.</div>
-        <button class="btn-secondary" style="width:100%;" onclick="App.toast('Password reset link sent to your Telegram','success')">Reset Password</button>
-      </div>
-
-      <div class="settings-danger-zone">
-        <div style="font-size:10px;color:var(--danger);font-weight:800;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">⚠️ Danger Zone</div>
-        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px;">
-          Deleting your shop permanently unpublishes all its products and removes it from Medebirr.
-          This cannot be undone. You cannot delete the shop while it has active (paid, undelivered) orders.
-        </div>
-        <button class="settings-delete-btn" style="width:100%;" onclick="SellerViews._confirmDeleteStore()">
-          🗑 Delete My Shop &amp; Medebirr Account
-        </button>
-      </div>
-
-      <button class="settings-logout-btn" style="width:100%;" onclick="SellerViews._confirmLogout()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        Log Out
-      </button>`;
-
-    // Split promotions into two sections
+    // 6. Coupons & Discounts — share-to-save only (group buy moved to Advanced)
     const coupons = `
       <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Grow sales with share-to-save coupons. Customers earn a coupon when they share a product N times.</div>
       <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
@@ -676,67 +492,284 @@ const SellerViews = {
       </div>
       <button class="btn-secondary" style="width:100%;" onclick="App.saveCouponPolicy()">💾 Save Coupons</button>`;
 
-    const groupBuy = `
-      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Customers can form a group to buy together and get a discount.</div>
-      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    // 7. Notifications — Telegram, low stock, new order alerts
+    const notifications = `
+      <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Choose how Medebirr keeps you and your buyers informed.</div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
           <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">👥 Group Buying</div>
-            <div style="font-size:11px;color:var(--text-secondary);">Customers can form a group to buy together and get a discount.</div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📨 Telegram Notifications</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Buyers get DM updates via @medebirrbot when their order status changes.</div>
           </div>
-          ${this._toggle('groupBuyToggle', cp.group_buy_active)}
+          ${this._toggle('telegramNotifsToggle', store.telegram_notifs !== false, "App.toggleTelegramNotifs(this.checked)")}
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0;">
-          <div class="form-group">
-            <label class="form-label">Min Members</label>
-            <input type="number" class="form-input" id="groupMinMembers" value="${cp.group_min_members}" placeholder="3" />
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📉 Low-Stock Alerts</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Get notified when a product is running low on stock.</div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Group Discount %</label>
-            <input type="number" class="form-input" id="groupDiscount" value="${cp.group_discount}" placeholder="10" />
+          ${this._toggle('lowStockToggle', store.low_stock_alerts !== false, "App.toggleLowStock(this.checked)")}
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">${State.t('seller.settings.newOrderAlerts')}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${State.t('seller.settings.newOrderAlertsDesc')}</div>
+          </div>
+          ${this._toggle('newOrderToggle', store.new_order_alerts !== false, "App.toggleNewOrderAlerts(this.checked)")}
+        </div>
+      </div>`;
+
+    // 8. Account Security — 2FA, password, danger zone, logout
+    const security = `
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">${State.t('seller.settings.twoFactor')}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${State.t('seller.settings.twoFactorDesc')}</div>
+          </div>
+          ${this._toggle('twoFactorToggle', store.two_factor_enabled, "App.toggleTwoFactor(this.checked)")}
+        </div>
+      </div>
+      <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:800;margin-bottom:4px;">${State.t('seller.settings.accountPassword')}</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">${State.t('seller.settings.accountPasswordDesc')}</div>
+        <button class="btn-secondary" style="width:100%;" onclick="App.toast(State.t('seller.settings.resetPassword')+' — sent to your Telegram','success')">${State.t('seller.settings.resetPassword')}</button>
+      </div>
+      <div class="settings-danger-zone">
+        <div style="font-size:10px;color:var(--danger);font-weight:800;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">${State.t('seller.settings.dangerZone')}</div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:12px;">${State.t('seller.settings.dangerZoneDesc')}</div>
+        <button class="settings-delete-btn" style="width:100%;" onclick="SellerViews._confirmDeleteStore()">${State.t('seller.settings.deleteShop')}</button>
+      </div>
+      <button class="settings-logout-btn" style="width:100%;" onclick="SellerViews._confirmLogout()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        ${State.t('seller.settings.logOut')}
+      </button>`;
+
+    // 9. Advanced Settings — staff, group buy, automation, tax combined
+    const advanced = `
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">👥 Staff Roles</div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">👤 Owner</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Full access — you. Receives payouts and can delete the shop.</div>
+          <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--success);font-weight:700;">Active</span>
+        </div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">🛡️ Manager</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">Manage products, orders and policies. Cannot change payouts or delete the shop.</div>
+          <button class="btn-secondary" style="width:100%;" onclick="App.toast('Staff invites coming soon','info')">+ Invite Manager</button>
+        </div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">📦 Fulfilment Staff</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">View and fulfil orders only. Ideal for warehouse or dispatch teams.</div>
+          <button class="btn-secondary" style="width:100%;" onclick="App.toast('Staff invites coming soon','info')">+ Invite Staff</button>
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">👥 Group Buying</div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <div>
+              <div style="font-size:13px;font-weight:800;margin-bottom:2px;">👥 Group Buying</div>
+              <div style="font-size:11px;color:var(--text-secondary);">Customers form a group to buy together and get a discount.</div>
+            </div>
+            ${this._toggle('groupBuyToggle', cp.group_buy_active)}
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:0;">
+            <div class="form-group">
+              <label class="form-label">Min Members</label>
+              <input type="number" class="form-input" id="groupMinMembers" value="${cp.group_min_members}" placeholder="3" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Group Discount %</label>
+              <input type="number" class="form-input" id="groupDiscount" value="${cp.group_discount}" placeholder="10" />
+            </div>
           </div>
         </div>
       </div>
-      <button class="btn-secondary" style="width:100%;" onclick="App.saveCouponPolicy()">💾 Save Group Buy</button>`;
 
-    // Remove telegram notifs from automation (now under notifications)
-    const automationClean = automation.replace(
-      /<div style="background:var\(--bg-surface\);border:1px solid var\(--border\);border-radius:var\(--radius-md\);padding:16px;margin-bottom:12px;">\s*<div style="display:flex;justify-content:space-between;align-items:center;">\s*<div>\s*<div style="font-size:13px;font-weight:800;margin-bottom:2px;">📨 Telegram Notifications<\/div>[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/,
-      ''
-    );
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
 
-    // ── Section registry (grouped into 5 categories) ──
-    const sections = {
-      identity:     { title: State.t('seller.menu.storeIdentity'), icon: Icons.store, desc: State.t('seller.menu.storeIdentityDesc'), body: identity },
-      policies:     { title: State.t('seller.menu.storePolicies'),  icon: Icons.file,  desc: State.t('seller.menu.storePoliciesDesc'), body: policies },
-      staff:        { title: State.t('seller.menu.staffRoles'),     icon: Icons.users, desc: State.t('seller.menu.staffRolesDesc'),  body: staff },
-      coupons:      { title: State.t('seller.menu.coupons'),        icon: Icons.tag,   desc: State.t('seller.menu.couponsDesc'),    body: coupons },
-      groupBuy:     { title: State.t('seller.menu.groupBuy'),       icon: Icons.users, desc: State.t('seller.menu.groupBuyDesc'),   body: groupBuy },
-      shipping:     { title: State.t('seller.menu.shipping'),       icon: Icons.truck, desc: State.t('seller.menu.shippingDesc'),   body: shipping, badge: 'NEW' },
-      automation:   { title: State.t('seller.menu.automation'),     icon: Icons.zap,   desc: State.t('seller.menu.automationDesc'), body: automationClean },
-      payout:       { title: State.t('seller.menu.payout'),         icon: Icons.wallet,desc: State.t('seller.menu.payoutDesc'),     body: payout },
-      tax:          { title: State.t('seller.menu.tax'),            icon: Icons.receipt,desc: State.t('seller.menu.taxDesc'),       body: tax, badge: 'NEW' },
-      security:     { title: State.t('seller.menu.security'),       icon: Icons.lock,  desc: State.t('seller.menu.securityDesc'),   body: security },
-      notifications:{ title: State.t('seller.menu.notifications'),  icon: Icons.bell,  desc: State.t('seller.menu.notificationsDesc'),body: notifications, badge: 'NEW' }
-    };
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">⚙️ Automation</div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:4px;">📢 Telegram Group Connection</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">
+            ${tgConnected
+              ? `✅ Connected: <strong style="color:var(--text-primary);">@${store.tg_channel_username}</strong> — Products auto-post here when published.`
+              : '⚠️ No group connected yet. Connect a group to auto-broadcast your products.'}
+          </div>
+          <div style="display:flex;gap:8px;">
+            <input class="form-input" id="groupUsernameInput" placeholder="@YourGroupUsername" value="${store.tg_channel_username || ''}" style="flex:1;"/>
+            <button onclick="App._verifyGroupFromPolicy()" style="background:rgba(252,205,4,0.15);border:1px solid rgba(252,205,4,0.4);color:var(--accent);padding:9px 14px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">✅ Verify Admin</button>
+          </div>
+          <div id="policyGroupVerifyResult" style="margin-top:8px;"></div>
+        </div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🔍 Auto-Detect Products</div>
+              <div style="font-size:11px;color:var(--text-secondary);">Any photo with a price in your group becomes a pending product. When OFF, only /sell commands create products.</div>
+            </div>
+            ${this._toggle('autoDetectToggle', store.auto_detect_products !== false, "App.toggleAutoDetect(this.checked)")}
+          </div>
+        </div>
+      </div>
 
-    const groups = [
-      { key: 'setup',     title: State.t('seller.menu.groupSetup'),    sub: State.t('seller.menu.groupSetupSub'),    icon: Icons.store,  sections: ['identity', 'policies', 'staff'] },
-      { key: 'sales',     title: State.t('seller.menu.groupSales'),    sub: State.t('seller.menu.groupSalesSub'),    icon: Icons.target, sections: ['coupons', 'groupBuy'] },
-      { key: 'orders',    title: State.t('seller.menu.groupOrders'),   sub: State.t('seller.menu.groupOrdersSub'),   icon: Icons.truck,  sections: ['shipping', 'automation'] },
-      { key: 'money',     title: State.t('seller.menu.groupMoney'),    sub: State.t('seller.menu.groupMoneySub'),    icon: Icons.wallet, sections: ['payout', 'tax'] },
-      { key: 'security',  title: State.t('seller.menu.groupSecurity'), sub: State.t('seller.menu.groupSecuritySub'), icon: Icons.shield, sections: ['security', 'notifications'] }
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+
+      <div style="margin-bottom:8px;">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">🧾 Tax & Invoices</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div class="form-group">
+            <label class="form-label">VAT / Tax %</label>
+            <input type="number" class="form-input" id="taxRate" value="${store.tax_rate || 0}" placeholder="15" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tax Number / TIN</label>
+            <input class="form-input" id="taxTin" value="${store.tax_tin || ''}" placeholder="TIN / VAT no." />
+          </div>
+        </div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;font-weight:800;margin-bottom:2px;">🧾 Auto-Invoice</div>
+              <div style="font-size:11px;color:var(--text-secondary);">Attach a PDF invoice to every completed order email.</div>
+            </div>
+            ${this._toggle('autoInvoiceToggle', store.auto_invoice !== false, "App.toggleAutoInvoice(this.checked)")}
+          </div>
+        </div>
+        <button class="btn-secondary" style="width:100%;" onclick="App.saveTaxConfig()">💾 Save Tax &amp; Invoice Settings</button>
+      </div>`;
+
+    // 10. Help Center — support, FAQ, app info
+    const helpCenter = `
+      <div style="margin-bottom:14px;">
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div style="width:40px;height:40px;border-radius:10px;background:rgba(59,130,246,0.12);display:flex;align-items:center;justify-content:center;font-size:20px;">💬</div>
+            <div>
+              <div style="font-size:14px;font-weight:800;">Contact Support</div>
+              <div style="font-size:11px;color:var(--text-secondary);">Get help from the Medebirr team</div>
+            </div>
+          </div>
+          <a href="https://t.me/medebirrbot" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(252,205,4,0.1);border:1px solid rgba(252,205,4,0.3);border-radius:10px;padding:12px;color:var(--accent);font-size:13px;font-weight:800;text-decoration:none;cursor:pointer;">
+            📲 @medebirrbot
+          </a>
+        </div>
+
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+          <div style="font-size:14px;font-weight:800;margin-bottom:10px;">📖 Frequently Asked Questions</div>
+          <details style="margin-bottom:8px;">
+            <summary style="font-size:13px;font-weight:700;cursor:pointer;padding:6px 0;">How do I get paid?</summary>
+            <p style="font-size:12px;color:var(--text-secondary);margin:6px 0 0 0;line-height:1.6;">Buyers pay you directly via Telebirr or CBE. Your payment details are shown at checkout. Payouts are settled instantly — the money goes straight to your account.</p>
+          </details>
+          <details style="margin-bottom:8px;">
+            <summary style="font-size:13px;font-weight:700;cursor:pointer;padding:6px 0;">How does delivery work?</summary>
+            <p style="font-size:12px;color:var(--text-secondary);margin:6px 0 0 0;line-height:1.6;">You can deliver yourself (self-delivery), use a rider, or partner with a courier company. Set your delivery fees and zones in Shipping & Delivery settings.</p>
+          </details>
+          <details style="margin-bottom:8px;">
+            <summary style="font-size:13px;font-weight:700;cursor:pointer;padding:6px 0;">Can I have multiple staff?</summary>
+            <p style="font-size:12px;color:var(--text-secondary);margin:6px 0 0 0;line-height:1.6;">Yes — Manager and Fulfilment roles are coming soon. Contact support to enable staff seats for your shop.</p>
+          </details>
+          <details>
+            <summary style="font-size:13px;font-weight:700;cursor:pointer;padding:6px 0;">What are the platform fees?</summary>
+            <p style="font-size:12px;color:var(--text-secondary);margin:6px 0 0 0;line-height:1.6;">Medebirr is free to use. You keep 100% of your sales. No listing fees, no commission, no hidden charges.</p>
+          </details>
+        </div>
+
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;">
+          <div style="font-size:14px;font-weight:800;margin-bottom:4px;">ℹ️ About Medebirr</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
+            <p style="margin:4px 0;">Version 1.4.0</p>
+            <p style="margin:4px 0;">Ethiopia's free Telegram marketplace — sell directly to buyers in your community.</p>
+          </div>
+        </div>
+      </div>`;
+
+    // 11. Policies — Platform terms + seller-configurable preferences
+    const sellerPolicies = `
+      <div style="margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">⚖️ Platform Policies</div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">📜 Terms of Service</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;line-height:1.6;">By selling on Medebirr, you agree to fulfil orders promptly, maintain accurate stock counts, and treat buyers fairly. Violations may result in account suspension.</div>
+          <a href="#" onclick="App.toast('Full terms available at medebirr.vercel.app/terms','info')" style="font-size:12px;color:var(--accent);font-weight:700;">Read full terms →</a>
+        </div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:10px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">🔒 Privacy & Data</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;line-height:1.6;">Buyer contact details are shared only for order fulfilment. You may not use buyer data for marketing without consent.</div>
+          <a href="#" onclick="App.toast('Privacy policy at medebirr.vercel.app/privacy','info')" style="font-size:12px;color:var(--accent);font-weight:700;">Read privacy policy →</a>
+        </div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">🚫 Prohibited Items</div>
+          <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;">Counterfeit goods, weapons, illegal substances, and stolen property are strictly prohibited. Violating items will be removed and may result in permanent ban.</div>
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+
+      <div style="margin-bottom:8px;">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">🛒 Checkout Preferences</div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:8px;">Payment Methods Accepted</div>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="telebirrEnabled" ${store.telebirr_enabled!==false?'checked':''} style="accent-color:var(--accent);"> 📱 Telebirr
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="cbeEnabled" ${store.cbe_enabled?'checked':''} style="accent-color:var(--accent);"> 🏦 CBE Bank Transfer
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="cashEnabled" ${store.cash_on_delivery!==false?'checked':''} style="accent-color:var(--accent);"> 💵 Cash on Delivery
+          </label>
+        </div>
+        <button class="btn-secondary" style="width:100%;" onclick="App.savePolicy()">💾 Save Preferences</button>
+      </div>`;
+
+    // ── Section registry (flat map) ──
+    const menuItems = [
+      { key: 'profile',        icon: '🏪', title: 'Profile',                desc: 'Store identity & display' },
+      { key: 'address',        icon: '📍', title: 'Address',                desc: 'Physical location' },
+      { key: 'payout',         icon: '👛', title: 'Payout & Banking',       desc: 'Telebirr & CBE accounts' },
+      { key: 'shipping',       icon: '🚚', title: 'Shipping & Delivery',    desc: 'Fees, self & company delivery' },
+      { key: 'returnPolicy',   icon: '🔄', title: 'Return Policy',          desc: 'Return type & terms' },
+      { key: 'coupons',        icon: '🏷️',  title: 'Coupons & Discounts',    desc: 'Share-to-save promotions' },
+      { key: 'notifications',  icon: '🔔', title: 'Notifications',          desc: 'Telegram, stock & order alerts' },
+      { key: 'security',       icon: '🔒', title: 'Settings (Security)',    desc: '2FA, password, account' },
+      { key: 'advanced',       icon: '⚡', title: 'Advanced Settings',       desc: 'Staff, group buy, automation, tax' },
+      { key: 'helpCenter',     icon: '🆘', title: 'Help Center',            desc: 'Support, FAQ & app info' },
+      { key: 'sellerPolicies', icon: '📜', title: 'Policies',               desc: 'Platform terms & preferences' }
     ];
 
-    const iconCell = (svg) => `<span class="menu-icon">${svg}</span>`;
+    const sections = {
+      profile:        { body: profile },
+      address:        { body: address },
+      payout:         { body: payout },
+      shipping:       { body: shipping },
+      returnPolicy:   { body: returnPolicy },
+      coupons:        { body: coupons },
+      notifications:  { body: notifications },
+      security:       { body: security },
+      advanced:       { body: advanced },
+      helpCenter:     { body: helpCenter },
+      sellerPolicies: { body: sellerPolicies }
+    };
 
-    // ── Detail view (a single section with a back button to its group) ──
+    // ── Detail view (single section with back button to flat menu) ──
     if (State.sellerSettingsSection && sections[State.sellerSettingsSection]) {
+      const item = menuItems.find(m => m.key === State.sellerSettingsSection);
       const s = sections[State.sellerSettingsSection];
       container.innerHTML = `
         <div class="settings-detail-header">
-          <button class="pdp-back-btn" onclick="SellerViews._backToSettingsGroup()" aria-label="Back">${Icons.chevron(22)}</button>
-          <div class="settings-detail-title">${s.icon(18)} ${s.title}</div>
+          <button class="pdp-back-btn" onclick="SellerViews._backToSettingsMenu()" aria-label="Back">${Icons.chevron(22)}</button>
+          <div class="settings-detail-title">${item ? item.icon + ' ' + item.title : ''}</div>
           <div style="width:28px;"></div>
         </div>
         <div style="padding:4px 0 8px;">${s.body}</div>
@@ -744,59 +777,21 @@ const SellerViews = {
       return;
     }
 
-    // ── Group list view (sub-sections of a chosen category) ──
-    if (State.sellerSettingsGroup) {
-      const g = groups.find(x => x.key === State.sellerSettingsGroup);
-      if (!g) { State.sellerSettingsGroup = null; }
-      else {
-        const rows = g.sections.map(key => {
-          const s = sections[key];
-          return `
-            <button class="settings-menu-row" onclick="SellerViews._openSettingsSection('${key}')">
-              ${iconCell(s.icon(20))}
-              <span class="settings-menu-text">
-                <span class="settings-menu-label">${s.title}</span>
-                <span class="settings-menu-sub">${s.desc}</span>
-              </span>
-              ${s.badge ? `<span class="settings-new-badge">${s.badge}</span>` : ''}
-              <span class="settings-menu-arrow">›</span>
-            </button>`;
-        }).join('');
-        container.innerHTML = `
-          <div class="settings-detail-header">
-            <button class="pdp-back-btn" onclick="SellerViews._backToSettingsMenu()" aria-label="Back">${Icons.chevron(22)}</button>
-            <div class="settings-detail-title">${g.icon(18)} ${g.title}</div>
-            <div style="width:28px;"></div>
-          </div>
-          <div style="font-size:11px;color:var(--text-secondary);padding:0 2px 10px;">${g.sub}</div>
-          <div class="settings-menu">${rows}</div>
-        `;
-        return;
-      }
-    }
-
-    // ── Category list view (top level) ──
-    const groupRows = groups.map(g => `
-      <button class="settings-menu-row settings-group-row" onclick="SellerViews._openSettingsGroup('${g.key}')">
-        ${iconCell(g.icon(22))}
+    // ── Flat menu list (11 items, one level) ──
+    const rows = menuItems.map(m => `
+      <button class="settings-menu-row" onclick="SellerViews._openSettingsSection('${m.key}')">
+        <span class="menu-icon" style="font-size:20px;width:36px;text-align:center;flex-shrink:0;">${m.icon}</span>
         <span class="settings-menu-text">
-          <span class="settings-menu-label">${g.title}</span>
-          <span class="settings-menu-sub">${g.sub}</span>
+          <span class="settings-menu-label">${m.title}</span>
+          <span class="settings-menu-sub">${m.desc}</span>
         </span>
         <span class="settings-menu-arrow">›</span>
       </button>`).join('');
 
     container.innerHTML = `
       <div class="section-header"><span class="section-title">👤 Account &amp; Settings</span></div>
-      <div class="settings-menu">${groupRows}</div>
+      <div class="settings-menu">${rows}</div>
     `;
-  },
-
-  _openSettingsGroup(key) {
-    State.sellerSettingsGroup = key;
-    State.sellerSettingsSection = null;
-    const body = document.getElementById('appBody');
-    if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
   },
 
   _openSettingsSection(key) {
@@ -805,14 +800,7 @@ const SellerViews = {
     if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
   },
 
-  _backToSettingsGroup() {
-    State.sellerSettingsSection = null;
-    const body = document.getElementById('appBody');
-    if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
-  },
-
   _backToSettingsMenu() {
-    State.sellerSettingsGroup = null;
     State.sellerSettingsSection = null;
     const body = document.getElementById('appBody');
     if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
@@ -916,11 +904,11 @@ const SellerViews = {
       <div class="modal-handle"></div>
       <div style="text-align:center;padding:16px 0;">
         <div style="font-size:40px;margin-bottom:14px;">👋</div>
-        <div style="font-size:17px;font-weight:900;margin-bottom:8px;">Log Out?</div>
-        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">You'll need to sign in again to manage your store.</div>
+        <div style="font-size:17px;font-weight:900;margin-bottom:8px;">${State.t('auth.logout.confirm')}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;">${State.t('auth.logout.desc')}</div>
         <div style="display:flex;gap:10px;">
-          <button class="btn-secondary" onclick="Modals.close();" style="flex:1;">Cancel</button>
-          <button onclick="App.clearToken();location.reload();" style="flex:1;background:var(--danger);color:white;border:none;padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:800;cursor:pointer;">Log Out</button>
+          <button class="btn-secondary" onclick="Modals.close();" style="flex:1;">${State.t('shared.btn.cancel')}</button>
+          <button onclick="App.clearToken();location.reload();" style="flex:1;background:var(--danger);color:white;border:none;padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:800;cursor:pointer;">${State.t('auth.logout.yes')}</button>
         </div>
       </div>
     `);
@@ -933,16 +921,16 @@ const SellerViews = {
       <div class="modal-handle"></div>
       <div style="padding:8px 4px 4px;">
         <div style="font-size:38px;text-align:center;margin-bottom:10px;">⚠️</div>
-        <div style="font-size:17px;font-weight:900;text-align:center;margin-bottom:6px;">Delete "${name}"?</div>
+        <div style="font-size:17px;font-weight:900;text-align:center;margin-bottom:6px;">${State.t('seller.confirmDeleteStore.title', { name })}</div>
         <div style="font-size:13px;color:var(--text-secondary);text-align:center;line-height:1.5;margin-bottom:18px;">
-          This permanently unpublishes all products and removes your shop from Medebirr. This action cannot be undone.
+          ${State.t('seller.confirmDeleteStore.body')}
         </div>
         <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:10px 12px;margin-bottom:18px;">
-          <div style="font-size:12px;color:var(--danger);font-weight:700;">⚠️ You cannot delete while there are active (paid, undelivered) orders.</div>
+          <div style="font-size:12px;color:var(--danger);font-weight:700;">${State.t('seller.confirmDeleteStore.warn')}</div>
         </div>
         <div style="display:flex;gap:10px;">
-          <button class="btn-secondary" onclick="Modals.close();" style="flex:1;">Cancel</button>
-          <button onclick="App.deleteStore(${store ? `'${store.store_id}','${store.store_name.replace(/'/g,"\\'")}'` : ''})" style="flex:1;background:var(--danger);color:white;border:none;padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:800;cursor:pointer;">Delete Shop</button>
+          <button class="btn-secondary" onclick="Modals.close();" style="flex:1;">${State.t('seller.confirmDeleteStore.cancel')}</button>
+          <button onclick="App.deleteStore(${store ? `'${store.store_id}','${store.store_name.replace(/'/g,"\\'")}'` : ''})" style="flex:1;background:var(--danger);color:white;border:none;padding:13px;border-radius:var(--radius-md);font-size:14px;font-weight:800;cursor:pointer;">${State.t('seller.confirmDeleteStore.delete')}</button>
         </div>
       </div>
     `);

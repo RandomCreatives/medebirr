@@ -38,6 +38,9 @@ auth.seller.setPasswordTitle,🔑 Set Your Password,auth,Set password modal titl
 auth.seller.storeName,${store.store_name},auth,Seller password prompt store name,,No
 auth.seller.unlock,🔓 Unlock Seller Studio,auth,Seller password unlock button,,No
 auth.switchAccount,Switch Account,auth,Switch account button,,No
+brand.loadingTagline,Ethiopia's Free Shopping Experience,brand,Loading screen tagline,,No
+brand.onboardingTagline,Ethiopia's Telegram Marketplace,brand,Onboarding tagline,,No
+brand.slideToEnter,Slide to enter →,brand,Onboarding slide label,,No
 buyer.address.addNew,Add New Address,buyer,Add address button,,No
 buyer.address.couldNotRemove,Could not remove address,buyer,Address remove error,,No
 buyer.address.couldNotSave,Could not save address,buyer,Address save error,,No
@@ -117,8 +120,8 @@ buyer.orders.cancelledReason,${o.cancel_reason || 'Order was cancelled'},buyer,O
 buyer.orders.completed,Completed,buyer,Order filter tab,,No
 buyer.orders.deliveryCode,"🔑 Delivery code: <strong style=""font-family:monospace;letter-spacing:2px;"">${o.delivery_otp}</strong> — give this to the ${o.delivery_provider === 'self' ? 'seller' : 'rider'} at handover",buyer,Order OTP line,,No
 buyer.orders.myOrders,My Orders,buyer,Orders section title,,No
-buyer.orders.noOrders,No ${filter === 'all' ? '' : filter} orders,buyer,Orders empty title,,No
-buyer.orders.noOrdersDesc,${filter === 'all' ? 'Your purchase history will appear here.' : 'No orders match this filter.'},buyer,Orders empty desc,,No
+buyer.orders.noOrders,No ${filter} orders,buyer,Orders empty title,,No
+buyer.orders.noOrdersDesc,${message},buyer,Orders empty desc,,No
 buyer.orders.paymentVerified,"✅ Payment verified from screenshot · TX <strong style=""font-family:monospace;"">${o.payment_proof.tx_ref}</strong>",buyer,Order payment proof line,,No
 buyer.orders.promoCoupon,🎟️ Promo Coupon Saved: -${State.formatETB(o.discount_etb)},buyer,Order promo line,,No
 buyer.orders.receipt,📄 Receipt,buyer,Order receipt button,,No
@@ -202,11 +205,15 @@ buyer.profile.verified,Verified,buyer,Store verified status,,No
 buyer.profile.yourProfile,Your Profile,buyer,Profile section title,,No
 buyer.profile.yourStores,Your Stores,buyer,Profile stores section,,No
 buyer.settings.amharic,አማርኛ,buyer,Language amharic,,No
+buyer.settings.appTagline,Ethiopia's Free Shopping Experience,buyer,Settings tagline,,No
+buyer.settings.appVersion,Medebirr v1.0.0,buyer,Settings version info,,Yes
 buyer.settings.appearance,Appearance,buyer,Settings group title,,No
 buyer.settings.biometric,Biometric Login,buyer,Settings toggle label,,No
 buyer.settings.biometricDesc,FaceID or Fingerprint authentication,buyer,Settings toggle desc,,No
 buyer.settings.chatAlerts,Chat Alerts,buyer,Notif toggle label,,No
 buyer.settings.chatAlertsDesc,Messages from sellers and support,buyer,Notif toggle desc,,No
+buyer.settings.clearCache,Clear App Cache,buyer,Settings action label,,No
+buyer.settings.clearCacheDesc,Free up storage and refresh cached data,buyer,Settings action desc,,No
 buyer.settings.darkHint,Switch to light theme,buyer,Dark mode desc,,No
 buyer.settings.darkMode,🌙 Dark Mode,buyer,Dark mode label,,No
 buyer.settings.english,English,buyer,Language english,,No
@@ -216,6 +223,7 @@ buyer.settings.lightMode,☀️ Light Mode,buyer,Light mode label,,No
 buyer.settings.orderUpdates,Order Updates,buyer,Notif toggle label,,No
 buyer.settings.orderUpdatesDesc,"Dispatch, delivery, and status changes",buyer,Notif toggle desc,,No
 buyer.settings.oromia,Afaan Oromoo,buyer,Language oromia,,No
+buyer.settings.performance,Performance,buyer,Settings group title,,No
 buyer.settings.promotions,Promotions & Deals,buyer,Notif toggle label,,No
 buyer.settings.promotionsDesc,"Sales, discounts, and new arrivals",buyer,Notif toggle desc,,No
 buyer.settings.pushNotif,Push Notifications,buyer,Settings group title,,No
@@ -846,6 +854,17 @@ seller.register.whatSell,What do you sell?,seller,Reg category label,,No
 seller.savePolicy.failed,Save failed,seller,Save policy error,,No
 seller.savePolicy.success,Store settings saved!,seller,Save policy toast,,No
 seller.settingNotSaved,Setting not saved yet,seller,Store toggle info,,No
+seller.settings.accountPassword,🔑 Account Password,seller,Seller settings password label,,No
+seller.settings.accountPasswordDesc,Used to confirm sensitive actions like payout changes and shop deletion.,seller,Seller settings password desc,,No
+seller.settings.dangerZone,⚠️ Danger Zone,seller,Seller settings danger zone title,,No
+seller.settings.dangerZoneDesc,"Deleting your shop permanently unpublishes all its products and removes it from Medebirr. This cannot be undone. You cannot delete the shop while it has active (paid, undelivered) orders.",seller,Seller settings danger zone desc,,No
+seller.settings.deleteShop,🗑 Delete My Shop &amp; Medebirr Account,seller,Seller settings delete button,,No
+seller.settings.logOut,Log Out,seller,Seller settings logout button,,No
+seller.settings.newOrderAlerts,🔔 New Order Alerts,seller,Seller settings new order alerts label,,No
+seller.settings.newOrderAlertsDesc,Ping you in Telegram the moment a new order lands.,seller,Seller settings new order alerts desc,,No
+seller.settings.resetPassword,Reset Password,seller,Seller settings reset button,,No
+seller.settings.twoFactor,🔐 Two-Factor Auth (2FA),seller,Seller settings 2FA label,,No
+seller.settings.twoFactorDesc,Require a Telegram code on every login to your seller account.,seller,Seller settings 2FA desc,,No
 seller.tax.notSaved,Tax settings not saved yet,seller,Tax error,,No
 seller.tax.saved,Tax & invoice settings saved!,seller,Tax saved toast,,No
 seller.telegramNotifs.enabled,'Telegram notifications ${enabled ? 'enabled' : 'disabled'}',seller,TG notifs toast,,No
