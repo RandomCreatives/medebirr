@@ -39,6 +39,42 @@ App.cancelOrder = async function(orderId) {
   }
 };
 
+// ── Buyer: Request cancel (paid orders) ──────────
+App.requestCancelOrder = async function(orderId, storeName) {
+  Modals.open(`
+    <div class="modal-handle"></div>
+    <div style="text-align:center;padding:8px 0 12px;">
+      <div style="font-size:36px;margin-bottom:10px;">📞</div>
+      <div style="font-size:17px;font-weight:900;margin-bottom:6px;">Request Cancellation</div>
+      <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">
+        Since your payment has already been sent, please contact <strong>${storeName}</strong> to agree on a refund.
+        Once the seller confirms they've sent the money back, we'll mark the order as refunded.
+      </div>
+      <div style="background:rgba(252,205,4,0.08);border:1px solid rgba(252,205,4,0.3);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text-secondary);text-align:left;line-height:1.6;">
+        <strong style="color:var(--accent);">How it works:</strong><br/>
+        1. Contact the seller via Telegram or phone<br/>
+        2. Agree on the refund amount and method<br/>
+        3. Seller sends the money back to you<br/>
+        4. We mark the order as refunded
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secondary" style="flex:1;" onclick="Modals.close()">Close</button>
+        <button class="btn-primary" style="flex:1;" onclick="App._notifySellerCancelRequest('${orderId}')">📨 Notify Seller</button>
+      </div>
+    </div>
+  `);
+};
+
+App._notifySellerCancelRequest = async function(orderId) {
+  try {
+    await Api.orders.notifyCancelRequest(orderId);
+    Modals.close();
+    this.toast('Seller notified. They will contact you to process the refund.', 'success');
+  } catch (err) {
+    this.toast(err.message || 'Failed to notify seller', 'error');
+  }
+};
+
 // ── Seller: Settle order ─────────────────────────
 App.settleOrder = async function(orderId) {
   if (!confirm('Confirm that delivery has been completed and settled?')) return;
@@ -79,7 +115,7 @@ App.openOrderDetail = async function(orderId) {
       </div>` : ''}
       ${o.rider_name ? `<div class="card" style="margin-bottom:10px;"><div class="card-title">🛵 Rider Details</div><div class="card-sub" style="margin-top:4px;">${o.rider_name} · ${o.rider_phone}</div></div>` : ''}
       ${policy ? `<div class="policy-box">🛡️ ${State.policyLabel(policy.return_policy_type)}: ${policy.custom_policy_text || ''}</div>` : ''}
-      ${['pending','confirmed'].includes(o.order_status) ? `<button class="btn-danger" style="margin-top:14px;" onclick="App.cancelOrder('${orderId}')">✕ Cancel Order</button>` : ''}
+      ${['pending','confirmed'].includes(o.order_status) ? (o.payment_method === 'cash' ? `<button class="btn-danger" style="margin-top:14px;" onclick="App.cancelOrder('${orderId}')">✕ Cancel Order</button>` : `<button class="btn-secondary" style="margin-top:14px;width:100%;" onclick="App.requestCancelOrder('${orderId}','${o.store_name || ''}')">📞 Request Cancel (Contact Seller)</button>`) : ''}
       ${o.order_status === 'dispatched' ? `
         <div style="display:flex;gap:8px;margin-top:14px;">
           <button class="btn-primary" style="flex:1;" onclick="Modals.close();Modals.openShowQR('${orderId}','buyer')">📱 Show My QR</button>
@@ -155,6 +191,21 @@ App.confirmCancelOrder = function(orderId, orderRef) {
 };
 
 // ── Seller: Execute order cancellation ────────────
+// ── Seller: Mark order as refunded ───────────────
+App.markOrderRefunded = async function(orderId) {
+  if (!confirm('Mark this order as refunded? Only do this after you have sent the money back to the buyer.')) return;
+  try {
+    await Api.orders.markRefunded(orderId);
+    this.toast('Order marked as refunded. Buyer notified.', 'success');
+    Modals.close();
+    const ordersData = await Api.orders.storeOrders(State.currentStoreId, { limit: 200 });
+    State.storeOrders = ordersData.orders || [];
+    this.renderContent();
+  } catch (err) {
+    this.toast(err.message || 'Failed to mark refunded', 'error');
+  }
+};
+
 App.cancelOrderAsSeller = async function(orderId) {
   const reason = document.getElementById('cancelReason')?.value?.trim() || 'Cancelled by seller';
   try {

@@ -383,7 +383,7 @@ const SellerViews = {
       </div>
       <button class="btn-secondary" style="width:100%;" onclick="App.toast('Address saved','success')">💾 Save Address</button>`;
 
-    // 3. Payout & Banking — Telebirr + CBE accounts
+    // 3. Payout & Banking — Telebirr + CBE accounts + checkout preferences
     const payout = `
       <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">These details are shown to buyers at checkout so they can pay you. Keep them up to date.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
@@ -406,7 +406,72 @@ const SellerViews = {
           <input class="form-input" id="cbeAccountName" value="${store.cbe_account_name || ''}" placeholder="Account holder name"/>
         </div>
       </div>
-      <button class="btn-secondary" id="savePayoutBtn" style="width:100%;" onclick="App.savePaymentAccounts()">💾 Save Payment Accounts</button>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">${Icons.credit(14)} Other Banks</div>
+        <div id="otherBanksList">
+          ${(() => {
+            const banks = store.other_banks || [];
+            const ethBanks = ['Dashen Bank','Awash Bank','Abyssinia Bank','Wegagen Bank','United Bank','Nib International Bank','Berhan International Bank','Lion International Bank','Oromia Bank','Zemen Bank','Bunna Bank','Abay Bank','Addis International Bank','Debub Global Bank','Enat Bank','Hibret Bank','Ahad Bank','Tsehay Bank','Gadaa Bank','Siinqee Bank','Shabelle Bank','Hijira Bank'];
+            return banks.length === 0 ? '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">No additional banks added yet.</div>' : banks.map((b, i) => `
+              <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;position:relative;">
+                <button type="button" onclick="SellerViews._removeOtherBank(${i})" style="position:absolute;top:6px;right:8px;background:none;border:none;color:var(--danger);font-size:16px;cursor:pointer;padding:2px;">${Icons.trash(14)}</button>
+                <div style="font-size:13px;font-weight:800;margin-bottom:4px;">${b.bank_name}</div>
+                <div style="font-size:12px;color:var(--text-primary);">${b.account_number}</div>
+                <div style="font-size:11px;color:var(--text-secondary);">${b.account_holder}</div>
+              </div>`).join('');
+          })()}
+        </div>
+        <div id="addOtherBankForm" style="background:var(--bg-surface);border:1px dashed var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:10px;">
+          <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px;">
+            <div>
+              <label class="form-label" style="font-size:11px;">Bank Name</label>
+              <div style="display:flex;gap:6px;">
+                <select id="otherBankNameSelect" onchange="SellerViews._onBankSelect(this)" style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text-primary);font-size:12px;outline:none;">
+                  <option value="">Select a bank...</option>
+                  ${['Dashen Bank','Awash Bank','Abyssinia Bank','Wegagen Bank','United Bank','Nib International Bank','Berhan International Bank','Lion International Bank','Oromia Bank','Zemen Bank','Bunna Bank','Abay Bank','Addis International Bank','Debub Global Bank','Enat Bank','Hibret Bank','Ahad Bank','Tsehay Bank','Gadaa Bank','Siinqee Bank','Shabelle Bank','Hijira Bank'].map(n => `<option value="${n}">${n}</option>`).join('')}
+                  <option value="__other__">Other (type manually)</option>
+                </select>
+              </div>
+              <input id="otherBankNameCustom" style="display:none;margin-top:6px;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text-primary);font-size:12px;outline:none;width:100%;box-sizing:border-box;" placeholder="Type bank name..." />
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <label class="form-label" style="font-size:11px;">Account Number</label>
+              <input class="form-input" id="otherBankAcctNum" placeholder="Account number" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text-primary);font-size:12px;outline:none;width:100%;box-sizing:border-box;" />
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px;">Account Holder</label>
+              <input class="form-input" id="otherBankAcctHolder" placeholder="Full name" style="background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text-primary);font-size:12px;outline:none;width:100%;box-sizing:border-box;" />
+            </div>
+          </div>
+          <button class="btn-secondary" style="width:100%;margin-top:10px;font-size:12px;" onclick="SellerViews._addOtherBank()">${Icons.plus(14)} Add Bank</button>
+        </div>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
+
+      <div style="margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">${Icons.credit(14)} Checkout Preferences</div>
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;">
+          <div style="font-size:13px;font-weight:800;margin-bottom:8px;">Payment Methods Accepted</div>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="telebirrEnabled" ${store.telebirr_enabled!==false?'checked':''} style="accent-color:var(--accent);"> ${Icons.wallet(16)} Telebirr
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="cbeEnabled" ${store.cbe_enabled?'checked':''} style="accent-color:var(--accent);"> ${Icons.credit(16)} CBE Bank Transfer
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="cashEnabled" ${store.cash_on_delivery!==false?'checked':''} style="accent-color:var(--accent);"> ${Icons.wallet(16)} Cash on Delivery
+          </label>
+        </div>
+        <button class="btn-secondary" style="width:100%;margin-top:10px;" onclick="App.savePaymentAccounts()">${Icons.check(16)} Save Preferences</button>
+      </div>
+
+      <button class="btn-secondary" id="savePayoutBtn" style="width:100%;" onclick="App.savePaymentAccounts()">${Icons.check(16)} Save Payment Accounts</button>
       <div class="progress-wrap" id="payoutProgress" style="display:none;">
         <div class="progress-bar" id="payoutProgressBar"></div>
       </div>
@@ -694,58 +759,39 @@ const SellerViews = {
         </div>
       </div>`;
 
-    // 11. Policies — Platform terms + seller-configurable preferences
+    // 11. Policies — Platform terms only
     const sellerPolicies = `
       <div style="margin-bottom:16px;">
-        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">⚖️ Platform Policies</div>
+        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">${Icons.shield(14)} Platform Policies</div>
         <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:10px;">
-          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">📜 Terms of Service</div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">${Icons.file(16)} Terms of Service</div>
           <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;line-height:1.6;">By selling on Medebirr, you agree to fulfil orders promptly, maintain accurate stock counts, and treat buyers fairly. Violations may result in account suspension.</div>
           <a href="#" onclick="App.toast('Full terms available at medebirr.vercel.app/terms','info')" style="font-size:12px;color:var(--accent);font-weight:700;">Read full terms →</a>
         </div>
         <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:10px;">
-          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">🔒 Privacy & Data</div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">${Icons.lock(16)} Privacy & Data</div>
           <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;line-height:1.6;">Buyer contact details are shared only for order fulfilment. You may not use buyer data for marketing without consent.</div>
           <a href="#" onclick="App.toast('Privacy policy at medebirr.vercel.app/privacy','info')" style="font-size:12px;color:var(--accent);font-weight:700;">Read privacy policy →</a>
         </div>
         <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
-          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">🚫 Prohibited Items</div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:6px;">${Icons.trash(16)} Prohibited Items</div>
           <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;">Counterfeit goods, weapons, illegal substances, and stolen property are strictly prohibited. Violating items will be removed and may result in permanent ban.</div>
         </div>
-      </div>
-
-      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0;">
-
-      <div style="margin-bottom:8px;">
-        <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;">🛒 Checkout Preferences</div>
-        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
-          <div style="font-size:13px;font-weight:800;margin-bottom:8px;">Payment Methods Accepted</div>
-          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" id="telebirrEnabled" ${store.telebirr_enabled!==false?'checked':''} style="accent-color:var(--accent);"> 📱 Telebirr
-          </label>
-          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" id="cbeEnabled" ${store.cbe_enabled?'checked':''} style="accent-color:var(--accent);"> 🏦 CBE Bank Transfer
-          </label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" id="cashEnabled" ${store.cash_on_delivery!==false?'checked':''} style="accent-color:var(--accent);"> 💵 Cash on Delivery
-          </label>
-        </div>
-        <button class="btn-secondary" style="width:100%;" onclick="App.savePolicy()">💾 Save Preferences</button>
       </div>`;
 
     // ── Section registry (flat map) ──
     const menuItems = [
-      { key: 'profile',        icon: '🏪', title: 'Profile',                desc: 'Store identity & display' },
-      { key: 'address',        icon: '📍', title: 'Address',                desc: 'Physical location' },
-      { key: 'payout',         icon: '👛', title: 'Payout & Banking',       desc: 'Telebirr & CBE accounts' },
-      { key: 'shipping',       icon: '🚚', title: 'Shipping & Delivery',    desc: 'Fees, self & company delivery' },
-      { key: 'returnPolicy',   icon: '🔄', title: 'Return Policy',          desc: 'Return type & terms' },
-      { key: 'coupons',        icon: '🏷️',  title: 'Coupons & Discounts',    desc: 'Share-to-save promotions' },
-      { key: 'notifications',  icon: '🔔', title: 'Notifications',          desc: 'Telegram, stock & order alerts' },
-      { key: 'security',       icon: '🔒', title: 'Settings (Security)',    desc: '2FA, password, account' },
-      { key: 'advanced',       icon: '⚡', title: 'Advanced Settings',       desc: 'Staff, group buy, automation, tax' },
-      { key: 'helpCenter',     icon: '🆘', title: 'Help Center',            desc: 'Support, FAQ & app info' },
-      { key: 'sellerPolicies', icon: '📜', title: 'Policies',               desc: 'Platform terms & preferences' }
+      { key: 'profile',        icon: Icons.store(20),   title: 'Profile',                desc: 'Store identity & display' },
+      { key: 'address',        icon: Icons.pin(20),     title: 'Address',                desc: 'Physical location' },
+      { key: 'payout',         icon: Icons.wallet(20),  title: 'Payout & Banking',       desc: 'Telebirr, CBE & checkout preferences' },
+      { key: 'shipping',       icon: Icons.truck(20),   title: 'Shipping & Delivery',    desc: 'Fees, self & company delivery' },
+      { key: 'returnPolicy',   icon: Icons.receipt(20), title: 'Return Policy',          desc: 'Return type & terms' },
+      { key: 'coupons',        icon: Icons.tag(20),     title: 'Coupons & Discounts',    desc: 'Share-to-save promotions' },
+      { key: 'notifications',  icon: Icons.bell(20),    title: 'Notifications',          desc: 'Telegram, stock & order alerts' },
+      { key: 'security',       icon: Icons.lock(20),    title: 'Settings (Security)',    desc: '2FA, password, account' },
+      { key: 'advanced',       icon: Icons.zap(20),     title: 'Advanced Settings',       desc: 'Staff, group buy, automation, tax' },
+      { key: 'helpCenter',     icon: Icons.help(20),    title: 'Help Center',            desc: 'Support, FAQ & app info' },
+      { key: 'sellerPolicies', icon: Icons.shield(20),  title: 'Policies',               desc: 'Platform terms' }
     ];
 
     const sections = {
@@ -780,7 +826,7 @@ const SellerViews = {
     // ── Flat menu list (11 items, one level) ──
     const rows = menuItems.map(m => `
       <button class="settings-menu-row" onclick="SellerViews._openSettingsSection('${m.key}')">
-        <span class="menu-icon" style="font-size:20px;width:36px;text-align:center;flex-shrink:0;">${m.icon}</span>
+        <span class="menu-icon" style="width:36px;text-align:center;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;">${m.icon}</span>
         <span class="settings-menu-text">
           <span class="settings-menu-label">${m.title}</span>
           <span class="settings-menu-sub">${m.desc}</span>
@@ -789,13 +835,17 @@ const SellerViews = {
       </button>`).join('');
 
     container.innerHTML = `
-      <div class="section-header"><span class="section-title">👤 Account &amp; Settings</span></div>
+      <div class="section-header"><span class="section-title">${Icons.settings(18)} Account &amp; Settings</span></div>
       <div class="settings-menu">${rows}</div>
     `;
   },
 
   _openSettingsSection(key) {
     State.sellerSettingsSection = key;
+    if (key === 'payout') {
+      const store = State.storeDetail || State.stores[0];
+      SellerViews._otherBanks = (store && store.other_banks) ? JSON.parse(JSON.stringify(store.other_banks)) : [];
+    }
     const body = document.getElementById('appBody');
     if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
   },
@@ -880,6 +930,7 @@ const SellerViews = {
             <button class="btn-dispatch" onclick="Modals.openScanQR('${o.order_id}','rider')">📷 Scan Buyer</button>
             <button class="btn-dispatch" onclick="App.settleOrder('${o.order_id}')">✅ Settled</button>
           ` : ''}
+          ${o.payment_status === 'paid' && o.order_status === 'confirmed' ? `<button class="btn-danger" style="padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:var(--danger);" onclick="App.markOrderRefunded('${o.order_id}')">💰 Mark Refunded</button>` : ''}
           <button class="btn-call" onclick="window.open('tel:${addr.phone}')">📞 Call Buyer</button>
           ${['pending','confirmed'].includes(o.order_status) ? `<button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.confirmCancelOrder('${o.order_id}','${o.order_ref}')">✕ Cancel</button>` : ''}
         </div>
@@ -912,6 +963,52 @@ const SellerViews = {
         </div>
       </div>
     `);
+  },
+
+  // ── Other Banks Management ──
+  _otherBanks: [],
+
+  _onBankSelect(sel) {
+    const custom = document.getElementById('otherBankNameCustom');
+    if (!custom) return;
+    custom.style.display = sel.value === '__other__' ? 'block' : 'none';
+    if (sel.value !== '__other__') custom.value = '';
+  },
+
+  _addOtherBank() {
+    const sel = document.getElementById('otherBankNameSelect');
+    const custom = document.getElementById('otherBankNameCustom');
+    const acctNum = document.getElementById('otherBankAcctNum');
+    const acctHolder = document.getElementById('otherBankAcctHolder');
+    const name = sel.value === '__other__' ? (custom.value || '').trim() : sel.value;
+    if (!name || !acctNum.value || !acctHolder.value) {
+      if (App && typeof App.toast === 'function') App.toast('Fill in bank name, account number, and holder name', 'error');
+      return;
+    }
+    SellerViews._otherBanks.push({ bank_name: name, account_number: acctNum.value.trim(), account_holder: acctHolder.value.trim() });
+    acctNum.value = ''; acctHolder.value = ''; sel.value = ''; custom.value = ''; custom.style.display = 'none';
+    SellerViews._renderOtherBanks();
+  },
+
+  _removeOtherBank(index) {
+    SellerViews._otherBanks.splice(index, 1);
+    SellerViews._renderOtherBanks();
+  },
+
+  _renderOtherBanks() {
+    const list = document.getElementById('otherBanksList');
+    if (!list) return;
+    const banks = SellerViews._otherBanks;
+    const ethBanks = ['Dashen Bank','Awash Bank','Abyssinia Bank','Wegagen Bank','United Bank','Nib International Bank','Berhan International Bank','Lion International Bank','Oromia Bank','Zemen Bank','Bunna Bank','Abay Bank','Addis International Bank','Debub Global Bank','Enat Bank','Hibret Bank','Ahad Bank','Tsehay Bank','Gadaa Bank','Siinqee Bank','Shabelle Bank','Hijira Bank'];
+    list.innerHTML = banks.length === 0
+      ? '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;">No additional banks added yet.</div>'
+      : banks.map((b, i) => `
+        <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px;position:relative;">
+          <button type="button" onclick="SellerViews._removeOtherBank(${i})" style="position:absolute;top:6px;right:8px;background:none;border:none;color:var(--danger);font-size:16px;cursor:pointer;padding:2px;">${Icons.trash(14)}</button>
+          <div style="font-size:13px;font-weight:800;margin-bottom:4px;">${b.bank_name}</div>
+          <div style="font-size:12px;color:var(--text-primary);">${b.account_number}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">${b.account_holder}</div>
+        </div>`).join('');
   },
 
   _confirmDeleteStore() {

@@ -161,7 +161,8 @@ router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res
     const {
       description, location_sub_city, location_woreda, location_detail,
       physical_address, business_phone, tg_channel_username,
-      telebirr_merchant_id, cbe_account_number, telebirr_account_name, cbe_account_name
+      telebirr_merchant_id, cbe_account_number, telebirr_account_name, cbe_account_name,
+      other_banks
     } = req.body;
 
     const result = await query(
@@ -177,8 +178,9 @@ router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res
         cbe_account_number = COALESCE($9, cbe_account_number),
         telebirr_account_name = COALESCE($10, telebirr_account_name),
         cbe_account_name = COALESCE($11, cbe_account_name),
+        other_banks = CASE WHEN $12 IS NOT NULL THEN $12::jsonb ELSE other_banks END,
         updated_at = NOW()
-       WHERE store_id = $12
+       WHERE store_id = $13
        RETURNING stores.*,
          (SELECT return_policy_type FROM seller_policies WHERE store_id = stores.store_id) AS return_policy_type,
          (SELECT custom_policy_text FROM seller_policies WHERE store_id = stores.store_id) AS custom_policy_text,
@@ -190,9 +192,10 @@ router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res
          (SELECT telebirr_enabled FROM seller_policies WHERE store_id = stores.store_id) AS telebirr_enabled,
          (SELECT telegram_notifs FROM seller_policies WHERE store_id = stores.store_id) AS telegram_notifs`,
       [description, location_sub_city, location_woreda, location_detail,
-       physical_address, business_phone, tg_channel_username,
-       telebirr_merchant_id, cbe_account_number, telebirr_account_name, cbe_account_name,
-       req.params.storeId]
+        physical_address, business_phone, tg_channel_username,
+        telebirr_merchant_id, cbe_account_number, telebirr_account_name, cbe_account_name,
+        other_banks ? JSON.stringify(other_banks) : null,
+        req.params.storeId]
     );
     const store = result.rows[0];
     // Don't expose sensitive payment keys or password hash (mirrors GET /stores/:id)

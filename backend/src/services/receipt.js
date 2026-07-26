@@ -101,11 +101,12 @@ async function generateReceiptPDF({ order, items, buyer, store, rider, qrBuffer 
     // ── Payment info bar ──
     doc.roundedRect(LEFT, y, W, 36, 4).fill('#111216');
     const payMethod = (order.payment_method || 'cash').toUpperCase();
-    const payStatus = (order.payment_status || 'pending').toUpperCase();
-    const txCode = order.transaction_code || order.payment_tx_ref || '';
+    const isCod = order.payment_method === 'cash';
+    const payStatus = isCod ? 'PENDING' : ((order.payment_status || 'pending').toUpperCase());
+    const txCode = isCod ? '' : (order.transaction_code || order.payment_tx_ref || '');
     doc.fontSize(9).font('Helvetica-Bold').fillColor('#FCCD04')
        .text(`PAYMENT: ${payMethod}`, LEFT + 14, y + 11, { width: 180 });
-    doc.fontSize(9).font('Helvetica-Bold')
+    doc.fontSize(9).font('Helvetica-Bold').fillColor(isCod ? '#F59E0B' : '#FFFFFF')
        .text(payStatus, LEFT + 200, y + 11, { width: 100 });
     if (txCode) {
       doc.fontSize(8).font('Helvetica').fillColor('#9DA3AE')

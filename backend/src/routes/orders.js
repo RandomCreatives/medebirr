@@ -431,11 +431,12 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
     const returnPolicy = policyLabel[order.return_policy_type] || 'Store Policy';
     const orderDate = new Date(order.created_at).toLocaleString('en-ET', { timeZone: 'Africa/Addis_Ababa' });
     const addrStr = [addr.sub_city, addr.woreda, addr.house_number, addr.landmark].filter(Boolean).join(', ');
-    const statusColor = order.payment_status === 'paid' ? '#10B981' : '#F59E0B';
+    const statusColor = order.payment_method === 'cash' ? '#F59E0B' : (order.payment_status === 'paid' ? '#10B981' : '#F59E0B');
     const statusText = (order.order_status || 'pending').toUpperCase();
     const payMethod = (order.payment_method || 'cash').toUpperCase();
-    const payStatus = (order.payment_status || 'pending').toUpperCase();
-    const txCode = order.transaction_code || order.payment_tx_ref || '';
+    const isCod = order.payment_method === 'cash';
+    const payStatus = isCod ? 'PENDING' : (order.payment_status || 'pending').toUpperCase();
+    const txCode = isCod ? '' : (order.transaction_code || order.payment_tx_ref || '');
     const deliveryMethod = order.delivery_method === 'pickup' ? 'Store Pickup' : 'Home Delivery';
     const riderName = order.rider_name || '';
     const riderPhone = order.rider_phone || '';
@@ -850,6 +851,66 @@ router.patch('/:orderId/cancel-seller', requireAuth, async (req, res, next) => {
     } catch (_) {}
 
     res.json({ order: result.rows[0], message: 'Order cancelled by seller.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/v1/orders/:orderId/cancel-request
+ * Buyer notifies seller of a cancel request (paid orders only)
+ */
+router.post('/:orderId/cancel-request', requireAuth, async (req, res, next) => {
+  try {
+    const ord = await query('SELECT o.*, s.admin_tg_user_id, s.store_name FROM orders o JOIN stores s ON o.store_id = s.store_id WHERE o.order_id = $1', [req.params.orderId]);
+    if (ord.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    const o = ord.rows[0];
+    if (o.buyer_tg_user_id !== req.user.tg_user_id) return res.status(403).json({ error: 'Not authorized' });
+    if (o.payment_method === 'cash') return res.status(400).json({ error: 'Use cancel for cash orders' });
+
+    // Notify seller via Telegram
+    try {
+      const tgService = require('../services/telegram');
+      await tgService.tgCall('sendMessage', {
+        chat_id: o.admin_tg_user_id,
+        text: `📞 *Cancel Request*\n\n Buyer requested to cancel order *${o.order_ref}*.\n\n Please contact them to arrange a refund.\n\n Order: ${req.params.orderId}`,
+        parse_mode: 'MarkdownV2'
+      });
+    } catch (_) {}
+
+    res.json({ message: 'Seller notified of cancel request' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/v1/orders/:orderId/mark-refunded
+ * Seller marks a paid order as refunded (after off-platform repayment)
+ */
+router.patch('/:orderId/mark-refunded', requireAuth, async (req, res, next) => {
+  try {
+    const ord = await query('SELECT o.*, s.admin_tg_user_id FROM orders o JOIN stores s ON o.store_id = s.store_id WHERE o.order_id = $1', [req.params.orderId]);
+    if (ord.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+    if (ord.rows[0].admin_tg_user_id !== req.user.tg_user_id) return res.status(403).json({ error: 'Not authorized' });
+
+    const result = await query(
+      `UPDATE orders SET payment_status = 'refunded', order_status = 'cancelled', cancel_reason = 'Refunded by seller', cancelled_at = NOW(), updated_at = NOW()
+       WHERE order_id = $1 AND payment_status = 'paid' RETURNING *`,
+      [req.params.orderId]
+    );
+    if (result.rows.length === 0) return res.status(400).json({ error: 'Order is not in paid status' });
+
+    // Release stock
+    await inventory.releaseReservedStock(req.params.orderId);
+
+    // Notify buyer
+    try {
+      const notif = require('../services/notifications');
+      await notif.notifyOrderStatus(result.rows[0], 'cancelled', { reason: 'Refunded by seller' });
+    } catch (_) {}
+
+    res.json({ order: result.rows[0], message: 'Order marked as refunded.' });
   } catch (err) {
     next(err);
   }

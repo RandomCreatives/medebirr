@@ -388,7 +388,7 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
  */
   router.post('/confirm-tx', requireAuth, async (req, res, next) => {
     try {
-      const { order_id, transaction_code } = req.body;
+      const { order_id, transaction_code, payment_proof } = req.body;
       if (!order_id) {
         return res.status(400).json({ error: 'order_id is required' });
       }
@@ -409,7 +409,7 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
         return res.status(400).json({ error: 'Order is already paid' });
       }
 
-      await markOrderPaid(order, transaction_code);
+      await markOrderPaid(order, transaction_code, payment_proof);
 
       res.json({ message: 'Payment confirmed with transaction code. Order confirmed.', order_id });
     } catch (err) {

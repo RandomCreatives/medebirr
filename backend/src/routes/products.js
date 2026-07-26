@@ -16,12 +16,12 @@ router.get('/featured', async (req, res, next) => {
       `SELECT p.product_id, p.title, p.price_etb, p.compare_price,
               p.stock_quantity, p.category, p.is_featured, p.rating, p.image_urls,
               s.store_id, s.store_name, s.location_sub_city, s.verified_badge,
-              s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address,
-              sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
-       FROM products p
-       JOIN stores s ON p.store_id = s.store_id
-       LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
-       WHERE p.is_published = TRUE AND s.status = 'verified'
+               s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address, s.other_banks,
+               sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
+        FROM products p
+        JOIN stores s ON p.store_id = s.store_id
+        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+        WHERE p.is_published = TRUE AND s.status = 'verified'
        ORDER BY p.is_featured DESC, p.order_count DESC
        LIMIT $1`,
       [Math.min(parseInt(limit), 20)]
@@ -96,12 +96,12 @@ router.get('/', async (req, res, next) => {
               p.is_featured, p.variants,
               s.store_id, s.store_name, s.store_slug, s.location_sub_city, s.physical_address,
               s.verified_badge, s.rating AS store_rating,
-              s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name,
-              sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
-       FROM products p
-       JOIN stores s ON p.store_id = s.store_id
-       LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
-       WHERE ${conditions.join(' AND ')}
+               s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.other_banks,
+               sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
+        FROM products p
+        JOIN stores s ON p.store_id = s.store_id
+        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+        WHERE ${conditions.join(' AND ')}
        ORDER BY ${orderBy}
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
@@ -177,10 +177,10 @@ router.get('/:productId', async (req, res, next) => {
     const result = await query(
       `SELECT p.*, s.store_name, s.store_slug, s.location_sub_city, s.location_woreda,
               s.tg_channel_username, s.verified_badge, s.rating AS store_rating, s.total_orders,
-              s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address,
-              sp.return_policy_type, sp.custom_policy_text, sp.addis_delivery_fee,
-              sp.regional_dispatch_fee, sp.zone_fee_matrix, sp.cash_on_delivery,
-              sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
+               s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address, s.other_banks,
+               sp.return_policy_type, sp.custom_policy_text, sp.addis_delivery_fee,
+               sp.regional_dispatch_fee, sp.zone_fee_matrix, sp.cash_on_delivery,
+               sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
        FROM products p
        JOIN stores s ON p.store_id = s.store_id
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id

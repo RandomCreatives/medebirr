@@ -103,6 +103,7 @@ const State = {
         telebirrAccountName: product.telebirr_account_name || '',
         cbeAccountNumber: product.cbe_account_number || '',
         cbeAccountName: product.cbe_account_name || '',
+        otherBanks: product.other_banks || [],
         telebirrEnabled: product.telebirr_enabled !== false,
         cbeEnabled: product.cbe_enabled || false,
         cashEnabled: product.cash_on_delivery !== false,

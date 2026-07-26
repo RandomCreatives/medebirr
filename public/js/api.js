@@ -101,13 +101,15 @@ const Api = {
     confirmDelivery: (id)                 => Api.put(`/orders/${id}/confirm-delivery`, {}),
     cancel:          (id)                 => Api.patch(`/orders/${id}/cancel`, {}),
     cancelAsSeller:  (id, data)           => Api.patch(`/orders/${id}/cancel-seller`, data),
+    notifyCancelRequest: (id)             => Api.post(`/orders/${id}/cancel-request`, {}),
+    markRefunded:    (id)                 => Api.patch(`/orders/${id}/mark-refunded`, {}),
     reviews:         (storeId)            => Api.get(`/reviews/store/${storeId}`),
   },
 
   // ── Payments ───────────────────────────────────────
   payments: {
     confirmCash:      (orderId) => Api.post('/payments/cash/confirm',      { order_id: orderId }),
-    confirmTx:        (orderId, transactionCode) => Api.post('/payments/confirm-tx', { order_id: orderId, transaction_code: transactionCode })
+    confirmTx:        (orderId, transactionCode, paymentProof) => Api.post('/payments/confirm-tx', { order_id: orderId, transaction_code: transactionCode, payment_proof: paymentProof })
   },
 
   // ── Bot / Telegram Group ───────────────────────────
