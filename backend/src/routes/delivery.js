@@ -125,7 +125,8 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
     if (bothVerified) {
       await ordersDal.updateStatus(req.params.orderId, 'delivered', {
         delivered_at: new Date(),
-        buyer_confirmed_at: new Date()
+        buyer_confirmed_at: new Date(),
+        payment_status: 'paid'
       });
 
       await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
@@ -195,7 +196,8 @@ router.post('/:orderId/verify-otp', requireAuth, async (req, res, next) => {
     if (order.qr_verified_by_buyer) {
       await ordersDal.updateStatus(req.params.orderId, 'delivered', {
         delivered_at: new Date(),
-        buyer_confirmed_at: new Date()
+        buyer_confirmed_at: new Date(),
+        payment_status: 'paid'
       });
       await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
       deliveryComplete = true;
@@ -261,7 +263,8 @@ router.post('/:orderId/verify-code', requireAuth, async (req, res, next) => {
     if (bothVerified) {
       await ordersDal.updateStatus(req.params.orderId, 'delivered', {
         delivered_at: new Date(),
-        buyer_confirmed_at: new Date()
+        buyer_confirmed_at: new Date(),
+        payment_status: 'paid'
       });
       await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
       deliveryComplete = true;
@@ -303,7 +306,8 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
     await ordersDal.updateStatus(req.params.orderId, 'delivered', {
       delivered_at: new Date(),
       settled_at: new Date(),
-      buyer_confirmed_at: new Date()
+      buyer_confirmed_at: new Date(),
+      payment_status: 'paid'
     });
 
     await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
@@ -311,7 +315,7 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
     try {
       await tg.tgCall('sendMessage', {
         chat_id: order.buyer_tg_user_id,
-        text: `✅ *Order Settled*\n\nOrder *${order.order_ref}* has been settled by the seller.\nThank you for your purchase!`,
+        text: `%E2%9C%85 *Order Settled*\n\nOrder *${order.order_ref}* has been settled by the seller.\nThank you for your purchase!`,
         parse_mode: 'MarkdownV2'
       });
     } catch (_) {}
@@ -325,7 +329,7 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
         if (riderResult.rows.length > 0) {
           await tg.tgCall('sendMessage', {
             chat_id: riderResult.rows[0].tg_user_id,
-            text: `✅ *Order Settled*\n\nOrder *${order.order_ref}* has been settled by the seller.\nNo return needed.`,
+            text: `%E2%9C%85 *Order Settled*\n\nOrder *${order.order_ref}* has been settled by the seller.\nNo return needed.`,
             parse_mode: 'MarkdownV2'
           });
         }
@@ -430,7 +434,7 @@ async function notifyReturnInitiated(order) {
   try {
     await tg.tgCall('sendMessage', {
       chat_id: order.buyer_tg_user_id,
-      text: `❌ *Return Initiated*\n\nOrder *${order.order_ref}* could not be verified.\nA return has been initiated. Your refund will be processed.`,
+      text: `%E2%9D%8C *Return Details*\n\nOrder *${order.order_ref}* could not be verified.\nA return has been initiated. Your refund will be processed.`,
       parse_mode: 'MarkdownV2'
     });
   } catch (_) {}
@@ -438,7 +442,7 @@ async function notifyReturnInitiated(order) {
   try {
     await tg.tgCall('sendMessage', {
       chat_id: order.admin_tg_user_id,
-      text: `📦 *Return Initiated*\n\nOrder *${order.order_ref}* failed verification.\nThe product will be returned to you.\n\nIf resolved in person, click "Settled" in your Seller Studio.`,
+      text: `%F0%9F%93%A6 *Return Details*\n\nOrder *${order.order_ref}* failed verification.\nThe product will be returned to you.\n\nIf resolved in person, click "Settled" in your Seller Studio.`,
       parse_mode: 'MarkdownV2'
     });
   } catch (_) {}
@@ -448,7 +452,7 @@ async function notifyDeliveryComplete(order) {
   try {
     await tg.tgCall('sendMessage', {
       chat_id: order.buyer_tg_user_id,
-      text: `✅ *Delivery Confirmed!*\n\nOrder *${order.order_ref}* has been delivered successfully.\nThank you for shopping with Medebirr!`,
+      text: `%E2%9C%85 *Delivery Details*\n\nOrder *${order.order_ref}* has been delivered successfully.\nThank you for shopping with Medebirr!`,
       parse_mode: 'MarkdownV2'
     });
   } catch (_) {}
@@ -456,7 +460,7 @@ async function notifyDeliveryComplete(order) {
   try {
     await tg.tgCall('sendMessage', {
       chat_id: order.admin_tg_user_id,
-      text: `✅ *Delivery Confirmed!*\n\nOrder *${order.order_ref}* has been delivered and confirmed by both parties.`,
+      text: `%E2%9C%85 *Delivery Details*\n\nOrder *${order.order_ref}* has been delivered and confirmed by both parties.`,
       parse_mode: 'MarkdownV2'
     });
   } catch (_) {}

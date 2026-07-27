@@ -334,7 +334,7 @@ const SellerViews = {
       </div>
 
       <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;margin-bottom:12px;text-align:center;">
-        <div style="font-size:10px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">📲 Share Your Store</div>
+        <div style="font-size:10px;color:var(--text-secondary);font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">%F0%9F%93%B2 Share Your Store</div>
         <div style="display:flex;justify-content:center;margin-bottom:8px;">
           <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(storeUrl)}" alt="Store QR" style="border-radius:8px;width:150px;height:150px;background:white;padding:4px;"/>
         </div>
@@ -427,7 +427,7 @@ const SellerViews = {
       <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📤 Share-to-Save Coupons</div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">%F0%9F%93%A4 Share-to-Save Coupons</div>
             <div style="font-size:11px;color:var(--text-secondary);">Customers earn a coupon when they share a product N times.</div>
           </div>
           ${this._toggle('shareCouponToggle', cp.share_coupon_active)}
@@ -508,7 +508,7 @@ const SellerViews = {
         </div>
       </div>`;
 
-    // ── Staff Roles & Permissions [NEW] ──
+    // ── Staff Roles & Permissions ──
     const staff = `
       <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Invite team members and assign roles. (Staff management is provisioned per store — contact Medebirr support to enable seats for your shop.)</div>
       <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
@@ -527,7 +527,7 @@ const SellerViews = {
         <button class="btn-secondary" style="width:100%;" onclick="App.toast('Staff invites coming soon','info')">+ Invite Staff</button>
       </div>`;
 
-    // ── Shipping & Delivery Rules [NEW] ──
+    // ── Shipping & Delivery Rules ──
     const shipping = `
       <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Control how your products are delivered and what buyers pay for shipping.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
@@ -560,7 +560,7 @@ const SellerViews = {
       </div>
       <button class="btn-secondary" style="width:100%;" onclick="App.saveDeliveryRules()">💾 Save Delivery Rules</button>`;
 
-    // ── Tax Config & Invoices [NEW] ──
+    // ── Tax Config & Invoices ──
     const tax = `
       <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Configure how tax is shown to buyers and whether invoices are auto-generated.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
@@ -584,7 +584,7 @@ const SellerViews = {
       </div>
       <button class="btn-secondary" style="width:100%;" onclick="App.saveTaxConfig()">💾 Save Tax &amp; Invoice Settings</button>`;
 
-    // ── Notification Preferences [NEW] ──
+    // ── Notification Preferences ──
     const notifications = `
       <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Choose how Medebirr keeps you and your buyers informed.</div>
       <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;">
@@ -654,7 +654,7 @@ const SellerViews = {
       <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <div>
-            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">📤 Share-to-Save Coupons</div>
+            <div style="font-size:13px;font-weight:800;margin-bottom:2px;">%F0%9F%93%A4 Share-to-Save Coupons</div>
             <div style="font-size:11px;color:var(--text-secondary);">Customers earn a coupon when they share a product N times.</div>
           </div>
           ${this._toggle('shareCouponToggle', cp.share_coupon_active)}
@@ -866,8 +866,17 @@ const SellerViews = {
     const statusBadge = {
       pending: State.t('seller.dispatch.pending'), confirmed: State.t('seller.dispatch.confirmed'),
       dispatched: State.t('seller.dispatch.dispatched'), delivered: State.t('seller.dispatch.delivered'),
-      cancelled: State.t('seller.dispatch.cancelled')
+      cancelled: State.t('seller.dispatch.cancelled'), cancel_requested: '⚠️ Cancel Requested'
     }[o.order_status] || o.order_status;
+
+    let proof = o.payment_proof;
+    if (typeof proof === 'string') { try { proof = JSON.parse(proof); } catch (_) { proof = null; } }
+    const proofScreenshotHtml = proof && proof.screenshot_url
+      ? `<div style="margin-top:6px;font-size:11px;color:var(--success);font-weight:800;">
+           📷 screenshot: <a href="${proof.screenshot_url}" target="_blank" style="color:var(--accent);text-decoration:underline;">View screenshot proof</a>
+         </div>`
+      : '';
+
     return `
       <div class="dispatch-card">
         <div class="dispatch-order-ref">${o.order_ref} · ${new Date(o.created_at).toLocaleDateString()} · ${statusBadge}</div>
@@ -875,6 +884,7 @@ const SellerViews = {
         <div class="dispatch-address">📍 ${addrStr}<br>📞 ${addr.phone || 'N/A'}</div>
         <div style="margin-top:8px;font-size:14px;font-weight:900;color:var(--accent);">${State.formatETB(o.total_etb)} — ${o.payment_method.toUpperCase()}</div>
         <div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">💳 TX ID: <span style="font-family:monospace;color:#1A1A2E;font-weight:800;">${o.transaction_code || o.payment_tx_ref || 'Cash on Delivery'}</span></div>
+        ${proofScreenshotHtml}
         ${Number(o.discount_etb) > 0 ? `<div style="font-size:11px;color:var(--success);font-weight:800;margin-top:2px;">🎟️ Coupon Discount Applied: -${State.formatETB(o.discount_etb)}</div>` : ''}
         ${providerBadge}
         ${o.delivery_otp ? `
@@ -885,7 +895,7 @@ const SellerViews = {
             </div>
             <button type="button" onclick="CheckoutPage && CheckoutPage._copyText && CheckoutPage._copyText('${o.delivery_otp}','Code copied!')" style="background:rgba(252,205,4,0.12);border:1px solid rgba(252,205,4,0.3);border-radius:6px;padding:6px 10px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;">📋</button>
           </div>` : ''}
-        <div class="dispatch-actions">
+        <div class="dispatch-actions" style="flex-wrap:wrap;gap:6px;">
           ${o.order_status === 'confirmed' ? `<button class="btn-dispatch" onclick="Modals.openAssignRider('${o.order_id}')">🛵 Assign Delivery</button>` : ''}
           ${o.order_status === 'dispatched' ? `
             <button class="btn-dispatch" onclick="Modals.openShowQR('${o.order_id}','rider')">📱 Show QR</button>
@@ -893,7 +903,13 @@ const SellerViews = {
             <button class="btn-dispatch" onclick="App.settleOrder('${o.order_id}')">✅ Settled</button>
           ` : ''}
           <button class="btn-call" onclick="window.open('tel:${addr.phone}')">📞 Call Buyer</button>
-          ${['pending','confirmed'].includes(o.order_status) ? `<button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.confirmCancelOrder('${o.order_id}','${o.order_ref}')">✕ Cancel</button>` : ''}
+
+          <!-- Mark as Refunded button -->
+          ${o.order_status === 'cancel_requested' || (o.payment_status === 'paid' && ['pending', 'confirmed'].includes(o.order_status)) ? `
+            <button class="btn-dispatch" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:var(--danger);" onclick="App.markAsRefunded('${o.order_id}', '${o.order_ref}')">💸 Mark as Refunded</button>
+          ` : ''}
+
+          ${['pending','confirmed'].includes(o.order_status) && o.order_status !== 'cancel_requested' ? `<button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.confirmCancelOrder('${o.order_id}','${o.order_ref}')">✕ Cancel</button>` : ''}
         </div>
       </div>
     `;

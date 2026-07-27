@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════
    Order Actions (extracted from app.js)
    Buyer: refreshOrders, confirmDelivery, cancelOrder, settleOrder, openOrderDetail
-   Seller: assignRider, confirmCancelOrder, cancelOrderAsSeller
+   Seller: assignRider, confirmCancelOrder, cancelOrderAsSeller, markAsRefunded
 ═══════════════════════════════════════════════════ */
 (function() {
 
@@ -27,10 +27,21 @@ App.confirmDelivery = async function(orderId) {
 
 // ── Buyer: Cancel order ──────────────────────────
 App.cancelOrder = async function(orderId) {
-  if (!confirm('Are you sure you want to cancel this order?')) return;
+  const o = State.myOrders.find(x => x.order_id === orderId);
+  const isPaid = o && o.payment_status === 'paid';
+  const confirmText = isPaid
+    ? 'Are you sure you want to request cancellation for this paid order? The seller will receive your request and process your refund.'
+    : 'Are you sure you want to cancel this order?';
+
+  if (!confirm(confirmText)) return;
+
   try {
-    await Api.orders.cancel(orderId);
-    this.toast('Order cancelled.', 'success');
+    const res = await Api.orders.cancel(orderId);
+    if (res.instant) {
+      this.toast('Order cancelled successfully.', 'success');
+    } else {
+      this.toast('Cancellation request sent to seller!', 'success');
+    }
     Modals.close();
     await this.refreshOrders();
     this.renderContent();
@@ -61,10 +72,12 @@ App.openOrderDetail = async function(orderId) {
     const addrStr = [addr.sub_city, addr.woreda, addr.house_number, addr.landmark].filter(Boolean).join(', ');
     const policy = typeof o.policy_snapshot === 'string' ? JSON.parse(o.policy_snapshot) : o.policy_snapshot;
     const firstProductId = o.items?.[0]?.product_id || '';
+    const isPaid = o.payment_status === 'paid';
+
     Modals.open(`
       <div class="modal-handle"></div>
       <div class="modal-title">${o.order_ref}</div>
-      <span class="order-status-badge status-${o.order_status}" style="margin-bottom:12px;display:inline-block;">${o.order_status}</span>
+      <span class="order-status-badge status-${o.order_status}" style="margin-bottom:12px;display:inline-block;">${o.order_status === 'cancel_requested' ? '⚠️ Cancel Requested' : o.order_status}</span>
       <div class="card" style="margin-bottom:10px;">
         <div class="card-title">📍 Delivery Address</div>
         <div class="card-sub" style="margin-top:4px;">${addrStr}<br>${addr.phone}</div>
@@ -79,7 +92,16 @@ App.openOrderDetail = async function(orderId) {
       </div>` : ''}
       ${o.rider_name ? `<div class="card" style="margin-bottom:10px;"><div class="card-title">🛵 Rider Details</div><div class="card-sub" style="margin-top:4px;">${o.rider_name} · ${o.rider_phone}</div></div>` : ''}
       ${policy ? `<div class="policy-box">🛡️ ${State.policyLabel(policy.return_policy_type)}: ${policy.custom_policy_text || ''}</div>` : ''}
-      ${['pending','confirmed'].includes(o.order_status) ? `<button class="btn-danger" style="margin-top:14px;" onclick="App.cancelOrder('${orderId}')">✕ Cancel Order</button>` : ''}
+      ${['pending','confirmed','cancel_requested'].includes(o.order_status) && o.order_status !== 'cancel_requested' ? `
+        <button class="btn-danger" style="margin-top:14px;" onclick="App.cancelOrder('${orderId}')">
+          ✕ ${isPaid ? 'Request Cancel' : 'Cancel Order'}
+        </button>
+      ` : ''}
+      ${o.order_status === 'cancel_requested' ? `
+        <div style="margin-top:14px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:12px;font-size:12px;color:var(--danger);font-weight:700;text-align:center;">
+          ⏳ Cancellation requested — awaiting seller review and refund.
+        </div>
+      ` : ''}
       ${o.order_status === 'dispatched' ? `
         <div style="display:flex;gap:8px;margin-top:14px;">
           <button class="btn-primary" style="flex:1;" onclick="Modals.close();Modals.openShowQR('${orderId}','buyer')">📱 Show My QR</button>
@@ -166,6 +188,21 @@ App.cancelOrderAsSeller = async function(orderId) {
     this.renderContent();
   } catch (err) {
     this.toast(err.message || 'Cancel failed', 'error');
+  }
+};
+
+// ── Seller: Mark as Refunded ─────────────────────
+App.markAsRefunded = async function(orderId, orderRef) {
+  if (!confirm(`Confirm that you have refunded order ${orderRef} off-platform and want to cancel/refund it? This will restore the stock quantity.`)) return;
+  try {
+    await Api.orders.cancelAsSeller(orderId, { reason: 'Refunded off-platform' });
+    this.toast('Order marked as refunded and cancelled!', 'success');
+    if (Modals && typeof Modals.close === 'function') Modals.close();
+    const ordersData = await Api.orders.storeOrders(State.currentStoreId, { limit: 200 });
+    State.storeOrders = ordersData.orders || [];
+    this.renderContent();
+  } catch (err) {
+    this.toast(err.message || 'Refund failed', 'error');
   }
 };
 

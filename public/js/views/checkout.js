@@ -18,6 +18,8 @@ const CheckoutPage = {
   _discountEtb: 0,
   _appliedCoupon: null,
   _geoLocation: null,
+  _proofScreenshotUrl: null, // Screenshot URL uploaded by user
+  _otherBankSelected: null,  // Selected other bank details
 
   open(shopId) {
     const pkg = State.cart[shopId];
@@ -36,6 +38,8 @@ const CheckoutPage = {
     this._couponCode = '';
     this._discountEtb = 0;
     this._appliedCoupon = null;
+    this._proofScreenshotUrl = null;
+    this._otherBankSelected = null;
 
     const overlay = document.getElementById('checkoutOverlay');
     if (overlay) overlay.classList.add('co-open');
@@ -306,33 +310,25 @@ const CheckoutPage = {
             ${State.t('checkout.zeroEscrow')}
           </p>
 
-          <div class="co-radio-group">
+          <!-- 1. Horizontal payment cards -->
+          <div class="co-pay-grid" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:8px;margin-bottom:14px;">
             ${pkg.telebirrEnabled !== false ? `
-            <label class="co-radio ${this._paymentMethod === 'telebirr' ? 'selected' : ''}" onclick="CheckoutPage._pickPayment(this,'telebirr')" style="cursor:pointer;">
-              <input type="radio" name="co-pay" value="telebirr" ${this._paymentMethod === 'telebirr' ? 'checked' : ''} />
-              <div class="co-radio-body">
-                <div class="co-radio-title">${State.t('checkout.telebirr')}</div>
-                <div class="co-radio-desc">${State.t('checkout.telebirrDesc')}</div>
-              </div>
-            </label>` : ''}
+            <button type="button" class="co-pay-card ${this._paymentMethod === 'telebirr' ? 'selected' : ''}" onclick="CheckoutPage._pickPayment(this,'telebirr')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:1px solid ${this._paymentMethod === 'telebirr' ? 'var(--accent)' : 'var(--border)'};background:${this._paymentMethod === 'telebirr' ? 'rgba(252,205,4,0.06)' : 'var(--bg-main)'};cursor:pointer;">
+              <span style="font-size:24px;">📱</span>
+              <span style="font-size:12px;font-weight:800;color:white;">Telebirr</span>
+            </button>` : ''}
 
             ${pkg.cbeEnabled !== false ? `
-            <label class="co-radio ${this._paymentMethod === 'cbe' ? 'selected' : ''}" onclick="CheckoutPage._pickPayment(this,'cbe')" style="cursor:pointer;">
-              <input type="radio" name="co-pay" value="cbe" ${this._paymentMethod === 'cbe' ? 'checked' : ''} />
-              <div class="co-radio-body">
-                <div class="co-radio-title">${State.t('checkout.cbe')}</div>
-                <div class="co-radio-desc">${State.t('checkout.cbeDesc')}</div>
-              </div>
-            </label>` : ''}
+            <button type="button" class="co-pay-card ${this._paymentMethod === 'cbe' ? 'selected' : ''}" onclick="CheckoutPage._pickPayment(this,'cbe')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:1px solid ${this._paymentMethod === 'cbe' ? 'var(--accent)' : 'var(--border)'};background:${this._paymentMethod === 'cbe' ? 'rgba(252,205,4,0.06)' : 'var(--bg-main)'};cursor:pointer;">
+              <span style="font-size:24px;">🏦</span>
+              <span style="font-size:12px;font-weight:800;color:white;">CBE</span>
+            </button>` : ''}
 
             ${pkg.cashEnabled !== false ? `
-            <label class="co-radio ${this._paymentMethod === 'cash' ? 'selected' : ''}" onclick="CheckoutPage._pickPayment(this,'cash')" style="cursor:pointer;">
-              <input type="radio" name="co-pay" value="cash" ${this._paymentMethod === 'cash' ? 'checked' : ''} />
-              <div class="co-radio-body">
-                <div class="co-radio-title">${State.t('checkout.cash')}</div>
-                <div class="co-radio-desc">${State.t('checkout.cashDesc')}</div>
-              </div>
-            </label>` : ''}
+            <button type="button" class="co-pay-card ${this._paymentMethod === 'cash' ? 'selected' : ''}" onclick="CheckoutPage._pickPayment(this,'cash')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:1px solid ${this._paymentMethod === 'cash' ? 'var(--accent)' : 'var(--border)'};background:${this._paymentMethod === 'cash' ? 'rgba(252,205,4,0.06)' : 'var(--bg-main)'};cursor:pointer;">
+              <span style="font-size:24px;">💵</span>
+              <span style="font-size:12px;font-weight:800;color:white;">Cash</span>
+            </button>` : ''}
           </div>
 
           <div id="coPaymentDetailsArea" style="margin-top:16px;"></div>
@@ -371,10 +367,15 @@ const CheckoutPage = {
     this._renderPaymentDetails();
   },
 
-  _pickPayment(el, method) {
-    document.querySelectorAll('.co-radio-group .co-radio').forEach(e => e.classList.remove('selected'));
-    el.classList.add('selected');
-    el.querySelector('input').checked = true;
+  _pickPayment(btn, method) {
+    document.querySelectorAll('.co-pay-grid .co-pay-card').forEach(e => {
+      e.classList.remove('selected');
+      e.style.borderColor = 'var(--border)';
+      e.style.background = 'var(--bg-main)';
+    });
+    btn.classList.add('selected');
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.background = 'rgba(252,205,4,0.06)';
     this._paymentMethod = method;
     this._renderPaymentDetails();
   },
@@ -392,13 +393,43 @@ const CheckoutPage = {
             1. Open Telebirr App &amp; transfer <strong>${State.formatETB(this._total())}</strong> to:
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;">
-            <span style="display:inline-block;background:var(--bg-main);padding:4px 10px;border-radius:4px;font-family:monospace;font-size:14px;color:var(--accent);font-weight:800;">${pkg.telebirrMerchantId || '891204 (Merchant Account)'}</span>
-            <button type="button" onclick="CheckoutPage._copyText('${pkg.telebirrMerchantId || '891204'}','Account copied!')" style="background:rgba(252,205,4,0.12);border:1px solid rgba(252,205,4,0.3);border-radius:6px;padding:5px 10px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;">📋 Copy</button>
+            <span style="display:inline-block;background:var(--bg-main);padding:4px 10px;border-radius:4px;font-family:monospace;font-size:14px;color:var(--accent);font-weight:800;">${pkg.telebirrCode || '891204 (Merchant Account)'}</span>
+            <button type="button" onclick="CheckoutPage._copyText('${pkg.telebirrCode || '891204'}','Account copied!')" style="background:rgba(252,205,4,0.12);border:1px solid rgba(252,205,4,0.3);border-radius:6px;padding:5px 10px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;">📋 Copy</button>
           </div>
-          <div style="font-size:12px;color:white;line-height:1.6;">2. Enter your SMS Transaction ID below:</div>
-          <input class="form-input" id="coTxCode" placeholder="e.g. TBX-891204-99218401" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:8px;background:var(--bg-main);border:1px solid var(--border);padding:10px;border-radius:6px;color:white;font-family:monospace;font-size:13px;" />
+
+          <!-- 3. Screenshot Upload Primary Proof -->
+          <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:12px;">
+            <label class="co-label" style="display:block;margin-bottom:6px;font-weight:800;color:white;">📷 Upload Payment Screenshot (Primary Proof)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="file" accept="image/*" id="coScreenshotFile" style="display:none;" onchange="CheckoutPage._uploadScreenshot(this.files)" />
+              <button class="co-btn secondary" type="button" onclick="document.getElementById('coScreenshotFile').click()" style="padding:10px 14px;font-size:12px;border-radius:8px;">📁 Choose Image</button>
+              <span id="coScreenshotStatus" style="font-size:11px;color:var(--text-secondary);">No file chosen</span>
+            </div>
+            <div id="coScreenshotPreview" style="display:none;margin-top:10px;position:relative;width:120px;height:120px;border-radius:8px;border:1px solid var(--border);background-size:cover;background-position:center;">
+              <button onclick="CheckoutPage._removeScreenshot()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--danger);color:white;border:none;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+            </div>
+          </div>
+
+          <!-- 4. SMS Code Fallback -->
+          <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:12px;">
+            <div style="font-size:12px;color:white;line-height:1.6;">💬 SMS code fallback (Manual Transaction ID):</div>
+            <input class="form-input" id="coTxCode" placeholder="e.g. TBX-891204-99218401" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:8px;background:var(--bg-main);border:1px solid var(--border);padding:10px;border-radius:6px;color:white;font-family:monospace;font-size:13px;" />
+          </div>
         </div>`;
     } else if (this._paymentMethod === 'cbe') {
+      const extraBanks = pkg.extraBanks || [];
+      const bankOptionsHtml = extraBanks.length > 0
+        ? `
+          <div style="margin-top:12px;margin-bottom:12px;">
+            <label class="co-label" style="display:block;margin-bottom:6px;font-weight:800;color:white;">🏦 Other Configured Bank</label>
+            <select class="form-select" id="coOtherBank" onchange="CheckoutPage._selectOtherBank(this.value)" style="width:100%;box-sizing:border-box;background:var(--bg-main);border:1px solid var(--border);padding:10px;border-radius:6px;color:white;font-size:13px;">
+              <option value="">-- Choose other bank instead --</option>
+              ${extraBanks.map(b => `<option value="${b.bank_name}">${b.bank_name} (${b.account_number})</option>`).join('')}
+            </select>
+          </div>
+          <div id="otherBankDetails" style="display:none;margin-top:10px;background:rgba(255,255,255,0.04);padding:10px;border-radius:6px;font-size:12px;color:white;line-height:1.6;border-left:3px solid var(--accent);margin-bottom:12px;"></div>`
+        : '';
+
       area.innerHTML = `
         <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:14px;">
           <div style="font-weight:800;color:#60A5FA;font-size:13px;margin-bottom:6px;">${State.t('checkout.payViaCbe')}</div>
@@ -406,11 +437,31 @@ const CheckoutPage = {
             1. Transfer <strong>${State.formatETB(this._total())}</strong> via CBE Birr / Mobile Banking to:
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;">
-            <span style="display:inline-block;background:var(--bg-main);padding:4px 10px;border-radius:4px;font-family:monospace;font-size:14px;color:#60A5FA;font-weight:800;">${pkg.cbeAccount || '100023491823 (CBE Account)'}</span>
-            <button type="button" onclick="CheckoutPage._copyText('${pkg.cbeAccount || '100023491823'}', State.t('checkout.copied'))" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:5px 10px;color:#60A5FA;font-size:11px;font-weight:700;cursor:pointer;">${State.t('checkout.telebirrCopy')}</button>
+            <span style="display:inline-block;background:var(--bg-main);padding:4px 10px;border-radius:4px;font-family:monospace;font-size:14px;color:#60A5FA;font-weight:800;">${pkg.cbeAccountNumber || '100023491823 (CBE Account)'}</span>
+            <button type="button" onclick="CheckoutPage._copyText('${pkg.cbeAccountNumber || '100023491823'}', State.t('checkout.copied'))" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:5px 10px;color:#60A5FA;font-size:11px;font-weight:700;cursor:pointer;">${State.t('checkout.telebirrCopy')}</button>
           </div>
-          <div style="font-size:12px;color:white;line-height:1.6;">${State.t('checkout.cbePaste')}</div>
-          <input class="form-input" id="coTxCode" placeholder="e.g. FT26194204812" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:8px;background:var(--bg-main);border:1px solid var(--border);padding:10px;border-radius:6px;color:white;font-family:monospace;font-size:13px;" />
+
+          <!-- 2. Other Banks Dropdown -->
+          ${bankOptionsHtml}
+
+          <!-- 3. Screenshot Upload Primary Proof -->
+          <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:12px;">
+            <label class="co-label" style="display:block;margin-bottom:6px;font-weight:800;color:white;">📷 Upload Payment Screenshot (Primary Proof)</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="file" accept="image/*" id="coScreenshotFile" style="display:none;" onchange="CheckoutPage._uploadScreenshot(this.files)" />
+              <button class="co-btn secondary" type="button" onclick="document.getElementById('coScreenshotFile').click()" style="padding:10px 14px;font-size:12px;border-radius:8px;">📁 Choose Image</button>
+              <span id="coScreenshotStatus" style="font-size:11px;color:var(--text-secondary);">No file chosen</span>
+            </div>
+            <div id="coScreenshotPreview" style="display:none;margin-top:10px;position:relative;width:120px;height:120px;border-radius:8px;border:1px solid var(--border);background-size:cover;background-position:center;">
+              <button onclick="CheckoutPage._removeScreenshot()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--danger);color:white;border:none;font-size:11px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+            </div>
+          </div>
+
+          <!-- 4. SMS Code Fallback -->
+          <div style="margin-top:14px;border-top:1px dashed var(--border);padding-top:12px;">
+            <div style="font-size:12px;color:white;line-height:1.6;">${State.t('checkout.cbePaste')}</div>
+            <input class="form-input" id="coTxCode" placeholder="e.g. FT26194204812" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:8px;background:var(--bg-main);border:1px solid var(--border);padding:10px;border-radius:6px;color:white;font-family:monospace;font-size:13px;" />
+          </div>
         </div>`;
     } else {
       area.innerHTML = `
@@ -420,6 +471,56 @@ const CheckoutPage = {
             Please have exact cash (` + State.formatETB(this._total()) + `) ready for the courier or cashier upon item inspection.
           </div>
         </div>`;
+    }
+  },
+
+  async _uploadScreenshot(files) {
+    if (!files || !files.length) return;
+    const statusEl = document.getElementById('coScreenshotStatus');
+    const previewEl = document.getElementById('coScreenshotPreview');
+    if (statusEl) statusEl.textContent = 'Uploading...';
+    try {
+      const data = await Api.images.upload(this._shopId, files);
+      if (data && data.urls && data.urls[0]) {
+        this._proofScreenshotUrl = data.urls[0];
+        if (statusEl) statusEl.textContent = 'Upload complete!';
+        if (previewEl) {
+          previewEl.style.display = 'block';
+          previewEl.style.backgroundImage = `url(${data.urls[0]})`;
+        }
+        if (App && typeof App.toast === 'function') App.toast('Screenshot uploaded successfully!', 'success');
+      }
+    } catch (err) {
+      if (statusEl) statusEl.textContent = 'Upload failed';
+      if (App && typeof App.toast === 'function') App.toast(err.message || 'Screenshot upload failed', 'error');
+    }
+  },
+
+  _removeScreenshot() {
+    this._proofScreenshotUrl = null;
+    const statusEl = document.getElementById('coScreenshotStatus');
+    const previewEl = document.getElementById('coScreenshotPreview');
+    if (statusEl) statusEl.textContent = 'No file chosen';
+    if (previewEl) previewEl.style.display = 'none';
+  },
+
+  _selectOtherBank(bankName) {
+    const detailsEl = document.getElementById('otherBankDetails');
+    if (!detailsEl) return;
+    if (!bankName) {
+      detailsEl.style.display = 'none';
+      this._otherBankSelected = null;
+      return;
+    }
+    const bank = (this._pkg.extraBanks || []).find(b => b.bank_name === bankName);
+    if (bank) {
+      detailsEl.style.display = 'block';
+      detailsEl.innerHTML = `
+        Transfer to ${bankName} account:<br/>
+        Account Name: <strong>${bank.account_name || this._pkg.shopName}</strong><br/>
+        Account Number: <strong>${bank.account_number}</strong>
+      `;
+      this._otherBankSelected = bank;
     }
   },
 
@@ -523,9 +624,15 @@ const CheckoutPage = {
       ? `🏪 <strong>Store Pickup</strong> at ${pkg.shopName}<br/><span style="font-size:11px;color:var(--text-secondary);">${pkg.physicalAddress || 'Bole Commercial Center'}</span>`
       : `🛵 <strong>Home Delivery</strong> to ${this._subCity}<br/><span style="font-size:11px;color:var(--text-secondary);">${this._landmark || 'Sub-city delivery'}</span>`;
 
-    const paySummary = this._paymentMethod === 'telebirr'
-      ? `📱 <strong>Telebirr Transfer</strong><br/><span style="font-size:11px;color:var(--text-secondary);">TX ID: ${this._txCode || 'Pending at handover'}</span>`
-      : (this._paymentMethod === 'cbe' ? `🏦 <strong>CBE Bank Transfer</strong><br/><span style="font-size:11px;color:var(--text-secondary);">TX ID: ${this._txCode || 'Pending at handover'}</span>` : `💵 <strong>Cash on Delivery</strong><br/><span style="font-size:11px;color:var(--text-secondary);">Pay upon item inspection</span>`);
+    const payLabel = this._paymentMethod === 'telebirr'
+      ? `📱 <strong>Telebirr Transfer</strong>`
+      : (this._paymentMethod === 'cbe' ? `🏦 <strong>${this._otherBankSelected ? this._otherBankSelected.bank_name : 'CBE'} Bank Transfer</strong>` : `💵 <strong>Cash on Delivery</strong>`);
+
+    const payDetails = this._paymentMethod === 'cash'
+      ? 'Pending at handover'
+      : `TX ID: ${this._txCode || 'Pending at handover'}${this._proofScreenshotUrl ? '<br/><span style="color:var(--success);font-weight:800;">✓ Screenshot Uploaded</span>' : ''}`;
+
+    const paySummary = `${payLabel}<br/><span style="font-size:11px;color:var(--text-secondary);">${payDetails}</span>`;
 
     document.getElementById('checkoutPage').innerHTML = `
       <div class="co-topbar">
@@ -630,6 +737,14 @@ const CheckoutPage = {
 
     const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
 
+    // payment_proof payload
+    const paymentProof = {};
+    if (this._proofScreenshotUrl) paymentProof.screenshot_url = this._proofScreenshotUrl;
+    if (this._paymentMethod === 'cbe' && this._otherBankSelected) {
+      paymentProof.bank_name = this._otherBankSelected.bank_name;
+      paymentProof.account_number = this._otherBankSelected.account_number;
+    }
+
     try {
       let order = null;
       let orderId = null;
@@ -642,6 +757,7 @@ const CheckoutPage = {
           delivery_address: deliveryAddress,
           delivery_method: isPickup ? 'pickup' : 'delivery',
           payment_method: this._paymentMethod,
+          payment_proof: paymentProof,
           ...(this._couponCode ? { coupon_code: this._couponCode } : {})
         });
         order = orderData.order;
@@ -649,7 +765,7 @@ const CheckoutPage = {
         orderRef = order.order_ref;
 
         if (this._paymentMethod === 'telebirr' || this._paymentMethod === 'cbe') {
-          await Api.payments.confirmTx(order.order_id, this._txCode || `TXN-${Date.now()}`);
+          await Api.payments.confirmTx(order.order_id, this._txCode || `TXN-${Date.now()}`, paymentProof);
         } else {
           await Api.payments.confirmCash(order.order_id);
         }
@@ -677,6 +793,11 @@ const CheckoutPage = {
   },
 
   _renderSuccess(orderRef, orderId, storeName, otp) {
+    const isCod = this._paymentMethod === 'cash';
+    const infoText = isCod
+      ? State.t('checkout.successInfo')
+      : State.t('checkout.successInfo');
+
     document.getElementById('checkoutPage').innerHTML = `
       <div class="co-topbar">
         <div style="width:36px;"></div>
@@ -693,7 +814,7 @@ const CheckoutPage = {
           </div>
 
           <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:14px;margin-bottom:16px;font-size:12px;color:var(--success);text-align:left;line-height:1.8;">
-            ${State.t('checkout.successInfo')}
+            ${infoText}
           </div>
 
           ${['telebirr', 'cbe'].includes(this._paymentMethod) ? `

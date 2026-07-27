@@ -47,7 +47,7 @@ router.post(
       if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
 
       const { store_id, items, delivery_address, payment_method, address_id, delivery_method, coupon_code,
-              delivery_latitude, delivery_longitude, idempotency_key } = req.body;
+              delivery_latitude, delivery_longitude, idempotency_key, payment_proof } = req.body;
       const isPickup = delivery_method === 'pickup';
 
       // Idempotency: if a key was provided, check for existing order
@@ -226,8 +226,8 @@ router.post(
           subtotal_etb, delivery_fee_etb, total_etb, payment_method,
           payment_status, order_status, policy_snapshot, delivery_method,
           coupon_code, discount_etb, delivery_otp,
-          delivery_latitude, delivery_longitude, payment_tx_ref
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11,$12,$13,$14,$15,$16,$17)
+          delivery_latitude, delivery_longitude, payment_tx_ref, payment_proof
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11,$12,$13,$14,$15,$16,$17,$18)
         RETURNING *`,
         [orderRef, req.user.tg_user_id, store_id, address_id || null,
          JSON.stringify(delivery_address), subtotal, deliveryFee, total,
@@ -236,7 +236,8 @@ router.post(
          deliveryOtp,
          delivery_latitude != null ? Number(delivery_latitude) : null,
          delivery_longitude != null ? Number(delivery_longitude) : null,
-         ik]
+         ik,
+         payment_proof ? JSON.stringify(payment_proof) : null]
       );
       const order = orderResult.rows[0];
 
@@ -378,7 +379,7 @@ router.get('/store/:storeId', requireAuth, requireSellerOf('storeId'), async (re
     const result = await query(
       `SELECT o.order_id, o.order_ref, o.total_etb, o.order_status, o.payment_status,
               o.payment_method, o.delivery_address, o.created_at, o.rider_name, o.rider_phone,
-              o.delivery_provider, o.delivery_otp,
+              o.delivery_provider, o.delivery_otp, o.payment_proof,
               o.qr_scan_attempts, o.qr_verified_by_rider, o.qr_verified_by_buyer, o.receipt_pdf_url,
               u.first_name, u.last_name, u.username AS buyer_username
        FROM orders o
@@ -427,8 +428,8 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
     const policy = typeof order.policy_snapshot === 'string' ? JSON.parse(order.policy_snapshot) : order.policy_snapshot;
 
     // Build HTML receipt (lightweight, no PDF lib dependency)
-    const policyLabel = { '7_day_free':'7-Day Free Return','3_day_warranty':'3-Day Warranty','size_exchange':'Size Exchange','fresh_guarantee':'Freshness Guarantee','no_return':'No Returns' };
-    const returnPolicy = policyLabel[order.return_policy_type] || 'Store Policy';
+    const policyLabels = { '7_day_free':'7-Day Free Return','3_day_warranty':'3-Day Warranty','size_exchange':'Size Exchange','fresh_guarantee':'Freshness Guarantee','no_return':'No Returns' };
+    const returnPolicy = policyLabels[order.return_policy_type] || 'Store Policy';
     const orderDate = new Date(order.created_at).toLocaleString('en-ET', { timeZone: 'Africa/Addis_Ababa' });
     const addrStr = [addr.sub_city, addr.woreda, addr.house_number, addr.landmark].filter(Boolean).join(', ');
     const statusColor = order.payment_status === 'paid' ? '#10B981' : '#F59E0B';
@@ -474,6 +475,7 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
     .payment-bar { background: #111216; border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .pay-left { display: flex; gap: 24px; }
     .pay-item .pay-label { font-size: 9px; text-transform: uppercase; color: #9DA3AE; letter-spacing: 1px; }
+    .pay-item .pay-value { font-size: 13px; font-weight: 800; color: #FCCD04; margin-top: 2px; }
     .pay-item .pay-value { font-size: 13px; font-weight: 800; color: #FCCD04; margin-top: 2px; }
     .pay-tx { font-size: 11px; color: #9DA3AE; }
     table.items { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
@@ -598,7 +600,6 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
   }
 });
 
-
 router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
   try {
     const { rider_name, rider_phone, dispatch_note, delivery_provider } = req.body;
@@ -618,14 +619,11 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
     if (ord.admin_tg_user_id !== req.user.tg_user_id) {
       return res.status(403).json({ error: 'Not authorized' });
     }
-    if (ord.payment_status !== 'paid') {
+    if (ord.payment_status !== 'paid' && ord.payment_method !== 'cash') {
       return res.status(400).json({ error: 'Cannot dispatch unpaid order' });
     }
 
     // Resolve rider identity per delivery provider.
-    // 'self'   -> the seller delivers (no external rider)
-    // 'company'-> a local delivery company (name required, phone optional)
-    // 'rider'  -> a named individual rider (name + phone required)
     let finalName = rider_name ? String(rider_name).trim() : '';
     let finalPhone = rider_phone ? String(rider_phone).trim() : '';
 
@@ -714,7 +712,7 @@ router.put('/:orderId/confirm-delivery', requireAuth, retryOnDeadlock(async (req
     const result = await query(
       `UPDATE orders SET
         order_status = 'delivered', buyer_confirmed_at = NOW(),
-        delivered_at = NOW(), updated_at = NOW()
+        delivered_at = NOW(), payment_status = 'paid', updated_at = NOW()
        WHERE order_id = $1 RETURNING *`,
       [req.params.orderId]
     );
@@ -753,7 +751,7 @@ router.put('/:orderId/confirm-delivery', requireAuth, retryOnDeadlock(async (req
 router.patch('/:orderId/cancel', requireAuth, retryOnDeadlock(async (req, res, next) => {
   try {
     const orderCheck = await query(
-      'SELECT order_id, buyer_tg_user_id, order_status FROM orders WHERE order_id = $1',
+      'SELECT order_id, buyer_tg_user_id, order_status, payment_status, store_id, order_ref FROM orders WHERE order_id = $1',
       [req.params.orderId]
     );
     if (orderCheck.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
@@ -766,35 +764,62 @@ router.patch('/:orderId/cancel', requireAuth, retryOnDeadlock(async (req, res, n
       return res.status(400).json({ error: 'Only pending or confirmed orders can be cancelled' });
     }
 
-    const result = await query(
-      `UPDATE orders SET
-        order_status = 'cancelled', cancelled_at = NOW(), updated_at = NOW()
-       WHERE order_id = $1 RETURNING *`,
-      [req.params.orderId]
-    );
+    const isPaid = ord.payment_status === 'paid';
 
-    // Release reserved stock
-    await inventory.releaseReservedStock(req.params.orderId);
-
-    // Notify buyer
-    try {
-      const notif = require('../services/notifications');
-      await notif.notifyOrderStatus(result.rows[0], 'cancelled', { reason: 'Cancelled by buyer' });
-    } catch (_) {}
-
-    // Notify seller
-    try {
-      const notif = require('../services/notifications');
-      await notif.notifySeller(
-        ord.store_id,
-        'order_cancelled',
-        'Order Cancelled',
-        `Order ${result.rows[0].order_ref} was cancelled by the buyer.`,
-        { order_id: result.rows[0].order_id, order_ref: result.rows[0].order_ref }
+    if (!isPaid) {
+      // COD or unpaid order -> cancel instantly
+      const result = await query(
+        `UPDATE orders SET
+          order_status = 'cancelled', cancelled_at = NOW(), updated_at = NOW()
+         WHERE order_id = $1 RETURNING *`,
+        [req.params.orderId]
       );
-    } catch (_) {}
 
-    res.json({ order: result.rows[0], message: 'Order cancelled.' });
+      // Release reserved stock
+      await inventory.releaseReservedStock(req.params.orderId);
+
+      // Notify buyer
+      try {
+        const notif = require('../services/notifications');
+        await notif.notifyOrderStatus(result.rows[0], 'cancelled', { reason: 'Cancelled by buyer' });
+      } catch (_) {}
+
+      // Notify seller
+      try {
+        const notif = require('../services/notifications');
+        await notif.notifySeller(
+          ord.store_id,
+          'order_cancelled',
+          'Order Cancelled',
+          `Order ${result.rows[0].order_ref} was cancelled by the buyer.`,
+          { order_id: result.rows[0].order_id, order_ref: result.rows[0].order_ref }
+        );
+      } catch (_) {}
+
+      return res.json({ order: result.rows[0], message: 'Order cancelled.', instant: true });
+    } else {
+      // Paid order -> request cancellation!
+      const result = await query(
+        `UPDATE orders SET
+          order_status = 'cancel_requested', updated_at = NOW()
+         WHERE order_id = $1 RETURNING *`,
+        [req.params.orderId]
+      );
+
+      // Notify seller of cancellation request
+      try {
+        const notif = require('../services/notifications');
+        await notif.notifySeller(
+          ord.store_id,
+          'cancel_requested',
+          'Cancellation Requested',
+          `Buyer requested cancellation for order ${ord.order_ref}. Review request in Seller Studio.`,
+          { order_id: ord.order_id, order_ref: ord.order_ref }
+        );
+      } catch (_) {}
+
+      return res.json({ order: result.rows[0], message: 'Cancellation requested. Awaiting seller approval.', instant: false });
+    }
   } catch (err) {
     next(err);
   }
@@ -816,13 +841,13 @@ router.patch('/:orderId/cancel-seller', requireAuth, async (req, res, next) => {
     if (ordResult.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
     const ord = ordResult.rows[0];
     if (ord.admin_tg_user_id !== req.user.tg_user_id) return res.status(403).json({ error: 'Not authorized' });
-    if (!['pending', 'confirmed'].includes(ord.order_status)) {
-      return res.status(400).json({ error: 'Only pending or confirmed orders can be cancelled' });
+    if (!['pending', 'confirmed', 'cancel_requested'].includes(ord.order_status)) {
+      return res.status(400).json({ error: 'Only pending, confirmed, or cancel requested orders can be cancelled' });
     }
 
     const result = await query(
       `UPDATE orders SET
-        order_status = 'cancelled', cancel_reason = $2, cancelled_at = NOW(), updated_at = NOW()
+        order_status = 'cancelled', payment_status = 'refunded', cancel_reason = $2, cancelled_at = NOW(), updated_at = NOW()
        WHERE order_id = $1 RETURNING *`,
       [req.params.orderId, reason || 'Cancelled by seller']
     );
@@ -834,7 +859,7 @@ router.patch('/:orderId/cancel-seller', requireAuth, async (req, res, next) => {
     try {
       const notif = require('../services/notifications');
       const fullOrder = await query('SELECT * FROM orders WHERE order_id = $1', [req.params.orderId]);
-      await notif.notifyOrderStatus(fullOrder.rows[0], 'cancelled', { reason: reason || 'Cancelled by seller' });
+      await notif.notifyOrderStatus(fullOrder.rows[0], 'cancelled', { reason: reason || 'Refunded and cancelled by seller' });
     } catch (_) {}
 
     // Notify seller (self-cancel) — informational
