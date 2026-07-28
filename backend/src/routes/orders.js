@@ -607,8 +607,8 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
 
     // Verify seller owns the store
     const orderCheck = await query(
-      `SELECT o.order_id, o.buyer_tg_user_id, o.payment_status, o.total_etb, s.admin_tg_user_id,
-              s.store_name, s.business_phone
+      `SELECT o.order_id, o.buyer_tg_user_id, o.payment_status, o.total_etb,
+              o.store_id, s.admin_tg_user_id, s.store_name, s.business_phone
        FROM orders o JOIN stores s ON o.store_id = s.store_id
        WHERE o.order_id = $1`,
       [req.params.orderId]
@@ -699,7 +699,7 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
 router.put('/:orderId/confirm-delivery', requireAuth, retryOnDeadlock(async (req, res, next) => {
   try {
     const orderCheck = await query(
-      'SELECT order_id, buyer_tg_user_id, order_status FROM orders WHERE order_id = $1',
+      'SELECT order_id, buyer_tg_user_id, order_status, total_etb, store_id FROM orders WHERE order_id = $1',
       [req.params.orderId]
     );
     if (orderCheck.rows.length === 0) return res.status(404).json({ error: 'Order not found' });

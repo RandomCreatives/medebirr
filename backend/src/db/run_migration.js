@@ -3,12 +3,13 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 
+if (!process.env.DATABASE_URL) {
+  console.error('DATABASE_URL environment variable is required');
+  process.exit(1);
+}
+
 const pool = new Pool({
-  host: 'aws-0-eu-central-1.pooler.supabase.com',
-  port: 6543,
-  database: 'postgres',
-  user: 'postgres.yklkuxujuzthhijeovie',
-  password: 'eMerkato2026',
+  connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 

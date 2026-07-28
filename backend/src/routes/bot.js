@@ -192,11 +192,9 @@ router.post('/webhook', async (req, res) => {
         res.status(200).json({ ok: true });
         return;
       }
-      await tg.tgCall('sendMessage', {
-        chat_id: msg.from?.id,
-        text: `👋 *Medebirr Bot*\n\nI help you verify payments and manage your shop.\n\n• To verify a payment, open your order in the Medebirr app and tap "Upload Receipt to Verification Bot".\n• Sellers: use /register_shop to open the Seller Studio.`,
-        parse_mode: 'MarkdownV2'
-      });
+      await tg.sendSafeMessage(msg.from?.id,
+        `👋 <b>Medebirr Bot</b>\n\nI help you verify payments and manage your shop.\n\n• To verify a payment, open your order in the Medebirr app and tap "Upload Receipt to Verification Bot".\n• Sellers: use /register_shop to open the Seller Studio.`
+      );
       res.status(200).json({ ok: true });
       return;
     }
@@ -693,11 +691,9 @@ router.post('/search/webhook', async (req, res) => {
     if (update.inline_query) {
       await handleInlineQuery(update.inline_query, token);
     } else if (update.message?.text?.startsWith('/start')) {
-      await tg.tgCall('sendMessage', {
-        chat_id: update.message.from?.id,
-        text: '🔎 *Medebirr Search Bot*\n\nType `@Medeb_Searchbot` followed by a product name in *any* chat to search Ethiopian shops\\.',
-        parse_mode: 'MarkdownV2'
-      }, token);
+      await tg.sendSafeMessage(update.message.from?.id,
+        '🔎 <b>Medebirr Search Bot</b>\n\nType @Medeb_Searchbot followed by a product name in <b>any</b> chat to search Ethiopian shops.',
+        {}, token);
     }
     res.status(200).json({ ok: true });
   } catch (err) {

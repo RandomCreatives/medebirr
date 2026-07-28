@@ -86,7 +86,7 @@ async function releaseReservedStock(orderId) {
     );
     for (const item of items.rows) {
       await client.query(
-        'SELECT reserved_stock FROM products WHERE product_id = $1 FOR UPDATE',
+        'SELECT stock_quantity, reserved_stock FROM products WHERE product_id = $1 FOR UPDATE',
         [item.product_id]
       );
       await client.query(

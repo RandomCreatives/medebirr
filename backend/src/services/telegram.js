@@ -14,6 +14,18 @@ const crypto = require('crypto');
 const BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || 'medebirrbot';
 
 /**
+ * Send a message using HTML parse_mode (forgiving — no special char escaping needed).
+ * Converts *bold* → &lt;b&gt;bold&lt;/b&gt; and removes spurious MarkdownV2 backslash-escapes.
+ */
+async function sendSafeMessage(chatId, text, extra = {}, botToken) {
+  const html = text
+    .replace(/\\([._\-!()#])/g, '$1')
+    .replace(/\*(.+?)\*/g, '<b>$1</b>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+  return tgCall('sendMessage', { ...extra, chat_id: chatId, text: html, parse_mode: 'HTML' }, botToken);
+}
+
+/**
  * Call Telegram Bot API.
  * @param {string} method - Telegram API method (e.g. 'sendMessage')
  * @param {object} params - API payload
@@ -431,6 +443,7 @@ async function downloadTelegramFileBuffer(fileId, botToken = process.env.TELEGRA
 
 module.exports = {
   tgCall,
+  sendSafeMessage,
   resolveChatId,
   checkBotIsAdmin,
   broadcastProduct,

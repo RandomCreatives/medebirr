@@ -219,6 +219,15 @@ router.post('/telebirr/webhook', retryOnDeadlock(async (req, res, next) => {
     }
     const tx = txResult.rows[0];
 
+    // Guard: skip if order is already paid (prevents double stock deduction)
+    const orderCheck = await query(
+      'SELECT payment_status FROM orders WHERE order_id = $1',
+      [tx.order_id]
+    );
+    if (orderCheck.rows.length > 0 && orderCheck.rows[0].payment_status === 'paid') {
+      return res.json({ code: 'SUCCESS', msg: 'Already processed' });
+    }
+
     if (tradeStatus === 'SUCCESS' || tradeStatus === '0') {
       // Mark transaction complete
       await query(
@@ -323,6 +332,10 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
       [order_id, req.user.tg_user_id, 'cash']
     );
     if (orderResult.rows.length === 0) return res.status(404).json({ error: 'Cash order not found' });
+
+    if (orderResult.rows[0].payment_status === 'paid') {
+      return res.status(400).json({ error: 'Order already paid' });
+    }
 
     await query(
       `INSERT INTO payment_transactions (order_id, gateway, gateway_tx_ref, amount_etb, status, settled_at)
