@@ -64,42 +64,19 @@ Amharic column empty — awaiting translator input.
 
 ## Fixed (latest session)
 
-### Products inventory: sort/filter pills, order stats, rename Items→Products
-- Seller nav tab "Items" → "Products"
-- Sort pills (Newest, A–Z, Most Ordered, Price) + filter chips (All, Live, Draft, Low Stock)
-- Per-product stats row: ordered/paid/delivered/views (backend subqueries on orders)
+### PostgreSQL full-text search, TTL cache, structured logging
+- **Full-text search**: `migration_2.2.sql` — tsvector column + GIN index on `products` and `stores`, trigger auto-update, backfill. Search uses `to_tsvector @@ websearch_to_tsquery('english')` instead of `ILIKE '%query%'` (~5ms vs ~500ms at 10K products).
+- **TTL caches**: `backend/src/utils/cache.js` — `productCache` (30s), `storeCache` (60s), `featuredCache` (120s), `statsCache` (60s). Wired into product detail, featured list, store detail, store stats. Invalidated on all writes (POST/PUT/DELETE).
+- **Pino structured logging**: `backend/src/utils/logger.js` — UUID request IDs, `X-Request-ID` header, per-request child loggers, structured error/DB logging. Replaced `console.*` in `server.js`, `app.js`, `db/index.js`, `errorHandler.js`, `api/index.js`.
 
-### 3 correctness bugs fixed
-1. **Stock overselling**: `deductStock` now uses BEGIN/COMMIT + `SELECT ... FOR UPDATE` to prevent two buyers taking the last item. `completeDelivery` also atomic.
-2. **Order ref collisions**: `Math.random() * 90000` → `uuid.v4().substring(0, 8)` (4B values instead of 90k).
-3. **Missing indexes**: `migration_2.0.sql` adds composites on `order_items(product_id)`, `order_items(order_id, product_id)`, `orders(payment_status)`, `orders(order_status)`.
+## Fixed (previous session)
 
-### Seller i18n migration (~80+ strings wrapped)
-- Dashboard, pending, inventory, dispatch, settings navigation all use `State.t()`
-- 40+ new catalog keys (settings navigation, inventory sort/filter, notif center)
-- 446 total keys resolve
-
-### CI: npm test in GitHub Actions
-Backend deps installed + all 35 unit tests run on every push/PR.
-
-### Order status polling (15s interval)
-`App._startOrderPolling()` — auto-refreshes buyer order list, seller dispatch orders, and seller dashboard stats.
-
-### Built: 4-Page Product Wizard
-Replaced the single-scroll add-product modal with a step-through 4-page wizard:
-- **Page 1 (Essentials):** Image upload, Title, Price, Category (visual grid)
-- **Page 2 (Details):** Description, Condition, Size, Materials, Stock, Product Code / Barcode (auto-gen toggles)
-- **Page 3 (Delivery & Payment):** Store defaults auto-filled; delivery radius/min-days/assign-editable; payment locked behind seller password
-- **Page 4 (Review & Approve):** Summary cards, edit links, publish
-- Auto-save draft to localStorage every 30s with restore prompt
-- +50 new i18n keys for wizard UI
-- DB columns added: `condition`, `size`, `product_code`, `barcode`, `delivery_radius`, `min_delivery_days`, `assign_name`, `assign_phone` (migration 1.9)
-
-### Previous fixes
-- **Wishlist items not displaying**: `toggleWishlist` now syncs `wishlistItems` in-memory; tab switch always refreshes from API (not only when null)
-- **TG photo auto-detect**: `captionHasPrice()` helper detects standalone numbers on their own line (no "Br" suffix needed)
-- **CI/CD**: GitHub Actions workflow added (`.github/workflows/ci.yml`) — JS syntax + i18n validation
-- **app.js split**: 2608→~1685 lines across `seller-registration.js`, `order-actions.js`, `store-settings.js`
+### 5 critical bugs fixed (JOURNAL.md)
+1. **Double stock deduction** — `payments.js` webhook + cash confirm checked `payment_status` before calling `deductStock`.
+2. **Store revenue NULL** — `orders.js` dispatch SELECTs missing `total_etb` and `store_id`.
+3. **Cancel/payment race** — `inventory.js` `releaseReservedStock` wrapped in transaction with `FOR UPDATE`.
+4. **MarkdownV2 escaping** — `bot.js` messages escaped; `telegram.js` `sendSafeMessage()` uses HTML mode.
+5. **Hardcoded DB credentials** — `run_migration.js` switched to `DATABASE_URL` env var.
 
 ## Upcoming (discussed, not started)
 

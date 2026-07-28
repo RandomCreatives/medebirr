@@ -12,8 +12,8 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const { requestLogger, logger } = require('./utils/logger');
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -46,7 +46,10 @@ function createApp(opts = {}) {
 
   const app = express();
 
-  // ─── Security ──────────────────────────────────────────────────────────────
+  // ─── Request ID + Structured Logging ──────────────────────────────────────────
+  app.use(requestLogger);
+
+// ─── Security ──────────────────────────────────────────────────────────────
   app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 
   app.use(cors({
@@ -69,13 +72,12 @@ function createApp(opts = {}) {
       // (localhost / ngrok / preview) we stay permissive for convenience.
       if (!isProd) return callback(null, true);
 
-      console.warn(`CORS rejected origin: ${origin}`);
+      logger.warn({ origin }, 'CORS rejected origin');
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true
   }));
 
-  app.use(morgan(isProd ? 'combined' : 'dev'));
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 

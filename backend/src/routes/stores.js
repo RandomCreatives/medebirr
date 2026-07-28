@@ -3,6 +3,8 @@ const crypto = require('crypto');
 const { body, param, query: queryValidator, validationResult } = require('express-validator');
 const { requireAuth, requireSellerOf } = require('../middleware/auth');
 const { query } = require('../db');
+const { storeCache, statsCache } = require('../utils/cache');
+const { logError } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -54,6 +56,15 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/:storeId', async (req, res, next) => {
   try {
+    const { storeId } = req.params;
+
+    // Check cache first
+    const cached = storeCache.get(storeId);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json({ store: cached });
+    }
+
     const result = await query(
       `SELECT s.*, sp.return_policy_type, sp.custom_policy_text, sp.addis_delivery_fee,
               sp.regional_dispatch_fee, sp.free_delivery_threshold, sp.zone_fee_matrix,
@@ -61,7 +72,7 @@ router.get('/:storeId', async (req, res, next) => {
        FROM stores s
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
        WHERE s.store_id = $1 OR s.store_slug = $1::text`,
-      [req.params.storeId]
+      [storeId]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Store not found' });
 
@@ -71,8 +82,12 @@ router.get('/:storeId', async (req, res, next) => {
     delete store.telebirr_merchant_id;
     delete store.seller_password_hash;
 
+    storeCache.set(storeId, store);
+
+    res.setHeader('X-Cache', 'MISS');
     res.json({ store });
   } catch (err) {
+    logError(err, { route: '/:storeId', storeId: req.params.storeId });
     next(err);
   }
 });
@@ -202,8 +217,13 @@ router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res
     delete store.cbe_account_number;
     delete store.telebirr_merchant_id;
     delete store.seller_password_hash;
+
+    // Invalidate caches
+    storeCache.delete(req.params.storeId);
+
     res.json({ store });
   } catch (err) {
+    logError(err, { route: 'PUT /:storeId', storeId: req.params.storeId });
     next(err);
   }
 });
@@ -254,6 +274,13 @@ router.get('/:storeId/stats', requireAuth, requireSellerOf('storeId'), async (re
   try {
     const storeId = req.params.storeId;
 
+    // Check cache first
+    const cached = statsCache.get(storeId);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
+    }
+
     const [ordersStats, productsStats, recentOrders] = await Promise.all([
       query(
         `SELECT
@@ -278,12 +305,18 @@ router.get('/:storeId/stats', requireAuth, requireSellerOf('storeId'), async (re
       )
     ]);
 
-    res.json({
+    const stats = {
       orders: ordersStats.rows[0],
       products: productsStats.rows[0],
       recentOrders: recentOrders.rows
-    });
+    };
+
+    statsCache.set(storeId, stats);
+
+    res.setHeader('X-Cache', 'MISS');
+    res.json(stats);
   } catch (err) {
+    logError(err, { route: '/:storeId/stats', storeId: req.params.storeId });
     next(err);
   }
 });

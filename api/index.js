@@ -22,6 +22,7 @@ if (process.env.NODE_ENV === 'production' && process.env.BYPASS_TELEGRAM_AUTH ==
 }
 
 const { createApp } = require('../backend/src/app');
+const { logger } = require('../backend/src/utils/logger');
 
 // ─── Validate required env vars at startup ──────────────────────────────────
 const validateEnv = () => {
@@ -47,10 +48,10 @@ const validateEnv = () => {
   }
 
   if (warnings.length > 0) {
-    console.warn(`⚠️ WARNING: Missing development environment variables: ${warnings.join(', ')}`);
+    logger.warn({ missing: warnings }, 'Missing development environment variables');
   }
   if (missing.length > 0) {
-    console.error(`❌ FATAL: Missing critical production environment variables: ${missing.join(', ')}`);
+    logger.fatal({ missing }, 'Missing critical production environment variables');
     process.exit(1);
   }
 };
@@ -61,7 +62,7 @@ const app = createApp();
 // ─── Local dev only: start HTTP server when run directly ─────────────────────
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
-  app.listen(PORT, () => console.log(`e-Merkato API running on http://localhost:${PORT}`));
+  app.listen(PORT, () => logger.info({ port: PORT }, 'e-Merkato API running'));
 }
 
 // ─── Auto-register Telegram webhook on startup (production only) ─────────────
@@ -73,10 +74,10 @@ if (process.env.VERCEL && process.env.TELEGRAM_BOT_TOKEN && process.env.APP_URL)
       const payload = { url: webhookUrl, allowed_updates: ['message', 'channel_post', 'callback_query', 'my_chat_member'] };
       if (process.env.TELEGRAM_WEBHOOK_SECRET) payload.secret_token = process.env.TELEGRAM_WEBHOOK_SECRET;
       const result = await tg.tgCall('setWebhook', payload);
-      if (result.ok) console.log(`✅ Telegram webhook set: ${webhookUrl}`);
-      else console.warn('⚠️ Telegram webhook setup failed:', result.description);
+      if (result.ok) logger.info({ webhookUrl }, 'Telegram webhook set');
+      else logger.warn({ description: result.description }, 'Telegram webhook setup failed');
     } catch (e) {
-      console.warn('⚠️ Telegram webhook setup error:', e.message);
+      logger.warn({ err: e.message }, 'Telegram webhook setup error');
     }
   }, 3000); // Delay 3s to let the server fully initialize
 }

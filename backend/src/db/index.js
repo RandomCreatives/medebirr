@@ -11,6 +11,12 @@
  */
 
 const { Pool } = require('pg');
+const pino = require('pino');
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  transport: process.env.NODE_ENV !== 'production' ? { target: 'pino-pretty', options: { colorize: true } } : undefined
+});
 
 const isServerless = !!process.env.VERCEL;
 const isProduction = process.env.NODE_ENV === 'production';
@@ -39,9 +45,11 @@ function getPool() {
     });
 
     pool.on('error', (err) => {
-      console.error('PostgreSQL pool error:', err.message);
+      logger.error({ err: err.message }, 'PostgreSQL pool error');
       pool = null;
     });
+
+    logger.info({ max: pool.options.max, serverless: isServerless }, 'PostgreSQL pool created');
   }
   return pool;
 }
@@ -53,10 +61,12 @@ function getPool() {
 const query = async (text, params) => {
   const start = Date.now();
   const res = await getPool().query(text, params);
-  if (!isProduction) {
-    const duration = Date.now() - start;
-    console.log('DB:', { sql: text.substring(0, 100).replace(/\s+/g, ' '), duration, rows: res.rowCount });
-  }
+  const duration = Date.now() - start;
+  logger.debug({
+    sql: text.substring(0, 120).replace(/\s+/g, ' '),
+    duration,
+    rows: res.rowCount
+  }, 'DB query');
   return res;
 };
 
@@ -70,7 +80,7 @@ const getClient = async () => {
 
   // Safety: auto-release if held longer than 10s (protects against connection leaks in lambdas)
   const timeout = setTimeout(() => {
-    console.error('DB client held > 10s — releasing to prevent leak');
+    logger.error('DB client held > 10s — releasing to prevent leak');
     client.release = originalRelease;
     client.release();
   }, 10000);
@@ -80,6 +90,9 @@ const getClient = async () => {
     client.release = originalRelease;
     return client.release();
   };
+
+  client._poolClientId = Date.now() + Math.random().toString(36).slice(2, 6);
+  logger.debug({ clientId: client._poolClientId }, 'DB client acquired');
 
   return client;
 };

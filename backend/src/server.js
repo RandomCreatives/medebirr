@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const { logger } = require('./utils/logger');
+
 // ─── Validate required env vars at startup ──────────────────────────────────
 const validateEnv = () => {
   const isProd = process.env.NODE_ENV === 'production';
@@ -24,10 +26,10 @@ const validateEnv = () => {
   }
 
   if (warnings.length > 0) {
-    console.warn(`⚠️ WARNING: Missing development environment variables: ${warnings.join(', ')}`);
+    logger.warn({ missing: warnings }, 'Missing development environment variables');
   }
   if (missing.length > 0) {
-    console.error(`❌ FATAL: Missing critical production environment variables: ${missing.join(', ')}`);
+    logger.fatal({ missing }, 'Missing critical production environment variables');
     process.exit(1);
   }
 };
@@ -35,7 +37,7 @@ validateEnv();
 
 // Safety: warn if bypass auth is set in production
 if (process.env.NODE_ENV === 'production' && process.env.BYPASS_TELEGRAM_AUTH === 'true') {
-  console.warn('⚠️ BYPASS_TELEGRAM_AUTH=true in production — mock login is enabled for browser testing.');
+  logger.warn('BYPASS_TELEGRAM_AUTH=true in production — mock login is enabled for browser testing.');
 }
 
 const { createApp } = require('./app');
@@ -44,17 +46,7 @@ const app = createApp({ serveStatic: true });
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`
-╔══════════════════════════════════════════════════╗
-║       e-Merkato API Server                       ║
-║       Ethiopia's Telegram Marketplace            ║
-╠══════════════════════════════════════════════════╣
-║  Port    : ${PORT}                                   ║
-║  Mode    : ${(process.env.NODE_ENV || 'development').padEnd(12)}                    ║
-║  API     : http://localhost:${PORT}/api/v1           ║
-║  Health  : http://localhost:${PORT}/api/health       ║
-╚══════════════════════════════════════════════════╝
-  `);
+  logger.info({ port: PORT, mode: process.env.NODE_ENV || 'development' }, 'e-Merkato API server started');
 });
 
 module.exports = app;

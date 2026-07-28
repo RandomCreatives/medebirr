@@ -2,7 +2,9 @@
  * Global error handler middleware
  */
 const errorHandler = (err, req, res, next) => {
-  console.error(`[${new Date().toISOString()}] ERROR:`, err.stack || err.message);
+  const log = req.log || { error: (...args) => console.error(...args) };
+
+  log.error({ err: { message: err.message, stack: err.stack, code: err.code }, status: err.status || 500 }, 'Unhandled error');
 
   const isProd = process.env.NODE_ENV === 'production';
 
@@ -22,7 +24,7 @@ const errorHandler = (err, req, res, next) => {
 
   // PostgreSQL deadlock — the operation was retried already
   if (err.code === '40P01') {
-    console.error('💀 Deadlock not resolved after retries:', err.message);
+    log.error({ err: err.message }, 'Deadlock not resolved after retries');
     return res.status(503).json({
       error: 'Conflict — please try again'
     });

@@ -2,6 +2,8 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { requireAuth, requireSellerOf } = require('../middleware/auth');
 const { query } = require('../db');
+const { featuredCache, productCache, storeCache } = require('../utils/cache');
+const { logError } = require('../utils/logger');
 
 const router = express.Router();
 
@@ -11,6 +13,14 @@ const router = express.Router();
  */
 router.get('/featured', async (req, res, next) => {
   try {
+    // Check cache first
+    const cached = featuredCache.get('featured');
+    if (cached) {
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+      res.setHeader('X-Cache', 'HIT');
+      return res.json({ products: cached });
+    }
+
     const { limit = 12 } = req.query;
     const result = await query(
       `SELECT p.product_id, p.title, p.price_etb, p.compare_price,
@@ -18,24 +28,30 @@ router.get('/featured', async (req, res, next) => {
               s.store_id, s.store_name, s.location_sub_city, s.verified_badge,
                s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address, s.other_banks,
                sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
-        FROM products p
-        JOIN stores s ON p.store_id = s.store_id
-        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
-        WHERE p.is_published = TRUE AND s.status = 'verified'
-       ORDER BY p.is_featured DESC, p.order_count DESC
-       LIMIT $1`,
+       FROM products p
+       JOIN stores s ON p.store_id = s.store_id
+       LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+       WHERE p.is_published = TRUE AND s.status = 'verified'
+      ORDER BY p.is_featured DESC, p.order_count DESC
+      LIMIT $1`,
       [Math.min(parseInt(limit), 20)]
     );
-    // Set aggressive cache headers — featured products don't change by the second
+
+    // Cache for 60 seconds
+    featuredCache.set('featured', result.rows);
+
     res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+    res.setHeader('X-Cache', 'MISS');
     res.json({ products: result.rows });
   } catch (err) {
+    logError(err, { route: '/featured' });
     next(err);
   }
 });
 
 /**
  * GET /api/v1/products
+ * Search products with full-text search (PostgreSQL to_tsvector + GIN index)
  */
 router.get('/', async (req, res, next) => {
   try {
@@ -50,8 +66,12 @@ router.get('/', async (req, res, next) => {
     const conditions = ['p.is_published = TRUE', "s.status = 'verified'"];
 
     if (search) {
-      params.push(`%${search}%`);
-      conditions.push(`(p.title ILIKE $${params.length} OR p.description ILIKE $${params.length} OR s.store_name ILIKE $${params.length})`);
+      // Use full-text search with websearch_to_tsquery
+      params.push(search);
+      conditions.push(`
+        (p.search_vector @@ websearch_to_tsquery('english', $${params.length})
+         OR s.store_name ILIKE $${params.length})
+      `);
     }
     if (category) {
       params.push(category);
@@ -98,12 +118,12 @@ router.get('/', async (req, res, next) => {
               s.verified_badge, s.rating AS store_rating,
                s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.other_banks,
                sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
-        FROM products p
-        JOIN stores s ON p.store_id = s.store_id
-        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
-        WHERE ${conditions.join(' AND ')}
-       ORDER BY ${orderBy}
-       LIMIT $${params.length - 1} OFFSET $${params.length}`,
+       FROM products p
+       JOIN stores s ON p.store_id = s.store_id
+       LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+       WHERE ${conditions.join(' AND ')}
+      ORDER BY ${orderBy}
+      LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     );
 
@@ -116,13 +136,12 @@ router.get('/', async (req, res, next) => {
       params.slice(0, -2)
     );
 
-    res.json({
-      products: result.rows,
-      total: parseInt(countResult.rows[0].count),
-      page: parseInt(page),
-      limit: parseInt(limit)
-    });
+    const total = parseInt(countResult.rows[0].count);
+    const products = result.rows;
+
+    res.json({ products, total, page: parseInt(page), limit: parseInt(limit) });
   } catch (err) {
+    logError(err, { route: '/', query: req.query });
     next(err);
   }
 });
@@ -174,6 +193,15 @@ router.get('/seller/:storeId', requireAuth, requireSellerOf('storeId'), async (r
  */
 router.get('/:productId', async (req, res, next) => {
   try {
+    const { productId } = req.params;
+
+    // Check cache first
+    const cached = productCache.get(productId);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json({ product: cached });
+    }
+
     const result = await query(
       `SELECT p.*, s.store_name, s.store_slug, s.location_sub_city, s.location_woreda,
               s.tg_channel_username, s.verified_badge, s.rating AS store_rating, s.total_orders,
@@ -185,16 +213,21 @@ router.get('/:productId', async (req, res, next) => {
        JOIN stores s ON p.store_id = s.store_id
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
        WHERE p.product_id = $1 AND p.is_published = TRUE`,
-      [req.params.productId]
+      [productId]
     );
 
     if (result.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
 
-    // Increment view count
-    query('UPDATE products SET view_count = view_count + 1 WHERE product_id = $1', [req.params.productId]);
+    // Cache for 5 minutes
+    productCache.set(productId, result.rows[0]);
 
+    // Increment view count (async, don't wait)
+    query('UPDATE products SET view_count = view_count + 1 WHERE product_id = $1', [productId]);
+
+    res.setHeader('X-Cache', 'MISS');
     res.json({ product: result.rows[0] });
   } catch (err) {
+    logError(err, { route: '/:productId', productId: req.params.productId });
     next(err);
   }
 });
@@ -280,6 +313,9 @@ router.post(
           }
         }
       }
+
+      // Invalidate caches
+      featuredCache.delete('featured');
 
       res.status(201).json({ product: result.rows[0], telegram_warning: telegramWarning });
     } catch (err) {
@@ -377,15 +413,18 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
         }
       }
 
+      // Invalidate caches
+      productCache.delete(req.params.productId);
+      featuredCache.clear();
+
       return res.json({ product: result.rows[0], telegram_warning: telegramWarning });
     } catch (err) {
-    next(err);
+      logError(err, { route: 'PUT /:productId', productId: req.params.productId });
+      next(err);
+    }
   }
-});
+);
 
-/**
- * DELETE /api/v1/products/:productId
- */
 router.delete('/:productId', requireAuth, async (req, res, next) => {
   try {
     const result = await query(
@@ -395,8 +434,14 @@ router.delete('/:productId', requireAuth, async (req, res, next) => {
       [req.params.productId, req.user.tg_user_id]
     );
     if (result.rows.length === 0) return res.status(403).json({ error: 'Not authorized or not found' });
+
+    // Invalidate caches
+    productCache.delete(req.params.productId);
+    featuredCache.clear();
+
     res.json({ message: 'Product deleted' });
   } catch (err) {
+    logError(err, { route: 'DELETE /:productId', productId: req.params.productId });
     next(err);
   }
 });
