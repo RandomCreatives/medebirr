@@ -109,7 +109,7 @@ const State = {
         otherBanks: product.other_banks || [],
         telebirrEnabled: product.telebirr_enabled !== false,
         mpesaEnabled: product.mpesa_enabled || false,
-        cbeEnabled: product.cbe_enabled || false,
+        cbeEnabled: product.cbe_enabled !== false,
         cashEnabled: product.cash_on_delivery !== false,
         items: []
       };
