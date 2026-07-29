@@ -843,6 +843,13 @@ async function handleConfirmPayment(orderId, callbackQuery) {
     return;
   }
 
+  // C-2: Only the store admin who owns this order can confirm payment
+  const callerId = callbackQuery.from?.id;
+  if (callerId && order.admin_tg_user_id && Number(callerId) !== Number(order.admin_tg_user_id)) {
+    await tg.tgCall('answerCallbackQuery', { callback_query_id: callbackQuery.id, text: 'Only the store admin can confirm payment' });
+    return;
+  }
+
   const vRes = await query(
     `SELECT transaction_note, ocr_tx_ref, ocr_amount FROM payment_verifications WHERE order_id = $1 ORDER BY created_at DESC LIMIT 1`,
     [orderId]
@@ -882,6 +889,21 @@ async function handleConfirmPayment(orderId, callbackQuery) {
  * Seller tapped "Reject" on a forwarded receipt.
  */
 async function handleRejectPayment(orderId, callbackQuery) {
+  const orderRes = await query(
+    `SELECT admin_tg_user_id FROM orders o JOIN stores s ON o.store_id = s.store_id WHERE o.order_id = $1`,
+    [orderId]
+  );
+  if (orderRes.rows.length === 0) {
+    await tg.tgCall('answerCallbackQuery', { callback_query_id: callbackQuery.id, text: 'Order not found' });
+    return;
+  }
+  const callerId = callbackQuery.from?.id;
+  const adminId = orderRes.rows[0].admin_tg_user_id;
+  if (callerId && adminId && Number(callerId) !== Number(adminId)) {
+    await tg.tgCall('answerCallbackQuery', { callback_query_id: callbackQuery.id, text: 'Only the store admin can reject payment' });
+    return;
+  }
+
   await query(
     `UPDATE payment_verifications SET status = 'rejected', updated_at = NOW() WHERE order_id = $1`,
     [orderId]

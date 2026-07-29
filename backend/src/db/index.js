@@ -33,7 +33,7 @@ function getPool() {
 
     pool = new Pool({
       connectionString,
-      ssl: isLocal ? false : { rejectUnauthorized: false },
+      ssl: isLocal ? false : { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' },
       max: isServerless ? 3 : 10,
       idleTimeoutMillis: isServerless ? 10000 : 30000,
       connectionTimeoutMillis: 10000

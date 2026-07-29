@@ -95,6 +95,16 @@ function createApp(opts = {}) {
   app.use('/api/', apiLimiter);
   app.use('/api/v1/auth', authLimiter);
 
+  // Granular rate limiters (H-1)
+  const paymentInitLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: { error: 'Too many payment attempts, try again later' }, standardHeaders: true, legacyHeaders: false });
+  const otpLimiter = rateLimit({ windowMs: 5 * 60 * 1000, max: 3, message: { error: 'Too many OTP requests, try again later' }, standardHeaders: true, legacyHeaders: false });
+  const couponLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, message: { error: 'Too many coupon attempts, try again later' }, standardHeaders: true, legacyHeaders: false });
+
+  app.use('/api/v1/payments/telebirr/initiate', paymentInitLimiter);
+  app.use('/api/v1/payments/confirm-tx', paymentInitLimiter);
+  app.use('/api/v1/otp', otpLimiter);
+  app.use('/api/v1/coupons/validate', couponLimiter);
+
   // ─── Static Frontend (local dev only) ───────────────────────────────────────
   if (serveStatic) {
     const path = require('path');

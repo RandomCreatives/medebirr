@@ -201,7 +201,7 @@ router.post('/telebirr/webhook', retryOnDeadlock(async (req, res, next) => {
 
     const expectedSign = crypto.createHash('sha256').update(signString).digest('hex').toUpperCase();
 
-    const isTesting = process.env.NODE_ENV === 'test' || process.env.BYPASS_TELEGRAM_AUTH === 'true';
+    const isTesting = process.env.NODE_ENV === 'test' || process.env.BYPASS_WEBHOOK_SIG === 'true';
     if (!isTesting && receivedSign !== expectedSign) {
       console.warn('Telebirr webhook signature mismatch');
       return res.status(400).json({ code: 'FAIL', msg: 'Invalid signature' });
@@ -237,21 +237,19 @@ router.post('/telebirr/webhook', retryOnDeadlock(async (req, res, next) => {
         [JSON.stringify(payload), outTradeNo]
       );
 
-      // Idempotency: skip if already paid
-      const orderStatus = await query('SELECT payment_status FROM orders WHERE order_id = $1', [tx.order_id]);
-      if (orderStatus.rows[0].payment_status === 'paid') {
-        console.log(`⏭️ Stock already deducted for order ${tx.order_id}, skipping`);
+      // Atomic guard: only one webhook call can mark the order paid
+      const updateRes = await query(
+        `UPDATE orders SET
+          payment_status = 'paid', order_status = 'confirmed',
+          telebirr_tx_id = $1, updated_at = NOW()
+         WHERE order_id = $2 AND payment_status != 'paid'
+         RETURNING order_id`,
+        [transactionNo, tx.order_id]
+      );
+      if (updateRes.rows.length === 0) {
+        console.log(`⏭️ Payment already processed for order ${tx.order_id}, skipping`);
         res.json({ code: 'SUCCESS', msg: 'Already processed' });
       } else {
-        // Mark order paid
-        await query(
-          `UPDATE orders SET
-            payment_status = 'paid', order_status = 'confirmed',
-            telebirr_tx_id = $1, updated_at = NOW()
-           WHERE order_id = $2`,
-          [transactionNo, tx.order_id]
-        );
-
         // Actual stock deduction (remove reservation, reduce actual stock)
         await inventory.deductStock(tx.order_id);
 
@@ -422,9 +420,33 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
         return res.status(400).json({ error: 'Order is already paid' });
       }
 
-      await markOrderPaid(order, transaction_code, payment_proof);
+      // C-3: Don't auto-confirm — create a payment_verification and notify seller
+      await query(
+        `INSERT INTO payment_verifications (order_id, buyer_tg_user_id, transaction_note, status)
+         VALUES ($1, $2, $3, 'pending_seller_confirm')`,
+        [order_id, req.user.tg_user_id, transaction_code || null]
+      );
 
-      res.json({ message: 'Payment confirmed with transaction code. Order confirmed.', order_id });
+      try {
+        const tgService = require('../services/telegram');
+        const keyboard = {
+          inline_keyboard: [[
+            { text: '✅ Confirm Payment', callback_data: `confirm_pay_${order_id}` },
+            { text: '❌ Reject', callback_data: `reject_pay_${order_id}` }
+          ]]
+        };
+        const txDisplay = transaction_code ? `\n\nTX: \`${transaction_code.replace(/\./g, '\\.')}\`` : '';
+        await tgService.tgCall('sendMessage', {
+          chat_id: order.admin_tg_user_id,
+          text: `💰 *Manual payment reported*\n\nOrder *${order.order_ref}* — Br ${Number(order.total_etb).toLocaleString()}\nMethod: ${order.payment_method.toUpperCase()}${txDisplay}\n\nReview and confirm receipt.`,
+          parse_mode: 'MarkdownV2',
+          reply_markup: keyboard
+        });
+      } catch (e) {
+        console.warn('Failed to notify seller of confirm-tx:', e.message);
+      }
+
+      res.json({ message: 'Transaction code submitted. Awaiting seller confirmation.', order_id });
     } catch (err) {
       next(err);
     }
@@ -449,15 +471,15 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
        gateway === 'telebirr' ? order.telebirr_merchant_id : order.cbe_account_number]
     );
 
-    // Skip if already deducted in a previous payment attempt
-    const orderStatus = await query('SELECT payment_status FROM orders WHERE order_id = $1', [orderId]);
-    if (orderStatus.rows[0].payment_status !== 'paid') {
-      await query(
-        `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed',
-          transaction_code = $1, payment_tx_ref = $2, payment_proof = $3, updated_at = NOW()
-         WHERE order_id = $4`,
-        [txRef, txRef, paymentProof ? JSON.stringify(paymentProof) : null, orderId]
-      );
+    // Atomic guard: only one caller can mark the order paid
+    const updated = await query(
+      `UPDATE orders SET payment_status = 'paid', order_status = 'confirmed',
+        transaction_code = $1, payment_tx_ref = $2, payment_proof = $3, updated_at = NOW()
+       WHERE order_id = $4 AND payment_status != 'paid'
+       RETURNING order_id`,
+      [txRef, txRef, paymentProof ? JSON.stringify(paymentProof) : null, orderId]
+    );
+    if (updated.rows.length > 0) {
       await inventory.deductStock(orderId);
     } else {
       console.log(`⏭️ Payment already processed for order ${orderId}, skipping`);
