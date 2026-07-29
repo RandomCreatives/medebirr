@@ -94,33 +94,48 @@ const Modals = {
       <div style="font-size:12px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">
         💳 Step 3 — Payment
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;" id="paymentMethodCards">
+      <div class="co-pay-cards" style="margin-bottom:8px;">
         ${pkg.telebirrEnabled ? `
-        <label class="payment-option selected" onclick="Modals._selectPayment(this,'telebirr')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
+        <label class="co-pay-card selected" onclick="Modals._selectPayment(this,'telebirr')">
           <input type="radio" name="payMethod" value="telebirr" checked style="display:none;">
-          <img src="images/telebirr-logo.svg?v=38be667" alt="Telebirr" style="width:48px;height:24px;object-fit:contain;margin:0 auto;border-radius:4px;">
-          <span style="font-size:13px;font-weight:800;">Telebirr</span>
-        </label>` : ''}
-        ${pkg.mpesaEnabled ? `
-        <label class="payment-option" onclick="Modals._selectPayment(this,'mpesa')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
-          <input type="radio" name="payMethod" value="mpesa" style="display:none;">
-          <img src="images/mpesa-logo.svg?v=38be667" alt="M-Pesa" style="width:48px;height:24px;object-fit:contain;margin:0 auto;border-radius:4px;">
-          <span style="font-size:13px;font-weight:800;">M-Pesa</span>
+          <div style="width:40px;height:24px;display:flex;align-items:center;justify-content:center;background:white;border-radius:6px;padding:2px;">
+            <img src="images/telebirr-logo.svg?v=38be667" alt="Telebirr" style="width:100%;height:100%;object-fit:contain;">
+          </div>
+          <span style="font-size:10px;font-weight:800;">Telebirr</span>
         </label>` : ''}
         ${pkg.cbeEnabled ? `
-        <label class="payment-option" onclick="Modals._selectPayment(this,'cbe')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
+        <label class="co-pay-card" onclick="Modals._selectPayment(this,'cbe')">
           <input type="radio" name="payMethod" value="cbe" style="display:none;">
-          <img src="images/cbe-birr-logo.svg?v=38be667" alt="CBE" style="width:48px;height:24px;object-fit:contain;margin:0 auto;border-radius:4px;">
-          <span style="font-size:13px;font-weight:800;">CBE</span>
+          <div style="width:40px;height:24px;display:flex;align-items:center;justify-content:center;background:white;border-radius:6px;padding:2px;">
+            <img src="images/cbe-birr-logo.svg?v=38be667" alt="CBE" style="width:100%;height:100%;object-fit:contain;">
+          </div>
+          <span style="font-size:10px;font-weight:800;">CBE</span>
         </label>` : ''}
-        ${pkg.cashEnabled ? `
-        <label class="payment-option" onclick="Modals._selectPayment(this,'cash')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
-          <input type="radio" name="payMethod" value="cash" style="display:none;">
-          <span style="font-size:24px;">💵</span>
-          <span style="font-size:13px;font-weight:800;">Cash</span>
-          <span style="font-size:10px;color:var(--text-secondary);">Pay on Delivery</span>
+        ${pkg.mpesaEnabled ? `
+        <label class="co-pay-card" onclick="Modals._selectPayment(this,'mpesa')">
+          <input type="radio" name="payMethod" value="mpesa" style="display:none;">
+          <div style="width:40px;height:24px;display:flex;align-items:center;justify-content:center;background:white;border-radius:6px;padding:2px;">
+            <img src="images/mpesa-logo.svg?v=38be667" alt="M-Pesa" style="width:100%;height:100%;object-fit:contain;">
+          </div>
+          <span style="font-size:10px;font-weight:800;">M-Pesa</span>
+        </label>` : ''}
+        ${pkg.otherBanks && pkg.otherBanks.length > 0 ? `
+        <label class="co-pay-card" onclick="Modals._selectPayment(this,'cbe')">
+          <input type="radio" name="payMethod" value="cbe" style="display:none;">
+          <div style="width:40px;height:24px;display:flex;align-items:center;justify-content:center;background:white;border-radius:6px;padding:2px;">
+            <img src="images/cbe-birr-logo.svg?v=38be667" alt="Other Banks" style="width:100%;height:100%;object-fit:contain;">
+          </div>
+          <span style="font-size:10px;font-weight:800;">Other Banks</span>
         </label>` : ''}
       </div>
+
+      ${pkg.cashEnabled ? `
+      <label class="co-pay-card" onclick="Modals._selectPayment(this,'cash')" style="flex-direction:row;justify-content:center;gap:10px;padding:14px 16px;width:100%;box-sizing:border-box;margin-bottom:12px;cursor:pointer;">
+        <input type="radio" name="payMethod" value="cash" style="display:none;">
+        <span style="font-size:22px;">💵</span>
+        <span style="font-size:14px;font-weight:800;">Cash on Delivery</span>
+        <span style="font-size:10px;color:var(--text-muted);">Pay upon delivery</span>
+      </label>` : ''}
 
       <!-- Payment details area (shown for Telebirr/CBE) -->
       <div id="paymentDetailsArea"></div>
@@ -245,8 +260,10 @@ const Modals = {
   },
 
   _selectPayment(label, value) {
-    document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.co-pay-card').forEach(el => el.classList.remove('selected'));
     label.classList.add('selected');
+    const radio = label.querySelector('input[type="radio"]');
+    if (radio) radio.checked = true;
     const shopId = Object.keys(State.cart)[0];
     const pkg = shopId ? State.cart[shopId] : null;
     if (pkg) Modals._renderPaymentDetails(value, pkg);

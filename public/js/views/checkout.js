@@ -274,11 +274,11 @@ const CheckoutPage = {
     const sub = this._subtotal();
     const del = this._deliveryMethod === 'pickup' ? 0 : this._deliveryFee;
     const total = this._total();
-    const methods = [];
-    if (pkg.telebirrEnabled !== false) methods.push({ id: 'telebirr', label: 'Telebirr', logo: 'images/telebirr-logo.svg', color: 'var(--accent)', bg: 'rgba(252,205,4,0.08)', border: 'rgba(252,205,4,0.3)' });
-    if (pkg.mpesaEnabled !== false) methods.push({ id: 'mpesa', label: 'M-Pesa', logo: 'images/mpesa-logo.svg', color: '#00A651', bg: 'rgba(0,166,81,0.08)', border: 'rgba(0,166,81,0.3)' });
-    if (pkg.cbeEnabled !== false || (pkg.otherBanks && pkg.otherBanks.length > 0)) methods.push({ id: 'cbe', label: 'CBE', logo: 'images/cbe-birr-logo.svg', color: '#60A5FA', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.3)' });
-    if (pkg.cashEnabled !== false) methods.push({ id: 'cash', label: 'Cash on Delivery', logo: null, icon: Icons.wallet(24), color: 'var(--success)', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' });
+    const digitalMethods = [];
+    if (pkg.telebirrEnabled !== false) digitalMethods.push({ id: 'telebirr', label: 'Telebirr', logo: 'images/telebirr-logo.svg', color: 'var(--accent)' });
+    if (pkg.cbeEnabled !== false) digitalMethods.push({ id: 'cbe', label: 'CBE', logo: 'images/cbe-birr-logo.svg', color: '#60A5FA' });
+    if (pkg.mpesaEnabled !== false) digitalMethods.push({ id: 'mpesa', label: 'M-Pesa', logo: 'images/mpesa-logo.svg', color: '#00A651' });
+    if (pkg.otherBanks && pkg.otherBanks.length > 0) digitalMethods.push({ id: 'cbe', label: 'Other Banks', logo: 'images/cbe-birr-logo.svg', color: '#60A5FA' });
 
     document.getElementById('checkoutPage').innerHTML = `
       <div class="co-topbar">
@@ -313,21 +313,27 @@ const CheckoutPage = {
             ${State.t('checkout.zeroEscrow')}
           </p>
 
-          <div class="co-pay-cards">
-            ${methods.map(m => `
+          <div class="co-pay-cards" style="margin-bottom:10px;">
+            ${digitalMethods.map(m => `
               <div class="co-pay-card ${this._paymentMethod === m.id ? 'selected' : ''}"
                    onclick="CheckoutPage._pickPayment('${m.id}')"
-                   style="background:${this._paymentMethod === m.id ? m.bg : 'var(--bg-surface)'};border:2px solid ${this._paymentMethod === m.id ? m.color : 'var(--border)'};${m.logo ? 'text-align:center;' : ''}">
-                ${m.logo ? `
-                  <div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:white;border-radius:8px;padding:4px;">
-                    <img src="${m.logo}?v=38be667" alt="${m.label}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-                    <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${m.icon || ''}</div>
-                  </div>
-                ` : `<div style="color:${this._paymentMethod === m.id ? m.color : 'var(--text-secondary)'};">${m.icon}</div>`}
-                <div style="font-size:11px;font-weight:800;color:${this._paymentMethod === m.id ? 'var(--text-primary)' : 'var(--text-secondary)'};text-align:center;white-space:nowrap;">${m.label}</div>
+                   style="background:${this._paymentMethod === m.id ? 'rgba(' + (m.id === 'telebirr' ? '252,205,4' : m.id === 'mpesa' ? '0,166,81' : '59,130,246') + ',0.08)' : 'var(--bg-surface)'};border:2px solid ${this._paymentMethod === m.id ? m.color : 'var(--border)'};">
+                <div style="width:40px;height:28px;display:flex;align-items:center;justify-content:center;background:white;border-radius:6px;padding:3px;">
+                  <img src="${m.logo}?v=38be667" alt="${m.label}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">
+                </div>
+                <div style="font-size:10px;font-weight:800;color:${this._paymentMethod === m.id ? 'var(--text-primary)' : 'var(--text-secondary)'};text-align:center;white-space:nowrap;">${m.label}</div>
               </div>
             `).join('')}
           </div>
+
+          ${pkg.cashEnabled !== false ? `
+          <div class="co-pay-card ${this._paymentMethod === 'cash' ? 'selected' : ''}"
+               onclick="CheckoutPage._pickPayment('cash')"
+               style="background:${this._paymentMethod === 'cash' ? 'rgba(16,185,129,0.08)' : 'var(--bg-surface)'};border:2px solid ${this._paymentMethod === 'cash' ? 'var(--success)' : 'var(--border)'};flex-direction:row;justify-content:center;gap:10px;padding:14px 16px;width:100%;box-sizing:border-box;border-radius:12px;cursor:pointer;">
+            <div style="color:${this._paymentMethod === 'cash' ? 'var(--success)' : 'var(--text-secondary)'};">${Icons.wallet(22)}</div>
+            <div style="font-size:14px;font-weight:800;color:${this._paymentMethod === 'cash' ? 'var(--text-primary)' : 'var(--text-secondary)'};">Cash on Delivery</div>
+            <div style="font-size:10px;color:var(--text-muted);">Pay upon delivery</div>
+          </div>` : ''}
 
           <div id="coPaymentDetailsArea" style="margin-top:4px;"></div>
 
