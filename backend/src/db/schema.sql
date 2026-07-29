@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS seller_policies (
     }',
     cash_on_delivery        BOOLEAN DEFAULT TRUE,
     telebirr_enabled        BOOLEAN DEFAULT TRUE,
+    cbe_enabled             BOOLEAN DEFAULT TRUE,
     mpesa_enabled           BOOLEAN DEFAULT FALSE,
     chapa_enabled           BOOLEAN DEFAULT FALSE,
     created_at              TIMESTAMP DEFAULT NOW(),
@@ -439,7 +440,10 @@ ALTER TABLE stores ADD COLUMN IF NOT EXISTS cbe_account_name VARCHAR(100);
 -- ============================================================
 -- SELLER POLICIES: replace chapa with cbe toggle
 -- ============================================================
-ALTER TABLE seller_policies ADD COLUMN IF NOT EXISTS cbe_enabled BOOLEAN DEFAULT FALSE;
+ALTER TABLE seller_policies ADD COLUMN IF NOT EXISTS cbe_enabled BOOLEAN DEFAULT TRUE;
+
+-- Backfill: enable CBE for all existing stores (it's the default payment system)
+UPDATE seller_policies SET cbe_enabled = TRUE WHERE cbe_enabled IS NULL OR cbe_enabled = FALSE;
 
 -- ============================================================
 -- ORDER COLUMNS: transaction code + delivery method
