@@ -1450,9 +1450,18 @@ flex-shrink: 0;
 .co-btn.confirm:active { transform: scale(0.97); }
 .co-section-label { font-size: 11px; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.8px; margin: 20px 0 10px; }
 .co-pay-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.co-pay-cards {
+  display: flex; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch; padding: 4px 2px 12px; margin: 0 -2px;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.co-pay-cards::-webkit-scrollbar { height: 4px; }
+.co-pay-cards::-webkit-scrollbar-track { background: transparent; }
+.co-pay-cards::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 .co-pay-card {
+  flex: 0 0 auto; scroll-snap-align: start; min-width: 120px;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 18px 10px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 14px;
+  padding: 18px 14px; background: var(--bg-card); border: 2px solid var(--border); border-radius: 14px;
   cursor: pointer; transition: all 0.2s; position: relative;
 }
 .co-pay-card.selected { border-color: var(--accent); background: rgba(252,205,4,0.04); }

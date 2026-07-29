@@ -59,7 +59,7 @@ router.post(
         if (existing.rows.length > 0) {
           const orderResult = await query(
             `SELECT o.*, s.store_name, s.store_slug, s.tg_channel_username, s.admin_tg_user_id, s.telebirr_merchant_id,
-                    s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address
+                    s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.mpesa_till_number, s.mpesa_short_code, s.mpesa_account_name, s.physical_address
              FROM orders o JOIN stores s ON o.store_id = s.store_id WHERE o.order_id = $1`,
             [existing.rows[0].order_id]
           );
@@ -78,6 +78,7 @@ router.post(
                 COALESCE(sp.cash_on_delivery, TRUE) AS cash_on_delivery,
                 COALESCE(sp.telebirr_enabled, TRUE) AS telebirr_enabled,
                 COALESCE(sp.cbe_enabled, FALSE) AS cbe_enabled,
+                COALESCE(sp.mpesa_enabled, FALSE) AS mpesa_enabled,
                 COALESCE(sp.free_delivery_threshold, 2000) AS free_delivery_threshold,
                 COALESCE(sp.addis_delivery_fee, 150) AS addis_delivery_fee_default
          FROM stores s
@@ -105,6 +106,10 @@ router.post(
       if (payment_method === 'cbe' && store.cbe_enabled === false) {
         await client.query('ROLLBACK');
         return res.status(400).json({ error: 'CBE not enabled for this store' });
+      }
+      if (payment_method === 'mpesa' && store.mpesa_enabled === false) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'M-Pesa not enabled for this store' });
       }
       if (payment_method === 'cash' && store.cash_on_delivery === false) {
         await client.query('ROLLBACK');

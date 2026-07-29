@@ -98,16 +98,20 @@ const Modals = {
         ${pkg.telebirrEnabled ? `
         <label class="payment-option selected" onclick="Modals._selectPayment(this,'telebirr')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
           <input type="radio" name="payMethod" value="telebirr" checked style="display:none;">
-          <span style="font-size:24px;">📱</span>
+          <img src="images/telebirr-logo.svg?v=38be667" alt="Telebirr" style="width:48px;height:24px;object-fit:contain;margin:0 auto;border-radius:4px;">
           <span style="font-size:13px;font-weight:800;">Telebirr</span>
-          <span style="font-size:10px;color:var(--text-secondary);">Mobile Money</span>
+        </label>` : ''}
+        ${pkg.mpesaEnabled ? `
+        <label class="payment-option" onclick="Modals._selectPayment(this,'mpesa')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
+          <input type="radio" name="payMethod" value="mpesa" style="display:none;">
+          <img src="images/mpesa-logo.svg?v=38be667" alt="M-Pesa" style="width:48px;height:24px;object-fit:contain;margin:0 auto;border-radius:4px;">
+          <span style="font-size:13px;font-weight:800;">M-Pesa</span>
         </label>` : ''}
         ${pkg.cbeEnabled ? `
         <label class="payment-option" onclick="Modals._selectPayment(this,'cbe')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
           <input type="radio" name="payMethod" value="cbe" style="display:none;">
-          <span style="font-size:24px;">🏦</span>
+          <img src="images/cbe-birr-logo.svg?v=38be667" alt="CBE" style="width:48px;height:24px;object-fit:contain;margin:0 auto;border-radius:4px;">
           <span style="font-size:13px;font-weight:800;">CBE</span>
-          <span style="font-size:10px;color:var(--text-secondary);">Bank Transfer</span>
         </label>` : ''}
         ${pkg.cashEnabled ? `
         <label class="payment-option" onclick="Modals._selectPayment(this,'cash')" style="text-align:center;display:flex;flex-direction:column;gap:4px;padding:12px 8px;cursor:pointer;">
@@ -256,8 +260,11 @@ const Modals = {
       const name = pkg.telebirrAccountName || '';
       const number = pkg.telebirrCode || '';
       area.innerHTML = `
-        <div style="background:rgba(52,152,219,0.08);border:1px solid rgba(52,152,219,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
-          <div style="font-size:13px;font-weight:800;color:#3498DB;margin-bottom:8px;">📱 Pay via Telebirr</div>
+        <div style="background:rgba(252,205,4,0.08);border:1px solid rgba(252,205,4,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <img src="images/telebirr-logo.svg?v=38be667" alt="Telebirr" style="width:60px;height:28px;object-fit:contain;border-radius:4px;">
+            <span style="font-size:13px;font-weight:800;color:var(--accent);">Telebirr Transfer</span>
+          </div>
           <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.7;">
             Send payment to the seller's Telebirr account:
           </div>
@@ -268,15 +275,43 @@ const Modals = {
             <div style="font-size:18px;font-weight:900;color:var(--accent);letter-spacing:1px;">${number || 'Not set'}</div>
           </div>
           <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">After transferring, enter your <strong style="color:white;">Transaction Code</strong> below:</div>
-          <input class="form-input" id="txCodeInput" placeholder="e.g. 2407101234567890" style="font-family:monospace;font-size:14px;letter-spacing:1px;"/>
-          <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">Found in your Telebirr SMS/app confirmation</div>
+          <input class="form-input" id="txCodeInput" placeholder="e.g. TBX-891204-99218401" style="font-family:monospace;font-size:14px;letter-spacing:1px;"/>
+        </div>`;
+    } else if (method === 'mpesa') {
+      const name = pkg.mpesaAccountName || '';
+      const till = pkg.mpesaTillNumber || '';
+      const shortCode = pkg.mpesaShortCode || '';
+      area.innerHTML = `
+        <div style="background:rgba(0,166,81,0.08);border:1px solid rgba(0,166,81,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <img src="images/mpesa-logo.svg?v=38be667" alt="M-Pesa" style="width:60px;height:28px;object-fit:contain;border-radius:4px;">
+            <span style="font-size:13px;font-weight:800;color:#00A651;">M-Pesa Transfer</span>
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.7;">
+            Send payment to the seller's M-Pesa:
+          </div>
+          <div style="background:var(--bg-primary);border-radius:8px;padding:12px;margin-bottom:10px;">
+            <div style="font-size:11px;color:var(--text-secondary);">Account Name</div>
+            <div style="font-size:15px;font-weight:900;color:white;">${name || 'Not set by seller'}</div>
+            ${till ? `
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Till Number (Buy Goods)</div>
+            <div style="font-size:18px;font-weight:900;color:#00A651;letter-spacing:1px;">${till}</div>` : ''}
+            ${shortCode ? `
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Paybill Number</div>
+            <div style="font-size:18px;font-weight:900;color:#00A651;letter-spacing:1px;">${shortCode}</div>` : ''}
+          </div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">After transferring, enter your <strong style="color:white;">Transaction Code</strong> below:</div>
+          <input class="form-input" id="txCodeInput" placeholder="e.g. MPESA12345678" style="font-family:monospace;font-size:14px;letter-spacing:1px;"/>
         </div>`;
     } else if (method === 'cbe') {
       const name = pkg.cbeAccountName || '';
       const account = pkg.cbeAccountNumber || '';
       area.innerHTML = `
-        <div style="background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
-          <div style="font-size:13px;font-weight:800;color:#E74C3C;margin-bottom:8px;">🏦 Pay via CBE Bank Transfer</div>
+        <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <img src="images/cbe-birr-logo.svg?v=38be667" alt="CBE" style="width:60px;height:28px;object-fit:contain;border-radius:4px;">
+            <span style="font-size:13px;font-weight:800;color:#60A5FA;">CBE Bank Transfer</span>
+          </div>
           <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.7;">
             Transfer to the seller's CBE account:
           </div>
@@ -284,11 +319,10 @@ const Modals = {
             <div style="font-size:11px;color:var(--text-secondary);">Account Name</div>
             <div style="font-size:15px;font-weight:900;color:white;">${name || 'Not set by seller'}</div>
             <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">CBE Account Number</div>
-            <div style="font-size:18px;font-weight:900;color:#E74C3C;letter-spacing:1px;">${account || 'Not set'}</div>
+            <div style="font-size:18px;font-weight:900;color:#60A5FA;letter-spacing:1px;">${account || 'Not set'}</div>
           </div>
           <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">After transferring, enter your <strong style="color:white;">Transaction Code</strong> below:</div>
-          <input class="form-input" id="txCodeInput" placeholder="e.g. TXN123456789" style="font-family:monospace;font-size:14px;letter-spacing:1px;"/>
-          <div style="font-size:10px;color:var(--text-secondary);margin-top:4px;">Found in your CBE SMS/app confirmation</div>
+          <input class="form-input" id="txCodeInput" placeholder="e.g. FT26194204812" style="font-family:monospace;font-size:14px;letter-spacing:1px;"/>
         </div>`;
     } else {
       // Cash — no details needed

@@ -35,7 +35,8 @@ router.get('/', async (req, res, next) => {
       `SELECT s.store_id, s.store_name, s.store_slug, s.store_code, s.location_sub_city, s.location_woreda,
               s.description, s.tg_channel_username, s.rating, s.rating_count,
               s.total_orders, s.verified_badge,
-              sp.return_policy_type, sp.addis_delivery_fee
+              sp.return_policy_type, sp.addis_delivery_fee,
+              sp.telebirr_enabled, sp.cbe_enabled, sp.mpesa_enabled
        FROM stores s
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
        ${whereClause}
@@ -68,7 +69,7 @@ router.get('/:storeId', async (req, res, next) => {
     const result = await query(
       `SELECT s.*, sp.return_policy_type, sp.custom_policy_text, sp.addis_delivery_fee,
               sp.regional_dispatch_fee, sp.free_delivery_threshold, sp.zone_fee_matrix,
-              sp.cash_on_delivery, sp.telebirr_enabled, sp.telegram_notifs
+              sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.mpesa_enabled, sp.telegram_notifs
        FROM stores s
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
        WHERE s.store_id = $1 OR s.store_slug = $1::text`,
@@ -80,6 +81,8 @@ router.get('/:storeId', async (req, res, next) => {
     // Don't expose sensitive payment keys or password hash
     delete store.cbe_account_number;
     delete store.telebirr_merchant_id;
+    delete store.mpesa_till_number;
+    delete store.mpesa_short_code;
     delete store.seller_password_hash;
 
     storeCache.set(storeId, store);
@@ -106,7 +109,10 @@ router.post(
     body('telebirr_merchant_id').optional().isString(),
     body('cbe_account_number').optional().isString(),
     body('telebirr_account_name').optional().isString(),
-    body('cbe_account_name').optional().isString()
+    body('cbe_account_name').optional().isString(),
+    body('mpesa_till_number').optional().isString(),
+    body('mpesa_short_code').optional().isString(),
+    body('mpesa_account_name').optional().isString()
   ],
   async (req, res, next) => {
     try {
@@ -117,7 +123,8 @@ router.post(
         store_name, tg_group_id, tg_channel_username, description,
         location_sub_city, location_woreda, location_detail,
         physical_address, business_phone, telebirr_merchant_id, cbe_account_number,
-        telebirr_account_name, cbe_account_name, seller_password
+        telebirr_account_name, cbe_account_name,
+        mpesa_till_number, mpesa_short_code, mpesa_account_name, seller_password
       } = req.body;
 
       // Generate unique 16-char store code
@@ -139,9 +146,10 @@ router.post(
           store_name, store_slug, store_code, admin_tg_user_id, tg_group_id, tg_channel_username,
           description, location_sub_city, location_woreda, location_detail,
           physical_address, business_phone, telebirr_merchant_id, cbe_account_number,
-          telebirr_account_name, cbe_account_name, seller_password_hash,
+          telebirr_account_name, cbe_account_name,
+          mpesa_till_number, mpesa_short_code, mpesa_account_name, seller_password_hash,
           status
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,'verified')
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,'verified')
         RETURNING store_id, store_name, store_slug, store_code, status`,
         [store_name, slug, storeCode, req.user.tg_user_id, tg_group_id || null,
          tg_channel_username || null, description || null,
@@ -149,6 +157,7 @@ router.post(
          physical_address || null, business_phone,
          telebirr_merchant_id || null, cbe_account_number || null,
          telebirr_account_name || null, cbe_account_name || null,
+         mpesa_till_number || null, mpesa_short_code || null, mpesa_account_name || null,
          passwordHash]
       );
 
@@ -173,10 +182,12 @@ router.post(
  */
 router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res, next) => {
   try {
-    const {
+const {
       description, location_sub_city, location_woreda, location_detail,
       physical_address, business_phone, tg_channel_username,
-      telebirr_merchant_id, cbe_account_number, telebirr_account_name, cbe_account_name,
+      telebirr_merchant_id, cbe_account_number,
+      telebirr_account_name, cbe_account_name,
+      mpesa_till_number, mpesa_short_code, mpesa_account_name,
       other_banks
     } = req.body;
 
@@ -193,22 +204,28 @@ router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res
         cbe_account_number = COALESCE($9, cbe_account_number),
         telebirr_account_name = COALESCE($10, telebirr_account_name),
         cbe_account_name = COALESCE($11, cbe_account_name),
-        other_banks = CASE WHEN $12 IS NOT NULL THEN $12::jsonb ELSE other_banks END,
+        mpesa_till_number = COALESCE($12, mpesa_till_number),
+        mpesa_short_code = COALESCE($13, mpesa_short_code),
+        mpesa_account_name = COALESCE($14, mpesa_account_name),
+        other_banks = CASE WHEN $15 IS NOT NULL THEN $15::jsonb ELSE other_banks END,
         updated_at = NOW()
-       WHERE store_id = $13
+       WHERE store_id = $16
        RETURNING stores.*,
-         (SELECT return_policy_type FROM seller_policies WHERE store_id = stores.store_id) AS return_policy_type,
-         (SELECT custom_policy_text FROM seller_policies WHERE store_id = stores.store_id) AS custom_policy_text,
-         (SELECT addis_delivery_fee FROM seller_policies WHERE store_id = stores.store_id) AS addis_delivery_fee,
-         (SELECT regional_dispatch_fee FROM seller_policies WHERE store_id = stores.store_id) AS regional_dispatch_fee,
-         (SELECT free_delivery_threshold FROM seller_policies WHERE store_id = stores.store_id) AS free_delivery_threshold,
-         (SELECT zone_fee_matrix FROM seller_policies WHERE store_id = stores.store_id) AS zone_fee_matrix,
-         (SELECT cash_on_delivery FROM seller_policies WHERE store_id = stores.store_id) AS cash_on_delivery,
-         (SELECT telebirr_enabled FROM seller_policies WHERE store_id = stores.store_id) AS telebirr_enabled,
-         (SELECT telegram_notifs FROM seller_policies WHERE store_id = stores.store_id) AS telegram_notifs`,
+          (SELECT return_policy_type FROM seller_policies WHERE store_id = stores.store_id) AS return_policy_type,
+          (SELECT custom_policy_text FROM seller_policies WHERE store_id = stores.store_id) AS custom_policy_text,
+          (SELECT addis_delivery_fee FROM seller_policies WHERE store_id = stores.store_id) AS addis_delivery_fee,
+          (SELECT regional_dispatch_fee FROM seller_policies WHERE store_id = stores.store_id) AS regional_dispatch_fee,
+          (SELECT free_delivery_threshold FROM seller_policies WHERE store_id = stores.store_id) AS free_delivery_threshold,
+          (SELECT zone_fee_matrix FROM seller_policies WHERE store_id = stores.store_id) AS zone_fee_matrix,
+          (SELECT cash_on_delivery FROM seller_policies WHERE store_id = stores.store_id) AS cash_on_delivery,
+          (SELECT telebirr_enabled FROM seller_policies WHERE store_id = stores.store_id) AS telebirr_enabled,
+          (SELECT cbe_enabled FROM seller_policies WHERE store_id = stores.store_id) AS cbe_enabled,
+          (SELECT mpesa_enabled FROM seller_policies WHERE store_id = stores.store_id) AS mpesa_enabled,
+          (SELECT telegram_notifs FROM seller_policies WHERE store_id = stores.store_id) AS telegram_notifs`,
       [description, location_sub_city, location_woreda, location_detail,
         physical_address, business_phone, tg_channel_username,
         telebirr_merchant_id, cbe_account_number, telebirr_account_name, cbe_account_name,
+        mpesa_till_number, mpesa_short_code, mpesa_account_name,
         other_banks ? JSON.stringify(other_banks) : null,
         req.params.storeId]
     );
@@ -217,7 +234,9 @@ router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res
     delete store.cbe_account_number;
     delete store.telebirr_merchant_id;
     delete store.seller_password_hash;
-
+    delete store.mpesa_till_number;
+    delete store.mpesa_short_code;
+    delete store.mpesa_account_name;
     // Invalidate caches
     storeCache.delete(req.params.storeId);
 
@@ -237,7 +256,7 @@ router.put('/:storeId/policy', requireAuth, requireSellerOf('storeId'), async (r
     const {
       return_policy_type, custom_policy_text, addis_delivery_fee,
       regional_dispatch_fee, free_delivery_threshold, zone_fee_matrix,
-      cash_on_delivery, telebirr_enabled, cbe_enabled, telegram_notifs
+      cash_on_delivery, telebirr_enabled, cbe_enabled, mpesa_enabled, telegram_notifs
     } = req.body;
 
     const result = await query(
@@ -251,14 +270,15 @@ router.put('/:storeId/policy', requireAuth, requireSellerOf('storeId'), async (r
         cash_on_delivery = COALESCE($7, cash_on_delivery),
         telebirr_enabled = COALESCE($8, telebirr_enabled),
         cbe_enabled = COALESCE($9, cbe_enabled),
-        telegram_notifs = COALESCE($10, telegram_notifs),
+        mpesa_enabled = COALESCE($10, mpesa_enabled),
+        telegram_notifs = COALESCE($11, telegram_notifs),
         updated_at = NOW()
-       WHERE store_id = $11
+       WHERE store_id = $12
        RETURNING *`,
       [return_policy_type, custom_policy_text, addis_delivery_fee,
        regional_dispatch_fee, free_delivery_threshold,
        zone_fee_matrix ? JSON.stringify(zone_fee_matrix) : null,
-       cash_on_delivery, telebirr_enabled, cbe_enabled, telegram_notifs, req.params.storeId]
+       cash_on_delivery, telebirr_enabled, cbe_enabled, mpesa_enabled, telegram_notifs, req.params.storeId]
     );
     res.json({ policy: result.rows[0] });
   } catch (err) {

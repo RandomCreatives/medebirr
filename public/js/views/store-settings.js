@@ -143,6 +143,9 @@ App.savePaymentAccounts = async function() {
     telebirr_account_name: document.getElementById('telebirrAccountName')?.value?.trim() || null,
     cbe_account_number: document.getElementById('cbeAccountNumber')?.value?.trim() || null,
     cbe_account_name: document.getElementById('cbeAccountName')?.value?.trim() || null,
+    mpesa_till_number: document.getElementById('mpesaTillNumber')?.value?.trim() || null,
+    mpesa_short_code: document.getElementById('mpesaShortCode')?.value?.trim() || null,
+    mpesa_account_name: document.getElementById('mpesaAccountName')?.value?.trim() || null,
     other_banks: SellerViews._otherBanks || []
   };
   const ui = this._startProgress();

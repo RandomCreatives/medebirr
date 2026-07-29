@@ -29,7 +29,7 @@ const CheckoutPage = {
     this._pkg = pkg;
     this._step = 1;
     this._deliveryMethod = 'delivery';
-    this._paymentMethod = pkg.telebirrEnabled ? 'telebirr' : (pkg.cbeEnabled ? 'cbe' : 'cash');
+    this._paymentMethod = pkg.telebirrEnabled ? 'telebirr' : (pkg.mpesaEnabled ? 'mpesa' : (pkg.cbeEnabled ? 'cbe' : 'cash'));
     this._deliveryFee = Number(pkg.deliveryFee) || 150;
     this._subCity = State.user?.addresses?.[0]?.sub_city || 'Bole';
     this._landmark = State.user?.addresses?.[0]?.landmark || '';
@@ -275,9 +275,10 @@ const CheckoutPage = {
     const del = this._deliveryMethod === 'pickup' ? 0 : this._deliveryFee;
     const total = this._total();
     const methods = [];
-    if (pkg.telebirrEnabled !== false) methods.push({ id: 'telebirr', label: 'Telebirr', icon: Icons.wallet(24), color: 'var(--accent)', bg: 'rgba(252,205,4,0.08)', border: 'rgba(252,205,4,0.3)' });
-    if (pkg.cbeEnabled !== false || (pkg.otherBanks && pkg.otherBanks.length > 0)) methods.push({ id: 'cbe', label: 'CBE', icon: Icons.credit(24), color: '#60A5FA', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.3)' });
-    if (pkg.cashEnabled !== false) methods.push({ id: 'cash', label: 'Cash on Delivery', icon: Icons.wallet(24), color: 'var(--success)', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' });
+    if (pkg.telebirrEnabled !== false) methods.push({ id: 'telebirr', label: 'Telebirr', logo: 'images/telebirr-logo.svg', color: 'var(--accent)', bg: 'rgba(252,205,4,0.08)', border: 'rgba(252,205,4,0.3)' });
+    if (pkg.mpesaEnabled !== false) methods.push({ id: 'mpesa', label: 'M-Pesa', logo: 'images/mpesa-logo.svg', color: '#00A651', bg: 'rgba(0,166,81,0.08)', border: 'rgba(0,166,81,0.3)' });
+    if (pkg.cbeEnabled !== false || (pkg.otherBanks && pkg.otherBanks.length > 0)) methods.push({ id: 'cbe', label: 'CBE', logo: 'images/cbe-birr-logo.svg', color: '#60A5FA', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.3)' });
+    if (pkg.cashEnabled !== false) methods.push({ id: 'cash', label: 'Cash on Delivery', logo: null, icon: Icons.wallet(24), color: 'var(--success)', bg: 'rgba(16,185,129,0.08)', border: 'rgba(16,185,129,0.25)' });
 
     document.getElementById('checkoutPage').innerHTML = `
       <div class="co-topbar">
@@ -312,13 +313,18 @@ const CheckoutPage = {
             ${State.t('checkout.zeroEscrow')}
           </p>
 
-          <div class="co-pay-cards" style="display:grid;grid-template-columns:repeat(${Math.min(methods.length, 4)},1fr);gap:8px;margin-bottom:16px;">
+          <div class="co-pay-cards">
             ${methods.map(m => `
               <div class="co-pay-card ${this._paymentMethod === m.id ? 'selected' : ''}"
                    onclick="CheckoutPage._pickPayment('${m.id}')"
-                   style="background:${this._paymentMethod === m.id ? m.bg : 'var(--bg-surface)'};border:2px solid ${this._paymentMethod === m.id ? m.color : 'var(--border)'};border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;transition:all 0.15s;display:flex;flex-direction:column;align-items:center;gap:6px;">
-                <div style="color:${this._paymentMethod === m.id ? m.color : 'var(--text-secondary)'};">${m.icon}</div>
-                <div style="font-size:11px;font-weight:800;color:${this._paymentMethod === m.id ? 'var(--text-primary)' : 'var(--text-secondary)'};">${m.label}</div>
+                   style="background:${this._paymentMethod === m.id ? m.bg : 'var(--bg-surface)'};border:2px solid ${this._paymentMethod === m.id ? m.color : 'var(--border)'};${m.logo ? 'text-align:center;' : ''}">
+                ${m.logo ? `
+                  <div style="width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:white;border-radius:8px;padding:4px;">
+                    <img src="${m.logo}?v=38be667" alt="${m.label}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${m.icon || ''}</div>
+                  </div>
+                ` : `<div style="color:${this._paymentMethod === m.id ? m.color : 'var(--text-secondary)'};">${m.icon}</div>`}
+                <div style="font-size:11px;font-weight:800;color:${this._paymentMethod === m.id ? 'var(--text-primary)' : 'var(--text-secondary)'};text-align:center;white-space:nowrap;">${m.label}</div>
               </div>
             `).join('')}
           </div>
@@ -401,6 +407,49 @@ const CheckoutPage = {
           <div style="margin-top:8px;font-size:11px;color:var(--text-secondary);text-align:center;">
             Or enter TX code manually:
             <input class="form-input" id="coTxCode" placeholder="e.g. TBX-891204-99218401" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg-main);border:1px solid var(--border);padding:8px;border-radius:6px;color:white;font-family:monospace;font-size:12px;" />
+          </div>
+        </div>`;
+    } else if (this._paymentMethod === 'mpesa') {
+      const mpesaTill = pkg.mpesaTillNumber || '';
+      const mpesaShortCode = pkg.mpesaShortCode || '';
+      const mpesaName = pkg.mpesaAccountName || '';
+      area.innerHTML = `
+        <div style="background:rgba(0,166,81,0.08);border:1px solid rgba(0,166,81,0.3);border-radius:12px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <img src="images/mpesa-logo.svg?v=38be667" alt="M-Pesa" style="width:32px;height:32px;border-radius:6px;">
+            <div>
+              <div style="font-weight:800;color:#00A651;font-size:14px;">M-Pesa Transfer</div>
+              ${mpesaName ? `<div style="font-size:11px;color:var(--text-secondary);">${mpesaName}</div>` : ''}
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text-primary);line-height:1.6;margin-bottom:10px;">
+            Transfer <strong>${State.formatETB(total)}</strong> to:
+          </div>
+          <div style="background:var(--bg-main);border-radius:8px;padding:12px;margin-bottom:12px;">
+            ${mpesaTill ? `
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Till Number (Buy Goods)</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+              <span style="display:inline-block;background:var(--bg-main);padding:6px 12px;border-radius:6px;font-family:monospace;font-size:16px;color:#00A651;font-weight:900;letter-spacing:1px;">${mpesaTill}</span>
+              <button type="button" onclick="CheckoutPage._copyText('${mpesaTill}','Till number copied!')" style="background:rgba(0,166,81,0.12);border:1px solid rgba(0,166,81,0.3);border-radius:6px;padding:6px 12px;color:#00A651;font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
+            </div>` : ''}
+            ${mpesaShortCode ? `
+            <div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Paybill Number</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+              <span style="display:inline-block;background:var(--bg-main);padding:6px 12px;border-radius:6px;font-family:monospace;font-size:16px;color:#00A651;font-weight:900;letter-spacing:1px;">${mpesaShortCode}</span>
+              <button type="button" onclick="CheckoutPage._copyText('${mpesaShortCode}','Paybill copied!')" style="background:rgba(0,166,81,0.12);border:1px solid rgba(0,166,81,0.3);border-radius:6px;padding:6px 12px;color:#00A651;font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
+            </div>` : ''}
+          </div>
+          <hr style="border:none;border-top:1px solid rgba(0,166,81,0.2);margin:12px 0;">
+          <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Upload Payment Screenshot</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <label style="flex:1;background:var(--bg-main);border:1px dashed var(--border);border-radius:8px;padding:10px;text-align:center;cursor:pointer;font-size:11px;color:var(--text-secondary);">
+              ${this._screenshotData ? '✅ Screenshot captured' : '📸 Tap to upload screenshot'}
+              <input type="file" accept="image/*" style="display:none;" onchange="CheckoutPage._onScreenshot(this)" />
+            </label>
+          </div>
+          <div style="margin-top:8px;font-size:11px;color:var(--text-secondary);text-align:center;">
+            Or enter TX code manually:
+            <input class="form-input" id="coTxCode" placeholder="e.g. MPESA12345678" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg-main);border:1px solid var(--border);padding:8px;border-radius:6px;color:white;font-family:monospace;font-size:12px;" />
           </div>
         </div>`;
     } else if (this._paymentMethod === 'cbe') {
@@ -567,7 +616,7 @@ const CheckoutPage = {
 
   // ── Step 3: Review & Confirm Order ─────────────────────────────────────────
   _goStep3() {
-    if (['telebirr', 'cbe'].includes(this._paymentMethod)) {
+    if (['telebirr', 'mpesa', 'cbe'].includes(this._paymentMethod)) {
       const txCode = document.getElementById('coTxCode')?.value?.trim() || this._txCode;
       this._txCode = txCode;
     }
@@ -592,8 +641,9 @@ const CheckoutPage = {
     const payLabel = this._paymentMethod === 'cbe' && this._selectedOtherBank ? this._selectedOtherBank.bank_name : (this._paymentMethod === 'cbe' ? 'CBE Bank Transfer' : '');
     const paySummary = this._paymentMethod === 'telebirr'
       ? `📱 <strong>Telebirr Transfer</strong><br/><span style="font-size:11px;color:var(--text-secondary);">TX ID: ${this._txCode || 'Pending at handover'}</span>`
+      : (this._paymentMethod === 'mpesa' ? `📱 <strong>M-Pesa Transfer</strong><br/><span style="font-size:11px;color:var(--text-secondary);">TX ID: ${this._txCode || 'Pending at handover'}</span>`
       : (this._paymentMethod === 'cbe' ? `🏦 <strong>${payLabel}</strong><br/><span style="font-size:11px;color:var(--text-secondary);">TX ID: ${this._txCode || 'Pending at handover'}</span>`
-      : `💵 <strong>Cash on Delivery</strong><br/><span style="font-size:11px;color:var(--text-secondary);">Pay upon item inspection</span>`);
+      : `💵 <strong>Cash on Delivery</strong><br/><span style="font-size:11px;color:var(--text-secondary);">Pay upon item inspection</span>`));
 
     document.getElementById('checkoutPage').innerHTML = `
       <div class="co-topbar">
@@ -720,7 +770,7 @@ const CheckoutPage = {
         orderId = order.order_id;
         orderRef = order.order_ref;
 
-        if (['telebirr', 'cbe'].includes(this._paymentMethod)) {
+        if (['telebirr', 'mpesa', 'cbe'].includes(this._paymentMethod)) {
           const proof = this._screenshotData ? { screenshot: this._screenshotData, tx_ref: this._txCode } : null;
           await Api.payments.confirmTx(order.order_id, this._txCode || `TXN-${Date.now()}`, proof);
         } else {
@@ -772,7 +822,7 @@ const CheckoutPage = {
             ${State.t('checkout.successInfo')}
           </div>
 
-          ${['telebirr', 'cbe'].includes(this._paymentMethod) ? `
+          ${['telebirr', 'mpesa', 'cbe'].includes(this._paymentMethod) ? `
           <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:14px;margin-bottom:16px;font-size:12px;color:#93C5FD;text-align:left;line-height:1.7;">
             ${State.t('checkout.verifyPayment')}
             <a href="https://t.me/medebirrbot?start=verify_order_${orderId}" target="_blank"

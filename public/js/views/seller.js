@@ -383,7 +383,7 @@ const SellerViews = {
       </div>
       <button class="btn-secondary" style="width:100%;" onclick="App.toast('Address saved','success')">💾 Save Address</button>`;
 
-    // 3. Payout & Banking — Telebirr + CBE accounts + checkout preferences
+    // 3. Payout & Banking — Telebirr + CBE + M-Pesa accounts + checkout preferences
     const payout = `
       <div style="font-size:11px;color:var(--text-secondary);margin-bottom:10px;">These details are shown to buyers at checkout so they can pay you. Keep them up to date.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
@@ -396,7 +396,7 @@ const SellerViews = {
           <input class="form-input" id="telebirrAccountName" value="${store.telebirr_account_name || ''}" placeholder="Account holder name"/>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div>
           <label class="form-label" style="font-size:11px;">CBE Account Number</label>
           <input class="form-input" id="cbeAccountNumber" value="${store.cbe_account_number || ''}" placeholder="1000XXXXXXX"/>
@@ -404,6 +404,22 @@ const SellerViews = {
         <div>
           <label class="form-label" style="font-size:11px;">CBE Account Name</label>
           <input class="form-input" id="cbeAccountName" value="${store.cbe_account_name || ''}" placeholder="Account holder name"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <label class="form-label" style="font-size:11px;">M-Pesa Till Number</label>
+          <input class="form-input" id="mpesaTillNumber" value="${store.mpesa_till_number || ''}" placeholder="123456"/>
+        </div>
+        <div>
+          <label class="form-label" style="font-size:11px;">M-Pesa Short Code</label>
+          <input class="form-input" id="mpesaShortCode" value="${store.mpesa_short_code || ''}" placeholder="600123"/>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px;">
+        <div>
+          <label class="form-label" style="font-size:11px;">M-Pesa Account Name</label>
+          <input class="form-input" id="mpesaAccountName" value="${store.mpesa_account_name || ''}" placeholder="Business name"/>
         </div>
       </div>
 
@@ -463,6 +479,9 @@ const SellerViews = {
           </label>
           <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;">
             <input type="checkbox" id="cbeEnabled" ${store.cbe_enabled?'checked':''} style="accent-color:var(--accent);"> ${Icons.credit(16)} CBE Bank Transfer
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="mpesaEnabled" ${store.mpesa_enabled?'checked':''} style="accent-color:var(--accent);"> ${Icons.wallet(16)} M-Pesa (Safaricom)
           </label>
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
             <input type="checkbox" id="cashEnabled" ${store.cash_on_delivery!==false?'checked':''} style="accent-color:var(--accent);"> ${Icons.wallet(16)} Cash on Delivery

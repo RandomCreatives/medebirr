@@ -43,6 +43,10 @@ CREATE TABLE IF NOT EXISTS stores (
     currency                VARCHAR(10) DEFAULT 'ETB',
     telebirr_merchant_id    VARCHAR(100),
     cbe_account_number      VARCHAR(50),
+    mpesa_till_number       VARCHAR(20),
+    mpesa_consumer_key      VARCHAR(100),
+    mpesa_consumer_secret   VARCHAR(100),
+    mpesa_passkey           VARCHAR(255),
     chapa_secret_key        VARCHAR(255),
     store_code              VARCHAR(16) UNIQUE,
     seller_password_hash    TEXT,
@@ -83,6 +87,7 @@ CREATE TABLE IF NOT EXISTS seller_policies (
     }',
     cash_on_delivery        BOOLEAN DEFAULT TRUE,
     telebirr_enabled        BOOLEAN DEFAULT TRUE,
+    mpesa_enabled           BOOLEAN DEFAULT FALSE,
     chapa_enabled           BOOLEAN DEFAULT FALSE,
     created_at              TIMESTAMP DEFAULT NOW(),
     updated_at              TIMESTAMP DEFAULT NOW()
@@ -451,6 +456,18 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_longitude DOUBLE PRECISION;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS rider_latitude DOUBLE PRECISION;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS rider_longitude DOUBLE PRECISION;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_provider VARCHAR(20) DEFAULT 'rider'; -- self, rider, company
+
+-- ============================================================
+-- STORE COLUMNS: M-Pesa / Safaricom payment fields
+-- ============================================================
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS mpesa_till_number VARCHAR(50);
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS mpesa_short_code VARCHAR(20);
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS mpesa_account_name VARCHAR(100);
+
+-- ============================================================
+-- SELLER POLICIES: M-Pesa payment toggle
+-- ============================================================
+ALTER TABLE seller_policies ADD COLUMN IF NOT EXISTS mpesa_enabled BOOLEAN DEFAULT FALSE;
 
 -- ============================================================
 -- PAYMENT VERIFICATIONS: buyer-submitted receipt proofs

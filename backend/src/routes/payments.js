@@ -415,7 +415,7 @@ router.post('/cash/confirm', requireAuth, async (req, res, next) => {
       if (orderResult.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
       const order = orderResult.rows[0];
-      if (!['telebirr', 'cbe'].includes(order.payment_method)) {
+      if (!['telebirr', 'mpesa', 'cbe'].includes(order.payment_method)) {
         return res.status(400).json({ error: 'This order does not use a manual payment method' });
       }
       if (order.payment_status === 'paid') {

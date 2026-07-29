@@ -1104,7 +1104,7 @@ const App = {
       });
       const order = orderData.order;
 
-      if (payMethod === 'telebirr' || payMethod === 'cbe') {
+      if (payMethod === 'telebirr' || payMethod === 'mpesa' || payMethod === 'cbe') {
         // Submit transaction code for manual verification
         await Api.payments.confirmTx(order.order_id, txCode);
         State.clearStoreCart(shopId);

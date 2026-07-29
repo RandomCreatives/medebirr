@@ -21,19 +21,19 @@ router.get('/featured', async (req, res, next) => {
       return res.json({ products: cached });
     }
 
-    const { limit = 12 } = req.query;
+const { limit = 12 } = req.query;
     const result = await query(
       `SELECT p.product_id, p.title, p.price_etb, p.compare_price,
               p.stock_quantity, p.category, p.is_featured, p.rating, p.image_urls,
               s.store_id, s.store_name, s.location_sub_city, s.verified_badge,
-               s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address, s.other_banks,
-               sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
-       FROM products p
-       JOIN stores s ON p.store_id = s.store_id
-       LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
-       WHERE p.is_published = TRUE AND s.status = 'verified'
-      ORDER BY p.is_featured DESC, p.order_count DESC
-      LIMIT $1`,
+               s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address, s.other_banks, s.mpesa_till_number, s.mpesa_short_code, s.mpesa_account_name,
+               sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.mpesa_enabled, sp.free_delivery_threshold
+         FROM products p
+         JOIN stores s ON p.store_id = s.store_id
+         LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+         WHERE p.is_published = TRUE AND s.status = 'verified'
+        ORDER BY p.is_featured DESC, p.order_count DESC
+        LIMIT $1`,
       [Math.min(parseInt(limit), 20)]
     );
 
@@ -117,7 +117,7 @@ router.get('/', async (req, res, next) => {
               s.store_id, s.store_name, s.store_slug, s.location_sub_city, s.physical_address,
               s.verified_badge, s.rating AS store_rating,
                s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.other_banks,
-               sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
+               sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.mpesa_enabled, sp.free_delivery_threshold
        FROM products p
        JOIN stores s ON p.store_id = s.store_id
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
@@ -156,7 +156,7 @@ router.get('/seller/:storeId', requireAuth, requireSellerOf('storeId'), async (r
     const offset = (page - 1) * limit;
     const result = await query(
       `SELECT p.*, s.store_name, s.store_slug, s.location_sub_city, s.verified_badge,
-              sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold,
+              sp.return_policy_type, sp.addis_delivery_fee, sp.cash_on_delivery, sp.telebirr_enabled, sp.cbe_enabled, sp.mpesa_enabled, sp.free_delivery_threshold,
               COALESCE(paid_counts.paid, 0) AS paid_count,
               COALESCE(delivered_counts.delivered, 0) AS delivered_count
        FROM products p
@@ -208,7 +208,7 @@ router.get('/:productId', async (req, res, next) => {
                s.telebirr_merchant_id, s.telebirr_account_name, s.cbe_account_number, s.cbe_account_name, s.physical_address, s.other_banks,
                sp.return_policy_type, sp.custom_policy_text, sp.addis_delivery_fee,
                sp.regional_dispatch_fee, sp.zone_fee_matrix, sp.cash_on_delivery,
-               sp.telebirr_enabled, sp.cbe_enabled, sp.free_delivery_threshold
+               sp.telebirr_enabled, sp.cbe_enabled, sp.mpesa_enabled, sp.free_delivery_threshold
        FROM products p
        JOIN stores s ON p.store_id = s.store_id
        LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
