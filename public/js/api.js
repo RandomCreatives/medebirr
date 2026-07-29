@@ -201,5 +201,9 @@ const Api = {
     startConversation: (data)           => Api.post('/social/conversations', data),
     getConversationMsgs: (id)           => Api.get(`/social/conversations/${id}/messages`),
     sendMessage:       (convId, msg)    => Api.post(`/social/conversations/${convId}/messages`, { message: msg })
+  },
+  otp: {
+    send:              (phone)          => Api.post('/otp/send', { phone }),
+    verify:            (phone, code)    => Api.post('/otp/verify', { phone, code })
   }
 };

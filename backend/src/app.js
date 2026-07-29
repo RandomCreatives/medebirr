@@ -31,6 +31,7 @@ const imageRoutes = require('./routes/images');
 const deliveryRoutes = require('./routes/delivery');
 const socialRoutes = require('./routes/social');
 const pendingProductRoutes = require('./routes/pending-products');
+const otpRoutes = require('./routes/otp');
 const errorHandler = require('./middleware/errorHandler');
 
 const APP_VERSION = '1.3.0';
@@ -116,6 +117,7 @@ function createApp(opts = {}) {
   app.use('/api/v1/delivery', deliveryRoutes);
   app.use('/api/v1/pending-products', pendingProductRoutes);
   app.use('/api/v1/social', socialRoutes);
+  app.use('/api/v1/otp', otpRoutes);
 
   // ─── Health ─────────────────────────────────────────────────────────────────
   app.get('/api/health', (req, res) => {

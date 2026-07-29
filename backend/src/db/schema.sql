@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
     language_code   VARCHAR(10) DEFAULT 'en',
     tier            VARCHAR(20) DEFAULT 'standard', -- standard, gold, verified_seller
     wallet_points   INTEGER DEFAULT 0,
+    phone_verified  BOOLEAN DEFAULT FALSE,
     is_active       BOOLEAN DEFAULT TRUE,
     created_at      TIMESTAMP DEFAULT NOW(),
     updated_at      TIMESTAMP DEFAULT NOW()
@@ -577,3 +578,25 @@ CREATE TABLE IF NOT EXISTS messages (
     is_read             BOOLEAN DEFAULT FALSE,
     created_at          TIMESTAMP DEFAULT NOW()
 );
+
+-- ============================================================
+-- PHONE VERIFICATION CODES
+-- ============================================================
+CREATE TABLE IF NOT EXISTS verification_codes (
+    id              SERIAL PRIMARY KEY,
+    tg_user_id      BIGINT NOT NULL,
+    phone           VARCHAR(30) NOT NULL,
+    code            VARCHAR(10) NOT NULL,
+    attempts        INTEGER DEFAULT 0,
+    expires_at      TIMESTAMP NOT NULL,
+    used            BOOLEAN DEFAULT FALSE,
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_verification_codes_phone ON verification_codes(phone);
+CREATE INDEX IF NOT EXISTS idx_verification_codes_expires ON verification_codes(expires_at);
+
+-- ============================================================
+-- MIGRATION: phone_verified + verification_codes
+-- ============================================================
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified BOOLEAN DEFAULT FALSE;

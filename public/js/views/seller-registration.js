@@ -231,10 +231,12 @@ App.openRegisterStoreModal_ = function() {
     <!-- Wizard Progress Bar -->
     <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg-surface);padding:10px 14px;border-radius:8px;margin-bottom:18px;border:1px solid var(--border);">
       <div id="regStepBadge1" style="font-size:11px;font-weight:800;color:var(--accent);">${State.t('seller.register.step1')}</div>
-      <div style="width:20px;height:1px;background:var(--border);"></div>
-      <div id="regStepBadge2" style="font-size:11px;font-weight:700;color:var(--text-muted);">${State.t('seller.register.step2')}</div>
-      <div style="width:20px;height:1px;background:var(--border);"></div>
-      <div id="regStepBadge3" style="font-size:11px;font-weight:700;color:var(--text-muted);">${State.t('seller.register.step3')}</div>
+      <div style="width:16px;height:1px;background:var(--border);"></div>
+      <div id="regStepBadge2" style="font-size:11px;font-weight:700;color:var(--text-muted);">Verify Phone</div>
+      <div style="width:16px;height:1px;background:var(--border);"></div>
+      <div id="regStepBadge3" style="font-size:11px;font-weight:700;color:var(--text-muted);">${State.t('seller.register.step2')}</div>
+      <div style="width:16px;height:1px;background:var(--border);"></div>
+      <div id="regStepBadge4" style="font-size:11px;font-weight:700;color:var(--text-muted);">${State.t('seller.register.step3')}</div>
     </div>
 
     <!-- ── CARD STEP 1: STORE PROFILE ── -->
@@ -277,8 +279,39 @@ App.openRegisterStoreModal_ = function() {
       </button>
     </div>
 
-    <!-- ── CARD STEP 2: TELEBIRR & PASSWORD ── -->
+    <!-- ── CARD STEP 2: PHONE VERIFICATION ── -->
     <div id="regStepCard2" style="display:none;">
+      <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">📱 Phone Verification</div>
+
+      <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:white;line-height:1.5;">
+        A verification code will be sent to your Telegram. Make sure you have started <strong>@medebirrbot</strong>.
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Phone Number</label>
+        <div style="font-size:15px;font-weight:900;color:white;padding:8px 0;" id="regVerifyPhoneDisplay"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Verification Code</label>
+        <input class="form-input" id="regOtpCode" placeholder="Enter 6-character code" style="font-family:monospace;font-size:18px;letter-spacing:4px;text-transform:uppercase;text-align:center;" maxlength="6" autocomplete="off"/>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;" id="regOtpStatus"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="btn-secondary" onclick="App._showRegStep(1)" style="flex:1;">Back</button>
+        <button class="btn-primary" id="regSendOtpBtn" onclick="App._sendOtpVerify()" style="flex:1;">Send Code</button>
+        <button class="btn-primary" id="regVerifyOtpBtn" onclick="App._verifyOtpCode()" style="flex:1;display:none;" disabled>Verify</button>
+      </div>
+
+      <div style="margin-top:12px;text-align:center;">
+        <button id="regResendOtpBtn" style="display:none;background:none;border:none;color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;" onclick="App._sendOtpVerify()">Resend Code</button>
+        <span id="regOtpTimer" style="display:none;font-size:11px;color:var(--text-muted);"></span>
+      </div>
+    </div>
+
+    <!-- ── CARD STEP 3: TELEBIRR & PASSWORD ── -->
+    <div id="regStepCard3" style="display:none;">
       <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">${State.t('seller.register.paymentsStep')}</div>
 
       <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:white;line-height:1.5;">
@@ -298,13 +331,13 @@ App.openRegisterStoreModal_ = function() {
       </div>
 
       <div style="display:flex;gap:8px;margin-top:16px;">
-        <button class="btn-secondary" onclick="App._showRegStep(1)" style="flex:1;">${State.t('seller.register.back')}</button>
-        <button class="btn-primary" onclick="App._nextRegStep(2, 3)" style="flex:2;">${State.t('seller.register.nextTelegram')}</button>
+        <button class="btn-secondary" onclick="App._showRegStep(2)" style="flex:1;">${State.t('seller.register.back')}</button>
+        <button class="btn-primary" onclick="App._nextRegStep(3, 4)" style="flex:2;">${State.t('seller.register.nextTelegram')}</button>
       </div>
     </div>
 
-    <!-- ── CARD STEP 3: TELEGRAM GROUP & LAUNCH ── -->
-    <div id="regStepCard3" style="display:none;">
+    <!-- ── CARD STEP 4: TELEGRAM GROUP & LAUNCH ── -->
+    <div id="regStepCard4" style="display:none;">
       <div style="font-size:12px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">${State.t('seller.register.telegramStep')}</div>
 
       <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.25);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12px;color:white;line-height:1.5;">
@@ -339,7 +372,7 @@ App.openRegisterStoreModal_ = function() {
       </div>
 
       <div style="display:flex;gap:8px;margin-top:14px;">
-        <button class="btn-secondary" onclick="App._showRegStep(2)" style="flex:1;">${State.t('seller.register.back')}</button>
+        <button class="btn-secondary" onclick="App._showRegStep(3)" style="flex:1;">${State.t('seller.register.back')}</button>
         <button class="btn-primary" onclick="App.submitRegisterStore()" style="flex:2;background:var(--success);color:white;">
           ${State.t('seller.register.launchFree')}
         </button>
@@ -354,7 +387,7 @@ App.openRegisterStoreModal_ = function() {
 };
 
 App._showRegStep = function(step) {
-  [1, 2, 3].forEach(s => {
+  [1, 2, 3, 4].forEach(s => {
     const card = document.getElementById(`regStepCard${s}`);
     const badge = document.getElementById(`regStepBadge${s}`);
     if (card) card.style.display = s === step ? 'block' : 'none';
@@ -372,12 +405,33 @@ App._showRegStep = function(step) {
 App._nextRegStep = function(fromStep, toStep) {
   if (fromStep === 1) {
     const name = document.getElementById('regStoreName')?.value?.trim();
+    const phone = document.getElementById('regPhone')?.value?.trim();
     if (!name) {
       App.toast(State.t('seller.register.nameRequired'), 'error');
       document.getElementById('regStoreName')?.focus();
       return;
     }
+    const nameResult = Validation.validateName(name, 'Store name');
+    if (!nameResult.valid) { App.toast(nameResult.error, 'error'); return; }
+    if (!phone) {
+      App.toast(State.t('seller.register.phoneRequired'), 'error');
+      document.getElementById('regPhone')?.focus();
+      return;
+    }
+    const phoneResult = Validation.validatePhone(phone);
+    if (!phoneResult.valid) { App.toast(phoneResult.error, 'error'); return; }
+    // Store phone for later
+    App._regPhone = phoneResult.normalized;
+    // Show phone on verification step
+    const display = document.getElementById('regVerifyPhoneDisplay');
+    if (display) display.textContent = phoneResult.normalized;
   } else if (fromStep === 2) {
+    // OTP must be verified to proceed
+    if (!App._regPhoneVerified) {
+      App.toast('Please verify your phone number first', 'error');
+      return;
+    }
+  } else if (fromStep === 3) {
     const telebirr = document.getElementById('regTelebirr')?.value?.trim();
     const pwd = document.getElementById('regPassword')?.value?.trim();
     if (!telebirr || !pwd) {
@@ -393,6 +447,66 @@ App._nextRegStep = function(fromStep, toStep) {
     }
   }
   this._showRegStep(toStep);
+};
+
+App._sendOtpVerify = async function() {
+  const phone = App._regPhone;
+  if (!phone) { App.toast('Enter your phone number first', 'error'); return; }
+  const btn = document.getElementById('regSendOtpBtn');
+  const verifyBtn = document.getElementById('regVerifyOtpBtn');
+  const status = document.getElementById('regOtpStatus');
+  const resendBtn = document.getElementById('regResendOtpBtn');
+  const timer = document.getElementById('regOtpTimer');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+  status.textContent = '';
+  try {
+    const result = await Api.otp.send(phone);
+    btn.style.display = 'none';
+    verifyBtn.style.display = 'block';
+    verifyBtn.disabled = false;
+    status.innerHTML = '✅ Code sent to your Telegram';
+    // Start 60s resend timer
+    let sec = 60;
+    timer.style.display = 'inline';
+    resendBtn.style.display = 'none';
+    timer.textContent = `Resend in ${sec}s`;
+    const t = setInterval(() => {
+      sec--;
+      if (sec <= 0) { clearInterval(t); timer.style.display = 'none'; resendBtn.style.display = 'inline'; }
+      else timer.textContent = `Resend in ${sec}s`;
+    }, 1000);
+    document.getElementById('regOtpCode')?.focus();
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Send Code';
+    status.textContent = '❌ ' + (err.message || 'Failed to send code');
+  }
+};
+
+App._verifyOtpCode = async function() {
+  const code = document.getElementById('regOtpCode')?.value?.trim();
+  const phone = App._regPhone;
+  const btn = document.getElementById('regVerifyOtpBtn');
+  const status = document.getElementById('regOtpStatus');
+  if (!code || code.length !== 6) { App.toast('Enter the 6-character code from Telegram', 'error'); return; }
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+  status.textContent = '';
+  try {
+    await Api.otp.verify(phone, code);
+    App._regPhoneVerified = true;
+    status.innerHTML = '✅ Phone verified!';
+    btn.textContent = '✅ Verified';
+    btn.style.background = 'var(--success)';
+    // Auto-advance to next step after 1s
+    setTimeout(() => App._nextRegStep(2, 3), 1000);
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Verify';
+    status.textContent = '❌ ' + (err.message || 'Invalid code');
+    document.getElementById('regOtpCode')?.focus();
+  }
 };
 
 // Called after store is created to verify group link
@@ -435,7 +549,6 @@ App._verifyGroupLink = async function() {
 
 App.submitRegisterStore = async function() {
   const storeName    = document.getElementById('regStoreName')?.value?.trim();
-  const phone        = document.getElementById('regPhone')?.value?.trim();
   const subCity      = document.getElementById('regSubCity')?.value;
   const telebirrId   = document.getElementById('regTelebirr')?.value?.trim();
   const desc         = document.getElementById('regDesc')?.value?.trim();
@@ -446,17 +559,15 @@ App.submitRegisterStore = async function() {
   const nameResult = Validation.validateName(storeName, 'Store name');
   if (!nameResult.valid) { App.toast(nameResult.error, 'error'); return; }
 
-  if (!phone) { App.toast(State.t('seller.register.phoneRequired'), 'error'); return; }
-  const phoneResult = Validation.validatePhone(phone);
-  if (!phoneResult.valid) { App.toast(phoneResult.error, 'error'); return; }
-  const normalizedPhone = phoneResult.normalized;
+  if (!App._regPhone) { App.toast('Phone number missing — go back to step 1', 'error'); return; }
+  if (!App._regPhoneVerified) { App.toast('Please verify your phone number first', 'error'); return; }
 
   try {
     App.toast(State.t('seller.register.registering'), 'info');
     const data = await Api.stores.create({
       store_name: storeName,
       location_sub_city: subCity,
-      business_phone: normalizedPhone,
+      business_phone: App._regPhone,
       telebirr_merchant_id: telebirrId || null,
       tg_channel_username: groupUsername || null,
       description: desc || null,
