@@ -2,7 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { requireAuth, requireSellerOf } = require('../middleware/auth');
 const { query } = require('../db');
-const { featuredCache, productCache, storeCache } = require('../utils/cache');
+const { featuredCache, productCache, storeCache, searchCache } = require('../utils/cache');
 const { logError } = require('../utils/logger');
 
 const router = express.Router();
@@ -110,6 +110,14 @@ router.get('/', async (req, res, next) => {
 
     params.push(limit, offset);
 
+    // Build cache key from all filter params
+    const cacheKey = `search:${search || ''}:${category || ''}:${sub_city || ''}:${store_id || ''}:${min_price || ''}:${max_price || ''}:${return_policy || ''}:${sort}:${page}:${limit}`;
+    const cached = searchCache.get(cacheKey);
+    if (cached) {
+      res.setHeader('X-Cache', 'HIT');
+      return res.json(cached);
+    }
+
     const result = await query(
       `SELECT p.product_id, p.title, p.price_etb, p.compare_price, p.stock_quantity,
               p.category, p.image_urls, p.rating, p.rating_count, p.order_count,
@@ -139,7 +147,10 @@ router.get('/', async (req, res, next) => {
     const total = parseInt(countResult.rows[0].count);
     const products = result.rows;
 
-    res.json({ products, total, page: parseInt(page), limit: parseInt(limit) });
+    const response = { products, total, page: parseInt(page), limit: parseInt(limit) };
+    searchCache.set(cacheKey, response);
+    res.setHeader('X-Cache', 'MISS');
+    res.json(response);
   } catch (err) {
     logError(err, { route: '/', query: req.query });
     next(err);
@@ -316,6 +327,7 @@ router.post(
 
       // Invalidate caches
       featuredCache.delete('featured');
+      searchCache.clear();
 
       res.status(201).json({ product: result.rows[0], telegram_warning: telegramWarning });
     } catch (err) {
@@ -416,6 +428,7 @@ router.put('/:productId', requireAuth, async (req, res, next) => {
       // Invalidate caches
       productCache.delete(req.params.productId);
       featuredCache.clear();
+      searchCache.clear();
 
       return res.json({ product: result.rows[0], telegram_warning: telegramWarning });
     } catch (err) {
@@ -438,6 +451,7 @@ router.delete('/:productId', requireAuth, async (req, res, next) => {
     // Invalidate caches
     productCache.delete(req.params.productId);
     featuredCache.clear();
+    searchCache.clear();
 
     res.json({ message: 'Product deleted' });
   } catch (err) {

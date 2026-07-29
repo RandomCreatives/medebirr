@@ -224,6 +224,12 @@ router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res
     }
 
     const {
+      description, location_sub_city, location_woreda, location_detail,
+      physical_address, business_phone, tg_channel_username,
+      telebirr_merchant_id, cbe_account_number, telebirr_account_name, cbe_account_name,
+      mpesa_till_number, mpesa_short_code, mpesa_account_name,
+      other_banks
+    } = req.body;
 
     const result = await query(
       `UPDATE stores SET
