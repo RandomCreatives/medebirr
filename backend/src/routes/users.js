@@ -1,6 +1,7 @@
 const express = require('express');
 const { requireAuth } = require('../middleware/auth');
 const { query } = require('../db');
+const { validatePhone, validateName, validateEmail, validateRequired } = require('../utils/validation');
 
 const router = express.Router();
 
@@ -27,6 +28,31 @@ router.get('/me', requireAuth, async (req, res) => {
 router.put('/me', requireAuth, async (req, res, next) => {
   try {
     const { first_name, last_name, email, phone, mfa_enabled } = req.body;
+    const errors = [];
+
+    if (first_name !== undefined) {
+      const r = validateName(first_name, 'First name');
+      if (!r.valid) errors.push({ field: 'first_name', message: r.error });
+      else req.body.first_name = r.normalized;
+    }
+    if (last_name !== undefined) {
+      const r = validateName(last_name, 'Last name');
+      if (!r.valid) errors.push({ field: 'last_name', message: r.error });
+      else req.body.last_name = r.normalized;
+    }
+    if (email !== undefined) {
+      const r = validateEmail(email);
+      if (!r.valid) errors.push({ field: 'email', message: r.error });
+      else req.body.email = r.normalized;
+    }
+    if (phone !== undefined) {
+      const r = validatePhone(phone);
+      if (!r.valid) errors.push({ field: 'phone', message: r.error });
+      else req.body.phone = r.normalized;
+    }
+
+    if (errors.length) return res.status(422).json({ errors });
+
     const updates = [];
     const values = [];
     let idx = 1;
@@ -76,7 +102,11 @@ router.get('/me/addresses', requireAuth, async (req, res, next) => {
 router.post('/me/addresses', requireAuth, async (req, res, next) => {
   try {
     const { label, sub_city, woreda, house_number, landmark, phone, is_default } = req.body;
-    if (!sub_city || !phone) return res.status(400).json({ error: 'sub_city and phone are required' });
+    if (!sub_city) return res.status(400).json({ error: 'sub_city is required' });
+    if (!phone) return res.status(400).json({ error: 'phone is required' });
+    const phoneResult = validatePhone(phone);
+    if (!phoneResult.valid) return res.status(422).json({ errors: [{ field: 'phone', message: phoneResult.error }] });
+    req.body.phone = phoneResult.normalized;
 
     if (is_default) {
       await query('UPDATE delivery_addresses SET is_default = FALSE WHERE tg_user_id = $1', [req.user.tg_user_id]);
@@ -115,6 +145,11 @@ router.delete('/me/addresses/:addressId', requireAuth, async (req, res, next) =>
 router.put('/me/addresses/:addressId', requireAuth, async (req, res, next) => {
   try {
     const { label, sub_city, woreda, house_number, landmark, phone, is_default } = req.body;
+    if (phone !== undefined) {
+      const phoneResult = validatePhone(phone);
+      if (!phoneResult.valid) return res.status(422).json({ errors: [{ field: 'phone', message: phoneResult.error }] });
+      req.body.phone = phoneResult.normalized;
+    }
     if (is_default) {
       await query('UPDATE delivery_addresses SET is_default = FALSE WHERE tg_user_id = $1', [req.user.tg_user_id]);
     }

@@ -5,6 +5,7 @@ const { query, getClient } = require('../db');
 const { generateOTP } = require('../utils/otp');
 const inventory = require('../services/inventory');
 const { v4: uuidv4 } = require('uuid');
+const { validatePhone, validateName } = require('../utils/validation');
 
 const router = express.Router();
 const { retryOnDeadlock } = require('../utils/retry');
@@ -36,8 +37,12 @@ router.post(
     body('items.*.quantity').isInt({ min: 1 }),
     body('delivery_address').isObject(),
     body('delivery_address.sub_city').notEmpty(),
-    body('delivery_address.phone').notEmpty(),
-    body('payment_method').isIn(['telebirr', 'cbe', 'cash']),
+    body('delivery_address.phone').notEmpty().custom(phone => {
+      const r = validatePhone(phone);
+      if (!r.valid) throw new Error(r.error);
+      return true;
+    }),
+    body('payment_method').isIn(['telebirr', 'mpesa', 'cbe', 'cash']),
     body('coupon_code').optional({ values: 'falsy' }).isString()
   ],
   retryOnDeadlock(async (req, res, next) => {

@@ -5,6 +5,7 @@ const { requireAuth, requireSellerOf } = require('../middleware/auth');
 const { query } = require('../db');
 const { storeCache, statsCache } = require('../utils/cache');
 const { logError } = require('../utils/logger');
+const { validatePhone, validateName } = require('../utils/validation');
 
 const router = express.Router();
 
@@ -119,6 +120,25 @@ router.post(
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(422).json({ errors: errors.array() });
 
+      // Validate business phone
+      const phoneResult = validatePhone(req.body.business_phone);
+      if (!phoneResult.valid) return res.status(422).json({ errors: [{ field: 'business_phone', message: phoneResult.error }] });
+      req.body.business_phone = phoneResult.normalized;
+
+      // Validate account names if provided
+      const nameFields = [
+        { field: 'telebirr_account_name', label: 'Telebirr account name' },
+        { field: 'cbe_account_name', label: 'CBE account name' },
+        { field: 'mpesa_account_name', label: 'M-Pesa account name' },
+      ];
+      for (const { field, label } of nameFields) {
+        if (req.body[field]) {
+          const r = validateName(req.body[field], label);
+          if (!r.valid) return res.status(422).json({ errors: [{ field, message: r.error }] });
+          req.body[field] = r.normalized;
+        }
+      }
+
       const {
         store_name, tg_group_id, tg_channel_username, description,
         location_sub_city, location_woreda, location_detail,
@@ -182,14 +202,28 @@ router.post(
  */
 router.put('/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res, next) => {
   try {
-const {
-      description, location_sub_city, location_woreda, location_detail,
-      physical_address, business_phone, tg_channel_username,
-      telebirr_merchant_id, cbe_account_number,
-      telebirr_account_name, cbe_account_name,
-      mpesa_till_number, mpesa_short_code, mpesa_account_name,
-      other_banks
-    } = req.body;
+    // Validate business phone if provided
+    if (req.body.business_phone !== undefined) {
+      const phoneResult = validatePhone(req.body.business_phone);
+      if (!phoneResult.valid) return res.status(422).json({ errors: [{ field: 'business_phone', message: phoneResult.error }] });
+      req.body.business_phone = phoneResult.normalized;
+    }
+
+    // Validate account names if provided
+    const nameFields = [
+      { field: 'telebirr_account_name', label: 'Telebirr account name' },
+      { field: 'cbe_account_name', label: 'CBE account name' },
+      { field: 'mpesa_account_name', label: 'M-Pesa account name' },
+    ];
+    for (const { field, label } of nameFields) {
+      if (req.body[field] !== undefined && req.body[field] !== null) {
+        const r = validateName(req.body[field], label);
+        if (!r.valid) return res.status(422).json({ errors: [{ field, message: r.error }] });
+        req.body[field] = r.normalized;
+      }
+    }
+
+    const {
 
     const result = await query(
       `UPDATE stores SET

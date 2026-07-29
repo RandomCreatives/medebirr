@@ -867,6 +867,11 @@ const SellerViews = {
     }
     const body = document.getElementById('appBody');
     if (body) { this.renderSellerMenu(body); body.scrollTop = 0; }
+    // Attach input sanitizers after dynamic render
+    setTimeout(() => {
+      Validation.attachNameSanitizer('#storeName, #telebirrAccountName, #cbeAccountName, #mpesaAccountName, #otherBankAcctHolder');
+      Validation.attachPhoneSanitizer('#storePhone');
+    }, 50);
   },
 
   _backToSettingsMenu() {
@@ -1004,7 +1009,12 @@ const SellerViews = {
       if (App && typeof App.toast === 'function') App.toast('Fill in bank name, account number, and holder name', 'error');
       return;
     }
-    SellerViews._otherBanks.push({ bank_name: name, account_number: acctNum.value.trim(), account_holder: acctHolder.value.trim() });
+    const holderResult = Validation.validateName(acctHolder.value.trim(), 'Account holder name');
+    if (!holderResult.valid) {
+      if (App && typeof App.toast === 'function') App.toast(holderResult.error, 'error');
+      return;
+    }
+    SellerViews._otherBanks.push({ bank_name: name, account_number: acctNum.value.trim(), account_holder: holderResult.normalized });
     acctNum.value = ''; acctHolder.value = ''; sel.value = ''; custom.value = ''; custom.style.display = 'none';
     SellerViews._renderOtherBanks();
   },

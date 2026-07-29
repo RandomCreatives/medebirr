@@ -363,6 +363,10 @@ App._showRegStep = function(step) {
       badge.style.fontWeight = s === step ? '800' : '700';
     }
   });
+  if (step === 1) {
+    Validation.attachNameSanitizer('#regStoreName');
+    Validation.attachPhoneSanitizer('#regPhone');
+  }
 };
 
 App._nextRegStep = function(fromStep, toStep) {
@@ -439,14 +443,20 @@ App.submitRegisterStore = async function() {
   const sellerPassword = document.getElementById('regPassword')?.value?.trim();
 
   if (!storeName) { App.toast(State.t('seller.register.storeRequired'), 'error'); return; }
-  if (!phone)     { App.toast(State.t('seller.register.phoneRequired'), 'error'); return; }
+  const nameResult = Validation.validateName(storeName, 'Store name');
+  if (!nameResult.valid) { App.toast(nameResult.error, 'error'); return; }
+
+  if (!phone) { App.toast(State.t('seller.register.phoneRequired'), 'error'); return; }
+  const phoneResult = Validation.validatePhone(phone);
+  if (!phoneResult.valid) { App.toast(phoneResult.error, 'error'); return; }
+  const normalizedPhone = phoneResult.normalized;
 
   try {
     App.toast(State.t('seller.register.registering'), 'info');
     const data = await Api.stores.create({
       store_name: storeName,
       location_sub_city: subCity,
-      business_phone: phone,
+      business_phone: normalizedPhone,
       telebirr_merchant_id: telebirrId || null,
       tg_channel_username: groupUsername || null,
       description: desc || null,

@@ -138,16 +138,31 @@ App._startProgress = function() {
 App.savePaymentAccounts = async function() {
   const storeId = State.currentStoreId;
   if (!storeId) return;
-  const data = {
-    telebirr_merchant_id: document.getElementById('telebirrMerchantId')?.value?.trim() || null,
-    telebirr_account_name: document.getElementById('telebirrAccountName')?.value?.trim() || null,
-    cbe_account_number: document.getElementById('cbeAccountNumber')?.value?.trim() || null,
-    cbe_account_name: document.getElementById('cbeAccountName')?.value?.trim() || null,
-    mpesa_till_number: document.getElementById('mpesaTillNumber')?.value?.trim() || null,
-    mpesa_short_code: document.getElementById('mpesaShortCode')?.value?.trim() || null,
-    mpesa_account_name: document.getElementById('mpesaAccountName')?.value?.trim() || null,
-    other_banks: SellerViews._otherBanks || []
-  };
+
+  // Validate account names
+  const accountNameFields = [
+    { id: 'telebirrAccountName', label: 'Telebirr account name', key: 'telebirr_account_name' },
+    { id: 'cbeAccountName', label: 'CBE account name', key: 'cbe_account_name' },
+    { id: 'mpesaAccountName', label: 'M-Pesa account name', key: 'mpesa_account_name' },
+  ];
+  const data = {};
+  for (const { id, label, key } of accountNameFields) {
+    const val = document.getElementById(id)?.value?.trim() || null;
+    if (val) {
+      const r = Validation.validateName(val, label);
+      if (!r.valid) { this.toast(r.error, 'error'); return; }
+      data[key] = r.normalized;
+    } else {
+      data[key] = null;
+    }
+  }
+
+  data.telebirr_merchant_id = document.getElementById('telebirrMerchantId')?.value?.trim() || null;
+  data.cbe_account_number = document.getElementById('cbeAccountNumber')?.value?.trim() || null;
+  data.mpesa_till_number = document.getElementById('mpesaTillNumber')?.value?.trim() || null;
+  data.mpesa_short_code = document.getElementById('mpesaShortCode')?.value?.trim() || null;
+  data.other_banks = SellerViews._otherBanks || [];
+
   const ui = this._startProgress();
   try {
     const result = await Api.stores.update(storeId, data);

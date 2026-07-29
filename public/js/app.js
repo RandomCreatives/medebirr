@@ -1058,6 +1058,11 @@ const App = {
       this.toast('Please enter your phone number', 'error');
       return;
     }
+    const phoneResult = Validation.validatePhone(contactPhone);
+    if (!phoneResult.valid) {
+      this.toast(phoneResult.error, 'error');
+      return;
+    }
 
     // ── Read delivery method & build address ──────────
     const selectedDelivery = document.querySelector('input[name="deliveryMethod"]:checked')?.value || 'delivery';

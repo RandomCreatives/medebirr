@@ -168,6 +168,10 @@ const CheckoutPage = {
     `;
 
       this._renderDeliveryForm();
+      // Attach input sanitizers
+      setTimeout(() => {
+        Validation.attachPhoneSanitizer('#coContactPhone');
+      }, 50);
    },
 
    _pickDelivery(el, method) {
@@ -252,7 +256,13 @@ const CheckoutPage = {
       if (phoneInput) phoneInput.focus();
       return;
     }
-    this._phone = phone;
+    const phoneResult = Validation.validatePhone(phone);
+    if (!phoneResult.valid) {
+      if (App && typeof App.toast === 'function') App.toast(phoneResult.error, 'error');
+      if (phoneInput) phoneInput.focus();
+      return;
+    }
+    this._phone = phoneResult.normalized;
 
     if (this._deliveryMethod !== 'pickup') {
       const subCity = document.getElementById('coSubCity')?.value;

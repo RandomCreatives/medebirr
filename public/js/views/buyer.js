@@ -346,20 +346,30 @@ const BuyerViews = {
         </div>
       </div>
     `;
+    // Attach input sanitizers
+    setTimeout(() => {
+      Validation.attachNameSanitizer('#profileEditName');
+      Validation.attachPhoneSanitizer('#profileEditPhone');
+    }, 50);
   },
 
   async _saveProfileDetail() {
     const fullName = document.getElementById('profileEditName')?.value?.trim();
     const email = document.getElementById('profileEditEmail')?.value?.trim();
     const phone = document.getElementById('profileEditPhone')?.value?.trim();
-    if (!fullName) { App.toast(State.t('buyer.profile.nameRequired'), 'error'); return; }
+
+    const nameResult = Validation.validateName(fullName, 'Full name');
+    if (!nameResult.valid) { App.toast(nameResult.error, 'error'); return; }
+
+    const phoneResult = phone ? Validation.validatePhone(phone) : { valid: true };
+    if (!phoneResult.valid) { App.toast(phoneResult.error, 'error'); return; }
 
     const parts = fullName.split(' ');
     const first_name = parts.shift();
     const last_name = parts.join(' ');
 
     try {
-      const data = await Api.users.updateMe({ first_name, last_name, email, phone });
+      const data = await Api.users.updateMe({ first_name, last_name, email, phone: phoneResult.normalized || phone });
       State.user = { ...State.user, ...data.user };
       App.toast(State.t('buyer.profile.updated'), 'success');
       App.backToProfileHub();

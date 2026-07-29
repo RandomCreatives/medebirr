@@ -173,6 +173,10 @@ const Modals = {
     Modals._renderDeliveryForm('delivery', pkg);
     // Init payment details for default payment method (telebirr)
     Modals._renderPaymentDetails('telebirr', pkg);
+    // Attach input sanitizers
+    setTimeout(() => {
+      Validation.attachPhoneSanitizer('#contactPhone');
+    }, 50);
   },
 
   _selectDelivery(label, method) {
