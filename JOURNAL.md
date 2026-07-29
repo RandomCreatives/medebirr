@@ -300,3 +300,70 @@ Use a tiny inline chart lib (e.g. Chart.js from CDN, or hand-rolled SVG). No hea
 ### Next Step for VS Code Session
 
 Pull latest `JOURNAL.md`, then start at **Step 1** above. Build in this order — each step is independently testable before moving to the next.
+
+---
+
+## 2026-07-29: Phase 1 Hardening Deployed — Production 500 Hotfix
+
+### What Was Deployed (commit `4d8434e` by VS Code session)
+
+Full-text search, TTL cache, and structured logging — 12 files, +448/-100 lines:
+
+| File | What |
+|------|------|
+| `backend/src/db/migration_2.2.sql` | `tsvector` + GIN indexes on `products` and `stores`, auto-update triggers, backfill |
+| `backend/src/utils/cache.js` | `TTLCache` class + 5 singleton caches (product 30s, store 60s, featured 120s, search 15s, stats 60s) |
+| `backend/src/utils/logger.js` | Pino structured logger, request ID middleware (`X-Request-ID`), audit logging |
+| `backend/src/routes/products.js` | Search switched from `ILIKE '%query%'` to `websearch_to_tsquery('english')`; cache wired for featured + product detail; cache invalidation on write |
+| `backend/src/routes/stores.js` | Cache wired for store detail + stats; invalidation on write |
+| `backend/src/app.js` | `morgan` replaced with `requestLogger` middleware; `console.warn` → `logger.warn` in CORS |
+| `backend/src/server.js` | `console.*` → `logger.*` |
+| `backend/src/db/index.js` | DB query logging via pino; pool creation log |
+| `backend/src/middleware/errorHandler.js` | Error logging via `req.log` instead of `console.error` |
+| `api/index.js` | `console.*` → `logger.*` in webhook auto-registration and startup |
+| `backend/package.json` | Added `pino@^10.3.1`, `pino-pretty@^13.1.3` |
+
+### Production Outage — Root Cause
+
+After `4d8434e` deployed, **every API call returned 500 `FUNCTION_INVOCATION_FAILED`**.
+
+**Root cause:** The VS Code session added `pino`, `pino-pretty` to `backend/package.json`, but Vercel reads dependencies from the **root** `package.json` — because the serverless entry point is `api/index.js` at the repo root, not inside `backend/`. Node's module resolution from `api/index.js` walks up the directory tree and finds `D:\DEV_TRIAL\IdeaTesting\medebirr_repo\package.json`, not `backend/package.json`.
+
+Vercel's build installs from the root `package.json`. Since `pino` wasn't listed there, the require chain (`api/index.js` → `backend/src/app.js` → `backend/src/utils/logger.js` → `pino`) failed with `Cannot find module 'pino'`.
+
+### Fix Applied (commit `0573187`)
+
+Added the three missing deps to root `package.json`:
+
+```diff
++    "pino": "^10.3.1",
++    "pino-pretty": "^13.1.3",
++    "uuid": "^11.1.1",
+-    "morgan": "^1.11.0",   (still present, removal optional)
+```
+
+**Important lesson for future:**
+- **Root `package.json`** = Vercel production dependencies (what runs in serverless)
+- **`backend/package.json`** = local dev backend dependencies (+ any backend-only tools)
+- Any new npm package MUST be added to **both** files, or Vercel will crash at cold start
+- Consider adding a `"preinstall": "cd backend && npm install"` script to root `package.json`, or better yet, consolidate to root and symlink. But cross that bridge when it becomes a recurring issue.
+
+### Code Review Notes (from 4d8434e)
+
+**Issues to address (non-blocking):**
+
+1. **`searchCache` exported but never wired** — `cache.js` exports `searchCache` but no route uses it. Either wire it into the search route in `products.js` or remove it.
+
+2. **`db/index.js` creates its own pino instance** — separate from the one in `logger.js`. DB logs have different format/level than request logs. Should import and reuse the shared logger.
+
+3. **`morgan` still in root `package.json`** — no longer used in code (replaced by `requestLogger`). Dead dep, safe to remove.
+
+4. **`logger.js` uses `bindings()`** — `req.requestId = req.log.bindings().requestId` works on pino child loggers. Verified compatible with pino 10.3.1.
+
+5. **Cache TTLs are reasonable** for current scale. No stale-data issues expected.
+
+### Next Steps
+
+1. Verify production is green after `0573187` auto-deploys (check `/api/health` and `/api/health/db`)
+2. Start building admin analytics dashboard (see design spec above)
+3. Optionally add bot commands (`/donate`, `/manual`, delivery confirmation) as discussed
