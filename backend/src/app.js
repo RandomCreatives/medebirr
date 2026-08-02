@@ -51,7 +51,23 @@ function createApp(opts = {}) {
   app.use(requestLogger);
 
 // ─── Security ──────────────────────────────────────────────────────────────
-  app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+  app.use(helmet({
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://telegram.org", "https://unpkg.com", "'unsafe-inline'"],
+        styleSrc: ["'self'", "https://unpkg.com", "https://fonts.googleapis.com", "'unsafe-inline'"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "https://api.qrserver.com", "https://*.tile.openstreetmap.org", "https://*.supabase.co", "data:", "blob:"],
+        connectSrc: ["'self'", "https://medebirr.vercel.app", "https://*.supabase.co"],
+        frameSrc: ["'self'", "https://*.supabase.co", "data:"],
+        frameAncestors: ["'self'", "https://telegram.org", "https://*.telegram.org"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"]
+      }
+    }
+  }));
 
   app.use(cors({
     origin: (origin, callback) => {

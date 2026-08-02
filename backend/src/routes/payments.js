@@ -248,7 +248,7 @@ router.post('/telebirr/webhook', retryOnDeadlock(async (req, res, next) => {
       );
       if (updateRes.rows.length === 0) {
         console.log(`⏭️ Payment already processed for order ${tx.order_id}, skipping`);
-        res.json({ code: 'SUCCESS', msg: 'Already processed' });
+        return res.json({ code: 'SUCCESS', msg: 'Already processed' });
       } else {
         // Actual stock deduction (remove reservation, reduce actual stock)
         await inventory.deductStock(tx.order_id);
@@ -313,8 +313,7 @@ router.post('/telebirr/webhook', retryOnDeadlock(async (req, res, next) => {
 
     res.json({ code: 'SUCCESS', msg: 'OK' });
   } catch (err) {
-    console.error('Telebirr webhook error:', err);
-    res.json({ code: 'FAIL', msg: err.message });
+    next(err);
   }
 }));
 

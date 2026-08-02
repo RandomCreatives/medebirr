@@ -9,16 +9,20 @@ const router = express.Router();
  * GET /api/v1/users/me
  * Get current user profile
  */
-router.get('/me', requireAuth, async (req, res) => {
-  const storeResult = await query(
-    `SELECT s.store_id, s.store_name, s.store_slug, s.status, s.verified_badge,
-            sp.return_policy_type, sp.addis_delivery_fee
-     FROM stores s
-     LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
-     WHERE s.admin_tg_user_id = $1`,
-    [req.user.tg_user_id]
-  );
-  res.json({ user: req.user, stores: storeResult.rows });
+router.get('/me', requireAuth, async (req, res, next) => {
+  try {
+    const storeResult = await query(
+      `SELECT s.store_id, s.store_name, s.store_slug, s.status, s.verified_badge,
+              sp.return_policy_type, sp.addis_delivery_fee
+       FROM stores s
+       LEFT JOIN seller_policies sp ON s.store_id = sp.store_id
+       WHERE s.admin_tg_user_id = $1`,
+      [req.user.tg_user_id]
+    );
+    res.json({ user: req.user, stores: storeResult.rows });
+  } catch (err) {
+    next(err);
+  }
 });
 
 /**

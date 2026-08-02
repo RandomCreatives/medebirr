@@ -4,6 +4,11 @@
 const errorHandler = (err, req, res, next) => {
   const log = req.log || { error: (...args) => console.error(...args) };
 
+  if (!err) {
+    log.error('errorHandler called without an error object');
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+
   log.error({ err: { message: err.message, stack: err.stack, code: err.code }, status: err.status || 500 }, 'Unhandled error');
 
   const isProd = process.env.NODE_ENV === 'production';
