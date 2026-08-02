@@ -7,6 +7,7 @@ const express = require('express');
 const multer = require('multer');
 const crypto = require('crypto');
 const { requireAuth } = require('../middleware/auth');
+const { query } = require('../db');
 const { uploadImage } = require('../services/storage');
 
 const router = express.Router();
@@ -43,6 +44,16 @@ router.post('/upload', requireAuth, upload.array('images', 5), async (req, res, 
     const storeId = req.body.store_id;
     if (!storeId) {
       return res.status(400).json({ error: 'store_id is required' });
+    }
+
+    // Only the store owner may upload into that store's folder — otherwise
+    // any user could fill someone else's storage path (and quota).
+    const storeCheck = await query(
+      'SELECT store_id FROM stores WHERE store_id = $1 AND admin_tg_user_id = $2',
+      [storeId, req.user.tg_user_id]
+    );
+    if (storeCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Not authorized for this store' });
     }
 
     const urls = [];

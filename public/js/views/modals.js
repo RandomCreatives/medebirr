@@ -40,16 +40,16 @@ const Modals = {
           <label class="delivery-option" onclick="Modals._selectDelivery(this,'saved_${a.address_id}')" style="cursor:pointer;">
             <input type="radio" name="deliveryMethod" value="saved_${a.address_id}" style="accent-color:var(--accent);flex-shrink:0;"/>
             <div style="flex:1;">
-              <div style="font-weight:800;font-size:13px;">${a.label} ${a.is_default ? '<span style="background:rgba(252,205,4,0.2);color:var(--accent);font-size:9px;padding:1px 6px;border-radius:10px;font-weight:800;">DEFAULT</span>' : ''}</div>
-              <div style="font-size:11px;color:var(--text-secondary);">📍 ${a.sub_city}${a.woreda?', '+a.woreda:''} ${a.house_number?'· '+a.house_number:''}</div>
-              <div style="font-size:11px;color:var(--text-secondary);">📞 ${a.phone}</div>
+              <div style="font-weight:800;font-size:13px;">${esc(a.label)} ${a.is_default ? '<span style="background:rgba(252,205,4,0.2);color:var(--accent);font-size:9px;padding:1px 6px;border-radius:10px;font-weight:800;">DEFAULT</span>' : ''}</div>
+              <div style="font-size:11px;color:var(--text-secondary);">📍 ${esc(a.sub_city)}${a.woreda?', '+esc(a.woreda):''} ${a.house_number?'· '+esc(a.house_number):''}</div>
+              <div style="font-size:11px;color:var(--text-secondary);">📞 ${esc(a.phone)}</div>
             </div>
           </label>`).join('')
       : '';
 
     this.open(`
       <div class="modal-handle"></div>
-      <div class="modal-title">Checkout: ${pkg.shopName}</div>
+      <div class="modal-title">Checkout: ${esc(pkg.shopName)}</div>
       <div style="font-size:11px;color:var(--success);font-weight:700;margin-bottom:16px;">✅ ${State.policyLabel(pkg.returnPolicy)}</div>
 
       <!-- ── STEP 1: Delivery ── -->
@@ -152,7 +152,7 @@ const Modals = {
       <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
           <input type="checkbox" id="policyAgreement" style="accent-color:var(--accent);margin-top:2px;flex-shrink:0;">
-          <span style="color:var(--text-secondary);font-size:12px;line-height:1.5;">I agree to <strong style="color:white;">${pkg.shopName}'s ${State.policyLabel(pkg.returnPolicy)}</strong> policy for this order.</span>
+          <span style="color:var(--text-secondary);font-size:12px;line-height:1.5;">I agree to <strong style="color:white;">${esc(pkg.shopName)}'s ${State.policyLabel(pkg.returnPolicy)}</strong> policy for this order.</span>
         </label>
       </div>
 
@@ -223,7 +223,7 @@ const Modals = {
         <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:14px;margin-bottom:16px;">
           <div style="font-size:13px;font-weight:800;color:var(--success);margin-bottom:6px;">🏪 Store Pickup — Free</div>
           <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;">
-            📍 <strong style="color:white;">${pkg.shopName}</strong><br/>
+            📍 <strong style="color:white;">${esc(pkg.shopName)}</strong><br/>
             ${pkg.physicalAddress || pkg.location ? (pkg.physicalAddress || pkg.location) : 'Contact seller for exact address.'}<br/>
             After placing your order, the seller will confirm a pickup time via Telegram.
           </div>
@@ -291,9 +291,9 @@ const Modals = {
           </div>
           <div style="background:var(--bg-primary);border-radius:8px;padding:12px;margin-bottom:10px;">
             <div style="font-size:11px;color:var(--text-secondary);">Account Name</div>
-            <div style="font-size:15px;font-weight:900;color:white;">${name || 'Not set by seller'}</div>
+            <div style="font-size:15px;font-weight:900;color:white;">${esc(name || 'Not set by seller')}</div>
             <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Telebirr Number</div>
-            <div style="font-size:18px;font-weight:900;color:var(--accent);letter-spacing:1px;">${number || 'Not set'}</div>
+            <div style="font-size:18px;font-weight:900;color:var(--accent);letter-spacing:1px;">${esc(number || 'Not set')}</div>
           </div>
           <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">After transferring, enter your <strong style="color:white;">Transaction Code</strong> below:</div>
           <input class="form-input" id="txCodeInput" placeholder="e.g. TBX-891204-99218401" style="font-family:monospace;font-size:14px;letter-spacing:1px;"/>
@@ -313,13 +313,13 @@ const Modals = {
           </div>
           <div style="background:var(--bg-primary);border-radius:8px;padding:12px;margin-bottom:10px;">
             <div style="font-size:11px;color:var(--text-secondary);">Account Name</div>
-            <div style="font-size:15px;font-weight:900;color:white;">${name || 'Not set by seller'}</div>
+            <div style="font-size:15px;font-weight:900;color:white;">${esc(name || 'Not set by seller')}</div>
             ${till ? `
             <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Till Number (Buy Goods)</div>
-            <div style="font-size:18px;font-weight:900;color:#00A651;letter-spacing:1px;">${till}</div>` : ''}
+            <div style="font-size:18px;font-weight:900;color:#00A651;letter-spacing:1px;">${esc(till)}</div>` : ''}
             ${shortCode ? `
             <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Paybill Number</div>
-            <div style="font-size:18px;font-weight:900;color:#00A651;letter-spacing:1px;">${shortCode}</div>` : ''}
+            <div style="font-size:18px;font-weight:900;color:#00A651;letter-spacing:1px;">${esc(shortCode)}</div>` : ''}
           </div>
           <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">After transferring, enter your <strong style="color:white;">Transaction Code</strong> below:</div>
           <input class="form-input" id="txCodeInput" placeholder="e.g. MPESA12345678" style="font-family:monospace;font-size:14px;letter-spacing:1px;"/>
@@ -338,9 +338,9 @@ const Modals = {
           </div>
           <div style="background:var(--bg-primary);border-radius:8px;padding:12px;margin-bottom:10px;">
             <div style="font-size:11px;color:var(--text-secondary);">Account Name</div>
-            <div style="font-size:15px;font-weight:900;color:white;">${name || 'Not set by seller'}</div>
+            <div style="font-size:15px;font-weight:900;color:white;">${esc(name || 'Not set by seller')}</div>
             <div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">CBE Account Number</div>
-            <div style="font-size:18px;font-weight:900;color:#60A5FA;letter-spacing:1px;">${account || 'Not set'}</div>
+            <div style="font-size:18px;font-weight:900;color:#60A5FA;letter-spacing:1px;">${esc(account || 'Not set')}</div>
           </div>
           <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">After transferring, enter your <strong style="color:white;">Transaction Code</strong> below:</div>
           <input class="form-input" id="txCodeInput" placeholder="e.g. FT26194204812" style="font-family:monospace;font-size:14px;letter-spacing:1px;"/>
@@ -371,15 +371,15 @@ const Modals = {
       console.warn('PDP render error:', err);
       this.open(`
         <div class="modal-handle"></div>
-        <div class="modal-title">${product.title || 'Product Details'}</div>
-        <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${product.description || 'No description available.'}</p>
+        <div class="modal-title">${esc(product.title || 'Product Details')}</div>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;">${esc(product.description || 'No description available.')}</p>
         <div style="display:flex;gap:12px;align-items:center;margin-top:16px;flex-wrap:wrap;">
           <span style="font-size:28px;font-weight:900;color:var(--accent);">${State.formatETB(product.price_etb)}</span>
           ${product.compare_price ? `<span style="font-size:14px;color:var(--text-muted);text-decoration:line-through;">${State.formatETB(product.compare_price)}</span>` : ''}
         </div>
         <button class="pdp-btn-primary" style="margin-top:14px;" onclick="App.addToCart('${product.product_id}');this.innerHTML='✓ Added!'">🛒 Add to Cart</button>
         <div style="margin-top:12px;padding:8px;background:rgba(239,68,68,0.1);border-radius:6px;font-size:11px;color:#EF4444;">
-          ⚠️ ${err.message || err || 'Unknown error'}
+          ⚠️ ${esc(err.message || err || 'Unknown error')}
         </div>
       `);
     }
@@ -398,9 +398,9 @@ const Modals = {
       <div class="pdp-breadcrumb">
         <a onclick="Modals.close()">Home</a>
         <span>›</span>
-        <a onclick="Modals.close();setTimeout(()=>App.handleFilter('${product.category || 'all'}'),100)">${product.category || 'All'}</a>
+        <a onclick="Modals.close();setTimeout(()=>App.handleFilter('${escAttr(product.category || 'all')}'),100)">${esc(product.category || 'All')}</a>
         <span>›</span>
-        <span>${product.title.substring(0, 28)}${product.title.length > 28 ? '...' : ''}</span>
+        <span>${esc(product.title.substring(0, 28))}${product.title.length > 28 ? '...' : ''}</span>
       </div>`;
 
     this.open(`
@@ -414,7 +414,7 @@ const Modals = {
         <div class="pdp-layout">
           <div class="pdp-gallery">
             <div class="pdp-main-image" id="pdpMainImage" style="background:${gradient};">
-              ${images ? `<img src="${images[0]}" alt="${product.title}" draggable="false"/>` : `<span style="font-size:80px;">${emoji}</span>`}
+              ${images ? `<img src="${escUrl(images[0])}" alt="${escAttr(product.title)}" draggable="false"/>` : `<span style="font-size:80px;">${emoji}</span>`}
             </div>
             <div class="pdp-thumb-strip" id="pdpThumbStrip">
               ${this._renderSafe(() => this._renderThumbs(product, images, gradient, emoji))}
@@ -423,7 +423,7 @@ const Modals = {
 
           <div class="pdp-info">
             ${breadcrumb}
-            <h1 class="pdp-title">${product.title}</h1>
+            <h1 class="pdp-title">${esc(product.title)}</h1>
 
             <div class="pdp-price-row">
               <span class="pdp-current-price">${State.formatETB(product.price_etb)}</span>
@@ -438,7 +438,7 @@ const Modals = {
             </div>
 
             <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;line-height:1.6;">
-              🏪 <strong style="color:white;">${product.store_name}</strong>
+              🏪 <strong style="color:white;">${esc(product.store_name)}</strong>
               ${product.verified_badge ? '<span class="verified-check">✓ Verified</span>' : ''}
               · 📍 ${product.location_sub_city || 'Addis Ababa'}
               ${product.stock_quantity > 0
@@ -503,7 +503,7 @@ const Modals = {
     if (images) {
       return images.map((url, i) => `
         <div class="pdp-thumb ${i === 0 ? 'active' : ''}" onclick="Modals._switchImage(${i}, '${product.product_id}')">
-          <img src="${url}" alt="${product.title} thumbnail ${i + 1}" draggable="false"/>
+          <img src="${escUrl(url)}" alt="${escAttr(product.title)} thumbnail ${i + 1}" draggable="false"/>
         </div>
       `).join('');
     }
@@ -522,7 +522,7 @@ const Modals = {
     if (!product || !urls || !urls[index]) return;
     const main = document.getElementById('pdpMainImage');
     if (!main) return;
-    main.innerHTML = `<img src="${urls[index]}" alt="${product.title}" draggable="false"/>`;
+    main.innerHTML = `<img src="${escUrl(urls[index])}" alt="${escAttr(product.title)}" draggable="false"/>`;
     document.querySelectorAll('.pdp-thumb').forEach((el, i) => el.classList.toggle('active', i === index));
   },
 
@@ -598,14 +598,14 @@ const Modals = {
       if (isColor) {
         return `
           <div class="pdp-variant-section">
-            <div class="pdp-variant-label">${name}: <span id="pdpVarLabel_${name}">${options[0]}</span></div>
+            <div class="pdp-variant-label">${esc(name)}: <span id="pdpVarLabel_${escAttr(name)}">${esc(options[0])}</span></div>
             <div class="pdp-swatch-group">
               ${options.map((opt, i) => `
                 <div class="pdp-swatch ${i === 0 ? 'active' : ''}"
                      style="background:${this._colorToHex(opt)};"
-                     onclick="Modals._selectSwatch(this, '${name}')"
-                     title="${opt}"
-                     role="button" aria-label="${opt}" tabindex="0">
+                     onclick="Modals._selectSwatch(this, '${escAttr(name)}')"
+                     title="${escAttr(opt)}"
+                     role="button" aria-label="${escAttr(opt)}" tabindex="0">
                 </div>
               `).join('')}
             </div>
@@ -613,12 +613,12 @@ const Modals = {
       }
       return `
         <div class="pdp-variant-section">
-          <div class="pdp-variant-label">${name}: <span id="pdpVarLabel_${name}">${options[0]}</span></div>
+          <div class="pdp-variant-label">${esc(name)}: <span id="pdpVarLabel_${escAttr(name)}">${esc(options[0])}</span></div>
           <div class="pdp-swatch-group">
             ${options.map((opt, i) => `
               <div class="pdp-size-pill ${i === 0 ? 'active' : ''}"
-                   onclick="Modals._selectSize(this, '${name}')"
-                   role="button" aria-label="${opt}" tabindex="0">${opt}</div>
+                   onclick="Modals._selectSize(this, '${escAttr(name)}')"
+                   role="button" aria-label="${escAttr(opt)}" tabindex="0">${esc(opt)}</div>
             `).join('')}
           </div>
         </div>`;
@@ -633,7 +633,13 @@ const Modals = {
       gold: '#F59E0B', silver: '#D1D5DB', navy: '#1E3A5F', teal: '#14B8A6',
       beige: '#F5F5DC', cream: '#FFFDD0', maroon: '#800000', coral: '#FF7F50'
     };
-    return map[color.toLowerCase()] || color || '#6B7280';
+    const mapped = map[String(color || '').toLowerCase()];
+    if (mapped) return mapped;
+    // Unmapped values land in a CSS `background:` declaration — only allow
+    // literal hex/rgb() forms so variant names can't inject CSS.
+    const c = String(color || '');
+    if (/^#[0-9a-fA-F]{3,8}$/.test(c) || /^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/.test(c)) return c;
+    return '#6B7280';
   },
 
   _selectSwatch(el, name) {
@@ -749,8 +755,8 @@ const Modals = {
             <div style="display:grid;gap:6px;margin-top:8px;">
               ${specs.map(s => `
                 <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
-                  <span style="color:var(--text-secondary);">${s.label}</span>
-                  <span style="color:white;font-weight:600;text-align:right;">${s.value}</span>
+                  <span style="color:var(--text-secondary);">${esc(s.label)}</span>
+                  <span style="color:white;font-weight:600;text-align:right;">${esc(s.value)}</span>
                 </div>
               `).join('')}
             </div>
@@ -814,7 +820,7 @@ const Modals = {
             <input type="checkbox" checked disabled style="accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;">
             <div class="pdp-cross-item-thumb" style="background:${BuyerViews._categoryGradient(product.category)};">${this._categoryEmoji(product.category)}</div>
             <div class="pdp-cross-item-info">
-              <div class="pdp-cross-item-title">${product.title}</div>
+              <div class="pdp-cross-item-title">${esc(product.title)}</div>
               <div class="pdp-cross-item-price">${State.formatETB(product.price_etb)}</div>
             </div>
             <span style="font-size:10px;color:var(--text-secondary);">This item</span>
@@ -824,7 +830,7 @@ const Modals = {
               <input type="checkbox" class="pdp-cross-checkbox" checked data-price="${p.price_etb}" data-id="${p.product_id}" onchange="Modals._updateCrossTotal()">
               <div class="pdp-cross-item-thumb" style="background:${BuyerViews._categoryGradient(p.category)};">${this._categoryEmoji(p.category)}</div>
               <div class="pdp-cross-item-info">
-                <div class="pdp-cross-item-title">${p.title}</div>
+                <div class="pdp-cross-item-title">${esc(p.title)}</div>
                 <div class="pdp-cross-item-price">${State.formatETB(p.price_etb)}</div>
               </div>
             </label>
@@ -893,7 +899,7 @@ const Modals = {
                 <button class="pdp-carousel-quick-add" onclick="event.stopPropagation();App.addToCart('${p.product_id}');this.textContent='✓ Added';setTimeout(()=>this.textContent='+ Add',1500)">+ Add</button>
               </div>
               <div class="pdp-carousel-body">
-                <div class="pdp-carousel-item-title">${p.title}</div>
+                <div class="pdp-carousel-item-title">${esc(p.title)}</div>
                 <div class="pdp-carousel-item-price">${State.formatETB(p.price_etb)}</div>
                 <div class="pdp-carousel-item-rating">⭐ ${(Number(p.rating) || 0).toFixed(1)}</div>
               </div>
@@ -1110,7 +1116,7 @@ const Modals = {
     const d = Modals._wizD;
     const cats = {'electronics':'📱','fashion':'👗','groceries':'☕','footwear':'👟','furniture':'🪑','beauty':'💄','home':'🏠','sports':'⚽','other':'📦'};
     const condLabels = {new: State.t('seller.wizard.conditionNew'), slightly_used: State.t('seller.wizard.conditionSlightlyUsed'), repack: State.t('seller.wizard.conditionRepack'), used: State.t('seller.wizard.conditionUsed'), refurbished: State.t('seller.wizard.conditionRefurbished')};
-    const thumb = d.image_urls && d.image_urls[0] ? `<div style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:url(${d.image_urls[0]}) center/cover no-repeat var(--bg-surface);flex-shrink:0;"></div>` : `<div style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${Icons.box(24, 'var(--text-muted)')}</div>`;
+    const thumb = d.image_urls && d.image_urls[0] ? `<div style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:url(${escUrl(d.image_urls[0])}) center/cover no-repeat var(--bg-surface);flex-shrink:0;"></div>` : `<div style="width:56px;height:56px;border-radius:10px;border:1px solid var(--border);background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${Icons.box(24, 'var(--text-muted)')}</div>`;
     return `
       <div class="modal-handle"></div>
       <div class="wiz-page-title">${State.t('seller.wizard.page4Title')}</div>
@@ -1119,13 +1125,13 @@ const Modals = {
         <div style="display:flex;gap:10px;align-items:flex-start;">
           ${thumb}
           <div style="flex:1;min-width:0;">
-            <div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.title || '—'}</div>
+            <div style="font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(d.title || '—')}</div>
             <div style="font-size:13px;font-weight:700;color:var(--accent);margin-top:2px;">${State.formatETB(d.price_etb)}</div>
-            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${cats[d.category] || '📦'} ${d.category} · ${condLabels[d.condition] || d.condition}</div>
+            <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${cats[d.category] || '📦'} ${esc(d.category)} · ${esc(condLabels[d.condition] || d.condition)}</div>
           </div>
           <span class="wiz-edit-badge" onclick="Modals._wizGo(1)">${Icons.edit(14)}</span>
         </div>
-        ${d.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.5;">${d.description.slice(0, 150)}${d.description.length > 150 ? '...' : ''}</div>` : ''}
+        ${d.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.5;">${esc(d.description.slice(0, 150))}${d.description.length > 150 ? '...' : ''}</div>` : ''}
         <div style="display:flex;gap:10px;margin-top:8px;font-size:11px;color:var(--text-muted);flex-wrap:wrap;">
           <span>${Icons.box(14)} ${State.t('seller.addProduct.stock')}: ${d.stock_quantity}</span>
           ${d.size ? `<span>${Icons.tag(14)} ${d.size}</span>` : ''}
@@ -1411,11 +1417,11 @@ const Modals = {
 
       <div class="form-group">
         <label class="form-label">Product Title</label>
-        <input class="form-input" id="pendingTitle" value="${pending.title || ''}" placeholder="e.g. Wireless Headphones"/>
+        <input class="form-input" id="pendingTitle" value="${escAttr(pending.title || '')}" placeholder="e.g. Wireless Headphones"/>
       </div>
       <div class="form-group">
         <label class="form-label">Description *</label>
-        <textarea class="form-textarea" id="pendingDesc" placeholder="Describe your product in detail — features, condition, materials, size...">${pending.description || ''}</textarea>
+        <textarea class="form-textarea" id="pendingDesc" placeholder="Describe your product in detail — features, condition, materials, size...">${esc(pending.description || '')}</textarea>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
@@ -1571,8 +1577,8 @@ const Modals = {
         <div style="font-size:20px;font-weight:900;margin-bottom:6px;color:var(--success);">Order Confirmed!</div>
         <div style="font-size:13px;color:var(--text-secondary);margin-bottom:20px;line-height:1.7;">
           <strong style="color:white;">${orderRef}</strong><br/>
-          Placed with <strong style="color:white;">${storeName}</strong><br/>
-          Payment settled directly to the seller.
+          Placed with <strong style="color:white;">${esc(storeName)}</strong><br/>
+          Transfer payments are confirmed by the seller; cash is paid at handover.
         </div>
 
         <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius-md);padding:14px;margin-bottom:16px;font-size:12px;color:var(--success);text-align:left;line-height:1.8;">
@@ -1600,7 +1606,7 @@ const Modals = {
       <div class="modal-title">⭐ Rate Your Purchase</div>
       <div style="padding:16px 0;">
         <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">
-          How was your experience with <strong style="color:white;">${storeName}</strong>?
+          How was your experience with <strong style="color:white;">${esc(storeName)}</strong>?
         </div>
         <div class="review-stars" style="display:flex;gap:6px;justify-content:center;margin-bottom:16px;">
           ${[1,2,3,4,5].map(s => `<span class="star" data-value="${s}" style="font-size:36px;cursor:pointer;color:var(--border);transition:color .2s;" onclick="Modals._setReviewRating(${s})">★</span>`).join('')}
@@ -1670,7 +1676,7 @@ const Modals = {
           ${role === 'buyer' ? 'Show this to the rider for verification.' : 'Show this to the buyer for verification.'}
         </p>
         <div style="text-align:center;margin-bottom:16px;">
-          <img src="${data.qr_url}" alt="QR Code" style="width:220px;height:220px;border-radius:12px;border:2px solid var(--border);"/>
+          <img src="${escUrl(data.qr_url)}" alt="QR Code" style="width:220px;height:220px;border-radius:12px;border:2px solid var(--border);"/>
         </div>
         ${otp ? `
         <div style="background:rgba(252,205,4,0.08);border:1px solid rgba(252,205,4,0.3);border-radius:8px;padding:10px;margin-bottom:16px;text-align:center;">
@@ -1697,7 +1703,7 @@ const Modals = {
       this.open(`
         <div class="modal-handle"></div>
         <div class="modal-title">${State.t('delivery.qr.notAvailable')}</div>
-        <p style="font-size:13px;color:var(--text-secondary);">${err.message || 'QR code not yet generated for this order.'}</p>
+        <p style="font-size:13px;color:var(--text-secondary);">${esc(err.message || 'QR code not yet generated for this order.')}</p>
         <button class="btn-secondary" style="width:100%;margin-top:12px;" onclick="Modals.close()">Close</button>
       `);
     }
@@ -1782,7 +1788,7 @@ const Modals = {
       } else {
         if (out) out.innerHTML = `
           <div style="padding:12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;">
-            <div style="font-size:14px;font-weight:800;color:var(--danger);margin-bottom:4px;">❌ ${result.message}</div>
+            <div style="font-size:14px;font-weight:800;color:var(--danger);margin-bottom:4px;">❌ ${esc(result.message)}</div>
             <div style="font-size:11px;color:var(--text-secondary);">Attempt ${result.attempt || '?'} of 5 · ${result.remaining || '?'} remaining</div>
           </div>`;
       }
@@ -1919,7 +1925,7 @@ const Modals = {
         <div class="modal-handle"></div>
         <div class="modal-title">${State.t('delivery.receipt.title')}</div>
         <p style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">${State.t('delivery.receipt.for', { orderId: orderId.slice(0, 8) })}</p>
-        <iframe src="${data.receipt_url}" style="width:100%;height:400px;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;"></iframe>
+        <iframe src="${escUrl(data.receipt_url)}" style="width:100%;height:400px;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;"></iframe>
         <div style="display:flex;gap:8px;">
           <a href="${data.receipt_url}" target="_blank" download class="btn-primary" style="flex:1;text-align:center;text-decoration:none;">${State.t('delivery.receipt.download')}</a>
           <button class="btn-secondary" style="flex:1;" onclick="Modals.close()">${State.t('delivery.qr.close')}</button>
@@ -1929,7 +1935,7 @@ const Modals = {
       this.open(`
         <div class="modal-handle"></div>
         <div class="modal-title">⚠️ Receipt Not Available</div>
-        <p style="font-size:13px;color:var(--text-secondary);">${err.message || 'Receipt not yet generated.'}</p>
+        <p style="font-size:13px;color:var(--text-secondary);">${esc(err.message || 'Receipt not yet generated.')}</p>
         <button class="btn-secondary" style="width:100%;margin-top:12px;" onclick="Modals.close()">Close</button>
       `);
     }
@@ -1941,7 +1947,7 @@ const Modals = {
       <div class="modal-handle"></div>
       <div class="modal-title">🔑 Seller Studio Access</div>
       <p style="font-size:12px;color:var(--text-secondary);margin-bottom:16px;line-height:1.6;">
-        Enter your seller password to access <strong style="color:white;">${store.store_name}</strong>.
+        Enter your seller password to access <strong style="color:white;">${esc(store.store_name)}</strong>.
       </p>
       <div class="form-group">
         <label class="form-label">Password</label>
@@ -2094,7 +2100,7 @@ const Modals = {
     this._currentConvId = convId;
     this._currentStoreId = storeId;
     this._currentProductId = productId;
-    const title = productTitle ? `💬 Chat — ${productTitle}` : '💬 Chat';
+    const title = productTitle ? `💬 Chat — ${esc(productTitle)}` : '💬 Chat';
     this.open(`
       <div class="modal-handle"></div>
       <div class="modal-title">${title}</div>
@@ -2119,7 +2125,7 @@ const Modals = {
       if (!container) return;
       container.innerHTML = (data.messages || []).map(m => `
         <div style="max-width:80%;padding:8px 12px;font-size:13px;line-height:1.5;${m.is_mine ? 'background:var(--accent);color:#1a1a2e;align-self:flex-end;border-radius:12px 12px 2px 12px;' : 'background:var(--bg-surface);color:white;align-self:flex-start;border-radius:12px 12px 12px 2px;'}">
-          ${m.message}
+          ${esc(m.message)}
         </div>
       `).join('');
       container.scrollTop = container.scrollHeight;
@@ -2140,7 +2146,7 @@ const Modals = {
         const data = await Api.social.startConversation({ store_id: this._currentStoreId, product_id: this._currentProductId, message: msg });
         this._currentConvId = data.conversation_id;
         container.innerHTML += `
-          <div style="max-width:80%;padding:8px 12px;font-size:13px;line-height:1.5;background:var(--accent);color:#1a1a2e;align-self:flex-end;border-radius:12px 12px 2px 12px;">${msg}</div>
+          <div style="max-width:80%;padding:8px 12px;font-size:13px;line-height:1.5;background:var(--accent);color:#1a1a2e;align-self:flex-end;border-radius:12px 12px 2px 12px;">${esc(msg)}</div>
         `;
         container.scrollTop = container.scrollHeight;
       } catch (err) {
@@ -2150,7 +2156,7 @@ const Modals = {
       try {
         await Api.social.sendMessage(this._currentConvId, msg);
         container.innerHTML += `
-          <div style="max-width:80%;padding:8px 12px;font-size:13px;line-height:1.5;background:var(--accent);color:#1a1a2e;align-self:flex-end;border-radius:12px 12px 2px 12px;">${msg}</div>
+          <div style="max-width:80%;padding:8px 12px;font-size:13px;line-height:1.5;background:var(--accent);color:#1a1a2e;align-self:flex-end;border-radius:12px 12px 2px 12px;">${esc(msg)}</div>
         `;
         container.scrollTop = container.scrollHeight;
       } catch (err) {
@@ -2186,11 +2192,11 @@ const Modals = {
       container.innerHTML = coupons.map(c => `
         <div style="background:var(--bg-surface);border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid var(--border);">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <span style="font-size:14px;font-weight:800;color:white;">${c.store_name || 'Store'}</span>
+            <span style="font-size:14px;font-weight:800;color:white;">${esc(c.store_name || 'Store')}</span>
             <span style="font-size:16px;font-weight:900;color:var(--accent);">${c.discount_percentage || c.discount}% OFF</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-family:monospace;font-size:13px;font-weight:700;color:var(--accent);background:rgba(252,205,4,0.1);padding:4px 8px;border-radius:4px;cursor:pointer;" onclick="navigator.clipboard.writeText('${c.code}');App.toast('Coupon code copied!','success')">${c.code}</span>
+            <span style="font-family:monospace;font-size:13px;font-weight:700;color:var(--accent);background:rgba(252,205,4,0.1);padding:4px 8px;border-radius:4px;cursor:pointer;" onclick="navigator.clipboard.writeText(this.dataset.v);App.toast('Coupon code copied!','success')" data-v="${escAttr(c.code)}">${esc(c.code)}</span>
             <span style="font-size:11px;color:var(--text-muted);">Valid until ${new Date(c.valid_until || c.expires_at).toLocaleDateString()}</span>
           </div>
         </div>

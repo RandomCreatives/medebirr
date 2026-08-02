@@ -2,8 +2,7 @@
 node_modules/
 backend/node_modules/
 api/node_modules/
-package-lock.json
-backend/package-lock.json
+# Lockfiles ARE committed — CI installs with `npm ci`, which fails without them.
 
 # Environment variables
 .env
@@ -48,3 +47,6 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 venv/
+
+# Uploaded artifacts (local only — production uses Supabase Storage)
+uploads/

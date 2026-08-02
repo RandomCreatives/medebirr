@@ -148,7 +148,7 @@ const CheckoutPage = {
           <!-- Contact Phone Input -->
           <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px;">
             <label class="co-label" style="display:block;margin-bottom:6px;font-weight:800;color:white;">${State.t('checkout.contactPhone')}</label>
-            <input class="form-input" id="coContactPhone" type="tel" placeholder="${State.t('checkout.phonePlaceholder')}" value="${this._phone}" style="width:100%;box-sizing:border-box;background:var(--bg-main);border:1px solid var(--border);padding:12px;border-radius:8px;color:white;font-size:14px;" />
+            <input class="form-input" id="coContactPhone" type="tel" placeholder="${State.t('checkout.phonePlaceholder')}" value="${escAttr(this._phone)}" style="width:100%;box-sizing:border-box;background:var(--bg-main);border:1px solid var(--border);padding:12px;border-radius:8px;color:white;font-size:14px;" />
             <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${State.t('checkout.phoneHint')}</div>
           </div>
 
@@ -200,7 +200,7 @@ const CheckoutPage = {
         <div class="co-card accent-green" style="margin-top:16px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:14px;">
           <div style="font-weight:800;color:var(--success);margin-bottom:6px;">🏪 Store Pickup Confirmed</div>
           <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
-            <strong>${this._pkg.shopName}</strong><br/>
+            <strong>${esc(this._pkg.shopName)}</strong><br/>
             ${this._pkg.physicalAddress || 'Contact seller for exact store landmark across Addis.'}<br/>
             Seller will coordinate pickup timing with your contact number via Telegram.
           </div>
@@ -220,13 +220,13 @@ const CheckoutPage = {
 
       <div style="margin-top:12px;">
         <label class="co-label" style="display:block;margin-bottom:6px;font-weight:800;color:white;">${State.t('checkout.houseLandmark')}</label>
-        <input class="form-input" id="coLandmark" placeholder="${State.t('checkout.landmarkPlaceholder')}" value="${this._landmark}" oninput="CheckoutPage._updateAddressPreview()" style="width:100%;box-sizing:border-box;background:var(--bg-main);border:1px solid var(--border);padding:12px;border-radius:8px;color:white;font-size:14px;" />
+        <input class="form-input" id="coLandmark" placeholder="${State.t('checkout.landmarkPlaceholder')}" value="${escAttr(this._landmark)}" oninput="CheckoutPage._updateAddressPreview()" style="width:100%;box-sizing:border-box;background:var(--bg-main);border:1px solid var(--border);padding:12px;border-radius:8px;color:white;font-size:14px;" />
       </div>
 
       <!-- Live address preview -->
       <div class="co-address-preview" id="coAddressPreview" style="margin-top:14px;background:var(--bg-surface);border-left:3px solid var(--accent);padding:10px 14px;border-radius:4px;">
          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:800;">${State.t('checkout.deliveryDestination')}</div>
-         <div id="coAddressDetail" style="font-size:13px;font-weight:700;color:white;margin-top:2px;">${this._subCity || State.t('checkout.selectSubCity')}${this._landmark ? ', ' + this._landmark : ''}</div>
+         <div id="coAddressDetail" style="font-size:13px;font-weight:700;color:white;margin-top:2px;">${esc(this._subCity || State.t('checkout.selectSubCity'))}${this._landmark ? ', ' + esc(this._landmark) : ''}</div>
       </div>
     `;
   },
@@ -410,7 +410,7 @@ const CheckoutPage = {
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
             <span style="display:inline-block;background:var(--bg-main);padding:6px 12px;border-radius:6px;font-family:monospace;font-size:16px;color:var(--accent);font-weight:900;letter-spacing:1px;">${telNum}</span>
-            <button type="button" onclick="CheckoutPage._copyText('${telNum}','Account copied!')" style="background:rgba(252,205,4,0.12);border:1px solid rgba(252,205,4,0.3);border-radius:6px;padding:6px 12px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
+            <button type="button" data-v="${escAttr(telNum)}" data-m="Account copied!" onclick="CheckoutPage._copyText(this.dataset.v,this.dataset.m)" style="background:rgba(252,205,4,0.12);border:1px solid rgba(252,205,4,0.3);border-radius:6px;padding:6px 12px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
           </div>
           <hr style="border:none;border-top:1px solid rgba(252,205,4,0.2);margin:12px 0;">
           <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Upload Payment Screenshot</div>
@@ -422,7 +422,7 @@ const CheckoutPage = {
           </div>
           <div style="margin-top:8px;font-size:11px;color:var(--text-secondary);text-align:center;">
             Or enter TX code manually:
-            <input class="form-input" id="coTxCode" placeholder="e.g. TBX-891204-99218401" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg-main);border:1px solid var(--border);padding:8px;border-radius:6px;color:white;font-family:monospace;font-size:12px;" />
+            <input class="form-input" id="coTxCode" placeholder="e.g. TBX-891204-99218401" value="${escAttr(this._txCode)}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg-main);border:1px solid var(--border);padding:8px;border-radius:6px;color:white;font-family:monospace;font-size:12px;" />
           </div>
         </div>`;
     } else if (this._paymentMethod === 'mpesa') {
@@ -446,13 +446,13 @@ const CheckoutPage = {
             <div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Till Number (Buy Goods)</div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
               <span style="display:inline-block;background:var(--bg-main);padding:6px 12px;border-radius:6px;font-family:monospace;font-size:16px;color:#00A651;font-weight:900;letter-spacing:1px;">${mpesaTill}</span>
-              <button type="button" onclick="CheckoutPage._copyText('${mpesaTill}','Till number copied!')" style="background:rgba(0,166,81,0.12);border:1px solid rgba(0,166,81,0.3);border-radius:6px;padding:6px 12px;color:#00A651;font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
+              <button type="button" data-v="${escAttr(mpesaTill)}" data-m="Till number copied!" onclick="CheckoutPage._copyText(this.dataset.v,this.dataset.m)" style="background:rgba(0,166,81,0.12);border:1px solid rgba(0,166,81,0.3);border-radius:6px;padding:6px 12px;color:#00A651;font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
             </div>` : ''}
             ${mpesaShortCode ? `
             <div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Paybill Number</div>
             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
               <span style="display:inline-block;background:var(--bg-main);padding:6px 12px;border-radius:6px;font-family:monospace;font-size:16px;color:#00A651;font-weight:900;letter-spacing:1px;">${mpesaShortCode}</span>
-              <button type="button" onclick="CheckoutPage._copyText('${mpesaShortCode}','Paybill copied!')" style="background:rgba(0,166,81,0.12);border:1px solid rgba(0,166,81,0.3);border-radius:6px;padding:6px 12px;color:#00A651;font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
+              <button type="button" data-v="${escAttr(mpesaShortCode)}" data-m="Paybill copied!" onclick="CheckoutPage._copyText(this.dataset.v,this.dataset.m)" style="background:rgba(0,166,81,0.12);border:1px solid rgba(0,166,81,0.3);border-radius:6px;padding:6px 12px;color:#00A651;font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
             </div>` : ''}
           </div>
           <hr style="border:none;border-top:1px solid rgba(0,166,81,0.2);margin:12px 0;">
@@ -465,7 +465,7 @@ const CheckoutPage = {
           </div>
           <div style="margin-top:8px;font-size:11px;color:var(--text-secondary);text-align:center;">
             Or enter TX code manually:
-            <input class="form-input" id="coTxCode" placeholder="e.g. MPESA12345678" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg-main);border:1px solid var(--border);padding:8px;border-radius:6px;color:white;font-family:monospace;font-size:12px;" />
+            <input class="form-input" id="coTxCode" placeholder="e.g. MPESA12345678" value="${escAttr(this._txCode)}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg-main);border:1px solid var(--border);padding:8px;border-radius:6px;color:white;font-family:monospace;font-size:12px;" />
           </div>
         </div>`;
     } else if (this._paymentMethod === 'cbe') {
@@ -487,7 +487,7 @@ const CheckoutPage = {
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
             <span style="display:inline-block;background:var(--bg-main);padding:6px 12px;border-radius:6px;font-family:monospace;font-size:16px;color:#60A5FA;font-weight:900;letter-spacing:1px;">${cbeNum}</span>
-            <button type="button" onclick="CheckoutPage._copyText('${cbeNum}','Account copied!')" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:6px 12px;color:#60A5FA;font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
+            <button type="button" data-v="${escAttr(cbeNum)}" data-m="Account copied!" onclick="CheckoutPage._copyText(this.dataset.v,this.dataset.m)" style="background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:6px;padding:6px 12px;color:#60A5FA;font-size:11px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy</button>
           </div>`;
       if (banks.length > 0) {
         html += `<hr style="border:none;border-top:1px solid rgba(59,130,246,0.2);margin:12px 0;">
@@ -506,11 +506,11 @@ const CheckoutPage = {
             <div style="font-size:11px;color:var(--text-secondary);margin-bottom:2px;">Bank</div>
             <div style="font-size:14px;font-weight:800;color:white;">${this._selectedOtherBank.bank_name}</div>
             <div style="font-size:11px;color:var(--text-secondary);margin:6px 0 2px;">Account Number</div>
-            <div style="font-size:15px;font-weight:900;color:#60A5FA;font-family:monospace;letter-spacing:1px;">${this._selectedOtherBank.account_number}</div>
+            <div style="font-size:15px;font-weight:900;color:#60A5FA;font-family:monospace;letter-spacing:1px;">${esc(this._selectedOtherBank.account_number)}</div>
             <div style="font-size:11px;color:var(--text-secondary);margin:6px 0 2px;">Account Holder</div>
             <div style="font-size:12px;color:var(--text-primary);">${this._selectedOtherBank.account_holder}</div>
           </div>
-          <button type="button" onclick="CheckoutPage._copyText('${this._selectedOtherBank.account_number}','Account copied!')" style="width:100%;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:8px;color:#60A5FA;font-size:12px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy Account Number</button>` : ''}`;
+          <button type="button" data-v="${escAttr(this._selectedOtherBank.account_number)}" data-m="Account copied!" onclick="CheckoutPage._copyText(this.dataset.v,this.dataset.m)" style="width:100%;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:8px;color:#60A5FA;font-size:12px;font-weight:700;cursor:pointer;">${Icons.copy(14)} Copy Account Number</button>` : ''}`;
       }
       html += `<hr style="border:none;border-top:1px solid rgba(59,130,246,0.2);margin:12px 0;">
           <div style="font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">Upload Payment Screenshot</div>
@@ -522,7 +522,7 @@ const CheckoutPage = {
           </div>
           <div style="margin-top:8px;font-size:11px;color:var(--text-secondary);text-align:center;">
             Or enter TX code manually:
-            <input class="form-input" id="coTxCode" placeholder="e.g. FT26194204812" value="${this._txCode}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg-main);border:1px solid var(--border);padding:8px;border-radius:6px;color:white;font-family:monospace;font-size:12px;" />
+            <input class="form-input" id="coTxCode" placeholder="e.g. FT26194204812" value="${escAttr(this._txCode)}" oninput="CheckoutPage._txCode = this.value" style="width:100%;box-sizing:border-box;margin-top:4px;background:var(--bg-main);border:1px solid var(--border);padding:8px;border-radius:6px;color:white;font-family:monospace;font-size:12px;" />
           </div>
         </div>`;
       area.innerHTML = html;
@@ -651,8 +651,8 @@ const CheckoutPage = {
     const total = this._total();
 
     const deliverySummary = this._deliveryMethod === 'pickup'
-      ? `🏪 <strong>Store Pickup</strong> at ${pkg.shopName}<br/><span style="font-size:11px;color:var(--text-secondary);">${pkg.physicalAddress || 'Bole Commercial Center'}</span>`
-      : `🛵 <strong>Home Delivery</strong> to ${this._subCity}<br/><span style="font-size:11px;color:var(--text-secondary);">${this._landmark || 'Sub-city delivery'}</span>`;
+      ? `🏪 <strong>Store Pickup</strong> at ${esc(pkg.shopName)}<br/><span style="font-size:11px;color:var(--text-secondary);">${esc(pkg.physicalAddress || 'Bole Commercial Center')}</span>`
+      : `🛵 <strong>Home Delivery</strong> to ${esc(this._subCity)}<br/><span style="font-size:11px;color:var(--text-secondary);">${esc(this._landmark || 'Sub-city delivery')}</span>`;
 
     const payLabel = this._paymentMethod === 'cbe' && this._selectedOtherBank ? this._selectedOtherBank.bank_name : (this._paymentMethod === 'cbe' ? 'CBE Bank Transfer' : '');
     const paySummary = this._paymentMethod === 'telebirr'
@@ -695,7 +695,7 @@ const CheckoutPage = {
             <div style="background:var(--bg-surface);padding:12px;border-radius:8px;font-size:13px;line-height:1.5;">
               <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:800;margin-bottom:4px;">${State.t('checkout.deliveryDestination')}</div>
               ${deliverySummary}<br/>
-              <span style="font-size:12px;color:var(--accent);font-weight:700;">📞 ${this._phone}</span>
+              <span style="font-size:12px;color:var(--accent);font-weight:700;">📞 ${esc(this._phone)}</span>
             </div>
             <div style="background:var(--bg-surface);padding:12px;border-radius:8px;font-size:13px;line-height:1.5;">
               <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:800;margin-bottom:4px;">${State.t('checkout.paymentMethod')}</div>
@@ -708,7 +708,7 @@ const CheckoutPage = {
           <div style="background:var(--bg-surface);border-radius:8px;padding:8px 12px;margin-bottom:16px;">
             ${pkg.items.map(i => `
               <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
-                <div style="flex:1;font-weight:700;">${i.product.title} <span style="color:var(--text-secondary);font-weight:400;">× ${i.qty}</span></div>
+                <div style="flex:1;font-weight:700;">${esc(i.product.title)} <span style="color:var(--text-secondary);font-weight:400;">× ${i.qty}</span></div>
                 <div style="font-weight:800;">${State.formatETB(Number(i.product.price_etb) * i.qty)}</div>
               </div>`).join('')}
           </div>
@@ -726,7 +726,7 @@ const CheckoutPage = {
 
           <label class="co-check" style="margin-top:6px;cursor:pointer;">
             <input type="checkbox" id="coPolicyAgree" checked style="accent-color:var(--accent);width:18px;height:18px;" />
-            <span style="font-size:12px;line-height:1.4;">I agree to <strong>${pkg.shopName}</strong>'s return policy (${State.policyLabel(pkg.returnPolicy)}).</span>
+            <span style="font-size:12px;line-height:1.4;">I agree to <strong>${esc(pkg.shopName)}</strong>'s return policy (${State.policyLabel(pkg.returnPolicy)}).</span>
           </label>
         </div>
       </div>
@@ -787,11 +787,16 @@ const CheckoutPage = {
         orderRef = order.order_ref;
 
         if (['telebirr', 'mpesa', 'cbe'].includes(this._paymentMethod)) {
-          const proof = this._screenshotData ? { screenshot: this._screenshotData, tx_ref: this._txCode } : null;
-          await Api.payments.confirmTx(order.order_id, this._txCode || `TXN-${Date.now()}`, proof);
-        } else {
-          await Api.payments.confirmCash(order.order_id);
+          // Submit the payment claim for SELLER verification — only when the
+          // buyer actually entered a code or attached proof. The order is NOT
+          // marked paid by this call; the seller confirms in the bot.
+          if (this._txCode || this._screenshotData) {
+            const proof = this._screenshotData ? { screenshot: this._screenshotData, tx_ref: this._txCode } : null;
+            await Api.payments.confirmTx(order.order_id, this._txCode || null, proof);
+          }
         }
+        // Cash on delivery: nothing to confirm — the order is already
+        // created confirmed/unpaid; cash is collected at handover.
       } else {
         // Offline fallback
         orderId = `local-${Date.now()}`;
@@ -890,7 +895,7 @@ const CheckoutPage = {
       try {
         const data = await Api.delivery.receipt(orderId);
         if (data && data.receipt_url) {
-          area.innerHTML = `<iframe src="${data.receipt_url}" style="width:100%;height:320px;border:1px solid var(--border);border-radius:8px;background:white;"></iframe>`;
+          area.innerHTML = `<iframe src="${escUrl(data.receipt_url)}" style="width:100%;height:320px;border:1px solid var(--border);border-radius:8px;background:white;"></iframe>`;
           const dlBtn = document.getElementById('coReceiptDownload');
           if (dlBtn) {
             dlBtn.href = data.receipt_url;

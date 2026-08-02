@@ -802,11 +802,11 @@ const App = {
         <!-- Store Header -->
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
           <div style="width:56px;height:56px;border-radius:16px;background:${grad};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#111;flex-shrink:0;">
-            ${(store.store_name||'S')[0].toUpperCase()}
+            ${esc((store.store_name||'S')[0].toUpperCase())}
           </div>
           <div style="flex:1;">
             <div style="display:flex;align-items:center;gap:6px;">
-              <div style="font-size:17px;font-weight:900;">${store.store_name}</div>
+              <div style="font-size:17px;font-weight:900;">${esc(store.store_name)}</div>
               ${store.verified_badge ? '<span style="color:var(--success);font-size:14px;">✓</span>' : ''}
             </div>
             <div style="font-size:12px;color:var(--text-secondary);">📍 ${store.location_sub_city || 'Addis Ababa'}${store.location_woreda ? ', '+store.location_woreda : ''}</div>
@@ -817,7 +817,7 @@ const App = {
         <!-- Telegram + actions -->
         <div style="display:flex;gap:8px;margin-bottom:16px;">
           ${store.tg_channel_username
-            ? `<a href="https://t.me/${store.tg_channel_username}" target="_blank"
+            ? `<a href="https://t.me/${escAttr(store.tg_channel_username)}" target="_blank"
                  style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60A5FA;padding:10px;border-radius:var(--radius-sm);font-size:13px;font-weight:800;text-decoration:none;">
                  💬 Join Telegram Group
                </a>`
@@ -828,7 +828,7 @@ const App = {
           </button>
         </div>
 
-        ${store.description ? `<p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">${store.description}</p>` : ''}
+        ${store.description ? `<p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;">${esc(store.description)}</p>` : ''}
 
         <!-- Policy + delivery info -->
         ${store.return_policy_type ? `
@@ -1091,8 +1091,9 @@ const App = {
       deliveryNote = 'STORE_PICKUP';
     }
 
-    // ── Read transaction code for Telebirr/CBE (optional for testing) ────────
-    const txCode = document.getElementById('txCodeInput')?.value?.trim() || `TXN-${Date.now()}`;
+    // ── Read transaction code for Telebirr/CBE/M-Pesa (optional — the seller
+    //    verifies before the order is marked paid; never fabricate one) ──────
+    const txCode = document.getElementById('txCodeInput')?.value?.trim() || '';
 
     const items = pkg.items.map(i => ({ product_id: i.product.product_id, quantity: i.qty }));
     const couponCode = document.getElementById('couponCodeInput')?.value?.trim() || '';
@@ -1109,43 +1110,25 @@ const App = {
       });
       const order = orderData.order;
 
-      if (payMethod === 'telebirr' || payMethod === 'mpesa' || payMethod === 'cbe') {
-        // Submit transaction code for manual verification
+      if ((payMethod === 'telebirr' || payMethod === 'mpesa' || payMethod === 'cbe') && txCode) {
+        // Submit transaction code for SELLER verification (order is not paid
+        // until the seller confirms in the bot)
         await Api.payments.confirmTx(order.order_id, txCode);
-        State.clearStoreCart(shopId);
-        this.renderNavigation();
-        Modals.showOrderConfirmed(order.order_ref, order.store?.store_name || pkg.shopName, order.order_id);
-        App.refreshOrders();
-      } else {
-        // Cash on delivery
-        await Api.payments.confirmCash(order.order_id);
-        State.clearStoreCart(shopId);
-        this.renderNavigation();
-        Modals.showOrderConfirmed(order.order_ref, order.store?.store_name || pkg.shopName, order.order_id);
-        App.refreshOrders();
       }
+      // Cash on delivery needs no confirmation call — the order is created
+      // confirmed/unpaid and cash is collected at handover.
+      State.clearStoreCart(shopId);
+      this.renderNavigation();
+      Modals.showOrderConfirmed(order.order_ref, order.store?.store_name || pkg.shopName, order.order_id);
+      App.refreshOrders();
     } catch (err) {
       this.toast(err.message || 'Order failed — please try again', 'error');
     }
   },
 
-  async simulatePaymentSuccess(txRef) {
-    if (this._pendingOrderId) {
-      try {
-        await fetch('/api/v1/payments/telebirr/webhook', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ outTradeNo: txRef, transactionNo: `TX-${Date.now()}`, tradeStatus: 'SUCCESS', sign: 'demo' })
-        });
-        State.clearStoreCart(this._pendingStoreId);
-        this.renderNavigation();
-        Modals.showOrderConfirmed(this._pendingOrderRef, this._pendingStoreName || 'Store', this._pendingOrderId);
-        App.refreshOrders();
-      } catch (err) {
-        this.toast('Payment confirmation failed', 'error');
-      }
-    }
-  },
+  // NOTE: the old `simulatePaymentSuccess()` dev helper was removed — it
+  // POSTed a forged payment webhook. The webhook now verifies signatures
+  // unconditionally; demos should use the seller-confirm bot flow instead.
 
   _startPaymentPolling() {
     clearInterval(this._paymentPollTimer);

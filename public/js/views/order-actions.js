@@ -103,19 +103,19 @@ App.openOrderDetail = async function(orderId) {
       <span class="order-status-badge status-${o.order_status}" style="margin-bottom:12px;display:inline-block;">${o.order_status}</span>
       <div class="card" style="margin-bottom:10px;">
         <div class="card-title">📍 Delivery Address</div>
-        <div class="card-sub" style="margin-top:4px;">${addrStr}<br>${addr.phone}</div>
+        <div class="card-sub" style="margin-top:4px;">${esc(addrStr)}<br>${esc(addr.phone || '')}</div>
       </div>
       ${o.items ? `
       <div class="card" style="margin-bottom:10px;">
         <div class="card-title" style="margin-bottom:10px;">Order Items</div>
-        ${o.items.map(i => `<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;"><span>${i.title} x${i.quantity}</span><span style="color:var(--accent);font-weight:700;">${State.formatETB(i.subtotal_etb)}</span></div>`).join('')}
+        ${o.items.map(i => `<div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;"><span>${esc(i.title)} x${i.quantity}</span><span style="color:var(--accent);font-weight:700;">${State.formatETB(i.subtotal_etb)}</span></div>`).join('')}
         <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;justify-content:space-between;font-weight:900;">
           <span>Total Paid</span><span style="color:var(--accent);">${State.formatETB(o.total_etb)}</span>
         </div>
       </div>` : ''}
-      ${o.rider_name ? `<div class="card" style="margin-bottom:10px;"><div class="card-title">🛵 Rider Details</div><div class="card-sub" style="margin-top:4px;">${o.rider_name} · ${o.rider_phone}</div></div>` : ''}
-      ${policy ? `<div class="policy-box">🛡️ ${State.policyLabel(policy.return_policy_type)}: ${policy.custom_policy_text || ''}</div>` : ''}
-      ${['pending','confirmed'].includes(o.order_status) ? (o.payment_method === 'cash' ? `<button class="btn-danger" style="margin-top:14px;" onclick="App.cancelOrder('${orderId}')">✕ Cancel Order</button>` : `<button class="btn-secondary" style="margin-top:14px;width:100%;" onclick="App.requestCancelOrder('${orderId}','${o.store_name || ''}')">📞 Request Cancel (Contact Seller)</button>`) : ''}
+      ${o.rider_name ? `<div class="card" style="margin-bottom:10px;"><div class="card-title">🛵 Rider Details</div><div class="card-sub" style="margin-top:4px;">${esc(o.rider_name)} · ${esc(o.rider_phone || '')}</div></div>` : ''}
+      ${policy ? `<div class="policy-box">🛡️ ${State.policyLabel(policy.return_policy_type)}: ${esc(policy.custom_policy_text || '')}</div>` : ''}
+      ${['pending','confirmed'].includes(o.order_status) ? (o.payment_method === 'cash' ? `<button class="btn-danger" style="margin-top:14px;" onclick="App.cancelOrder('${orderId}')">✕ Cancel Order</button>` : `<button class="btn-secondary" style="margin-top:14px;width:100%;" onclick="App.requestCancelOrder('${orderId}','${escAttr(o.store_name || '')}')">📞 Request Cancel (Contact Seller)</button>`) : ''}
       ${o.order_status === 'dispatched' ? `
         <div style="display:flex;gap:8px;margin-top:14px;">
           <button class="btn-primary" style="flex:1;" onclick="Modals.close();Modals.openShowQR('${orderId}','buyer')">📱 Show My QR</button>
@@ -125,7 +125,7 @@ App.openOrderDetail = async function(orderId) {
           <button class="btn-secondary" style="flex:1;" onclick="Modals.close();Modals.openOrderReceipt('${orderId}')">📄 Receipt</button>
         </div>
       ` : ''}
-      ${o.order_status === 'delivered' ? `<div style="display:flex;gap:8px;margin-top:14px;"><button class="btn-primary" style="flex:1;background:var(--success);" onclick="Modals.close();setTimeout(()=>Modals.showReviewForm('${orderId}','${firstProductId}','${o.store_name}'),100)">⭐ Write a Review</button><button class="btn-secondary" style="flex:1;" onclick="Modals.close();Modals.openOrderReceipt('${orderId}')">📄 Receipt</button></div>` : ''}
+      ${o.order_status === 'delivered' ? `<div style="display:flex;gap:8px;margin-top:14px;"><button class="btn-primary" style="flex:1;background:var(--success);" onclick="Modals.close();setTimeout(()=>Modals.showReviewForm('${orderId}','${firstProductId}','${escAttr(o.store_name)}'),100)">⭐ Write a Review</button><button class="btn-secondary" style="flex:1;" onclick="Modals.close();Modals.openOrderReceipt('${orderId}')">📄 Receipt</button></div>` : ''}
       ${o.qr_data && o.order_status === 'dispatched' ? `<div style="margin-top:12px;font-size:12px;color:var(--text-secondary);">Rider: ${o.verified_by_rider ? '✅ Confirmed' : '⏳ Waiting'} · Buyer: ${o.verified_by_buyer ? '✅ Confirmed' : '⏳ Waiting'} · Attempts: ${o.qr_scan_attempts || 0}/5</div>` : ''}
     `);
   } catch (err) {
@@ -217,6 +217,20 @@ App.cancelOrderAsSeller = async function(orderId) {
     this.renderContent();
   } catch (err) {
     this.toast(err.message || 'Cancel failed', 'error');
+  }
+};
+
+// ── Seller: Attest COD cash collected (idempotent; normally automatic at delivery) ──
+App.markCashCollected = async function(orderId) {
+  if (!confirm('Confirm you have received the cash payment for this order?')) return;
+  try {
+    await Api.payments.confirmCashCollected(orderId);
+    this.toast('Cash payment recorded.', 'success');
+    const ordersData = await Api.orders.storeOrders(State.currentStoreId, { limit: 200 });
+    State.storeOrders = ordersData.orders || [];
+    this.renderContent();
+  } catch (err) {
+    this.toast(err.message || 'Failed to record cash payment', 'error');
   }
 };
 

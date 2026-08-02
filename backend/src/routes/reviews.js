@@ -17,11 +17,24 @@ router.post('/', requireAuth, async (req, res, next) => {
     }
 
     const orderCheck = await query(
-      `SELECT store_id FROM orders WHERE order_id = $1 AND buyer_tg_user_id = $2`,
+      `SELECT store_id, order_status FROM orders WHERE order_id = $1 AND buyer_tg_user_id = $2`,
       [order_id, tg_user_id]
     );
     if (orderCheck.rows.length === 0) {
       return res.status(403).json({ error: 'Order not found or not yours' });
+    }
+    // Reviews must reference a real purchase: the product has to be a line
+    // item of a live (non-cancelled) order. Previously any product_id could
+    // be paired with any of the reviewer's order_ids.
+    if (orderCheck.rows[0].order_status === 'cancelled') {
+      return res.status(400).json({ error: 'Cannot review a cancelled order' });
+    }
+    const itemCheck = await query(
+      'SELECT item_id FROM order_items WHERE order_id = $1 AND product_id = $2',
+      [order_id, product_id]
+    );
+    if (itemCheck.rows.length === 0) {
+      return res.status(400).json({ error: 'This product is not part of that order' });
     }
     const store_id = orderCheck.rows[0].store_id;
 
