@@ -77,7 +77,7 @@ const SellerViews = {
             <span style="font-size:12px;color:var(--warning);">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</span>
           </div>
           <div style="font-size:11px;color:var(--accent);margin-bottom:2px;">${r.product_title || ''}</div>
-          ${r.comment ? `<div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">${r.comment}</div>` : ''}
+          ${r.comment ? `<div style="font-size:12px;color:var(--text-secondary);line-height:1.5;">${esc(r.comment)}</div>` : ''}
         </div>
       `).join('')}
       ` : ''}
@@ -90,7 +90,7 @@ const SellerViews = {
 
   _pendingProductCard(p) {
     const thumb = (Array.isArray(p.image_urls) && p.image_urls[0])
-      ? `<div style="width:56px;height:56px;border-radius:8px;background:url(${p.image_urls[0]}) center/cover no-repeat var(--bg-surface);border:1px solid var(--border);flex-shrink:0;"></div>`
+      ? `<div style="width:56px;height:56px;border-radius:8px;background:url(${escUrl(p.image_urls[0])}) center/cover no-repeat var(--bg-surface);border:1px solid var(--border);flex-shrink:0;"></div>`
       : `<div style="width:56px;height:56px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📸</div>`;
     const timeAgo = this._timeAgo(p.detected_at);
     const priceStr = p.price_etb ? State.formatETB(p.price_etb) : State.t('seller.pending.noPrice');
@@ -99,7 +99,7 @@ const SellerViews = {
         <div style="display:flex;gap:10px;align-items:flex-start;">
           ${thumb}
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title || State.t('seller.pending.untitled')}</div>
+            <div style="font-size:13px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.title || State.t('seller.pending.untitled'))}</div>
             <div style="font-size:12px;color:var(--accent);font-weight:700;margin-top:2px;">${priceStr}</div>
             <div style="font-size:10px;color:var(--text-secondary);margin-top:2px;">${timeAgo} · ${p.auto_detected ? State.t('seller.pending.autoDetected') : State.t('seller.pending.sellCommand')}</div>
           </div>
@@ -129,7 +129,7 @@ const SellerViews = {
       <div class="card" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
         <div>
           <div style="font-size:13px;font-weight:800;">${o.order_ref}</div>
-          <div style="font-size:11px;color:var(--text-secondary);">${o.first_name} ${o.last_name || ''}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">${esc(o.first_name)} ${esc(o.last_name || '')}</div>
         </div>
         <div style="text-align:right;">
           <div style="color:var(--accent);font-weight:900;font-size:13px;">${State.formatETB(o.total_etb)}</div>
@@ -174,7 +174,7 @@ const SellerViews = {
           ${thumb}
           <div style="flex:1;min-width:0;">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-              <div style="font-size:14px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${p.title || State.t('seller.pending.untitled')}</div>
+              <div style="font-size:14px;font-weight:800;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${esc(p.title || State.t('seller.pending.untitled'))}</div>
               <span style="font-size:9px;padding:2px 6px;border-radius:4px;background:${statusColor}22;color:${statusColor};flex-shrink:0;margin-left:6px;">${p.status}</span>
             </div>
             <div style="font-size:13px;color:var(--accent);font-weight:700;margin-top:2px;">${priceStr}</div>
@@ -256,7 +256,7 @@ const SellerViews = {
 
   _inventoryCard(p) {
     const thumb = (Array.isArray(p.image_urls) && p.image_urls[0])
-      ? `<div style="width:48px;height:48px;border-radius:8px;background:url(${p.image_urls[0]}) center/cover no-repeat var(--bg-surface);border:1px solid var(--border);flex-shrink:0;"></div>`
+      ? `<div style="width:48px;height:48px;border-radius:8px;background:url(${escUrl(p.image_urls[0])}) center/cover no-repeat var(--bg-surface);border:1px solid var(--border);flex-shrink:0;"></div>`
       : `<div style="width:48px;height:48px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📦</div>`;
     const stock = p.stock_quantity - (p.reserved_stock || 0);
     return `
@@ -264,7 +264,7 @@ const SellerViews = {
         <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:6px;">
           ${thumb}
           <div style="flex:1;min-width:0;">
-            <div style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.title}</div>
+            <div style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.title)}</div>
             <div style="font-size:11px;color:var(--text-secondary);margin-top:1px;">${p.category}${p.sub_category ? ' · ' + p.sub_category : ''}</div>
           </div>
           <span style="font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;${p.is_published ? 'background:rgba(16,185,129,0.15);color:var(--success)' : 'background:rgba(245,158,11,0.15);color:var(--warning)'}">
@@ -327,11 +327,11 @@ const SellerViews = {
 
       <div class="form-group">
         <label class="form-label">Store Name</label>
-        <input class="form-input" id="storeName" value="${store.store_name}" placeholder="My Store"/>
+        <input class="form-input" id="storeName" value="${escAttr(store.store_name)}" placeholder="My Store"/>
       </div>
       <div class="form-group">
         <label class="form-label">Business Phone</label>
-        <input class="form-input" id="storePhone" value="${store.business_phone || ''}" placeholder="+251 9XX XXX XXX"/>
+        <input class="form-input" id="storePhone" value="${escAttr(store.business_phone || '')}" placeholder="+251 9XX XXX XXX"/>
       </div>
       <div class="form-group">
         <label class="form-label">Store Description</label>
@@ -367,11 +367,11 @@ const SellerViews = {
       <div style="font-size:11px;color:var(--text-secondary);margin-bottom:12px;">Your store's physical location — shown to buyers for pickup and delivery reference.</div>
       <div class="form-group">
         <label class="form-label">Sub-City</label>
-        <input class="form-input" id="storeSubCity" value="${store.location_sub_city || ''}" placeholder="Bole"/>
+        <input class="form-input" id="storeSubCity" value="${escAttr(store.location_sub_city || '')}" placeholder="Bole"/>
       </div>
       <div class="form-group">
         <label class="form-label">Woreda</label>
-        <input class="form-input" id="storeWoreda" value="${store.location_woreda || ''}" placeholder="Woreda 03"/>
+        <input class="form-input" id="storeWoreda" value="${escAttr(store.location_woreda || '')}" placeholder="Woreda 03"/>
       </div>
       <div class="form-group">
         <label class="form-label">Location Detail</label>
@@ -389,37 +389,37 @@ const SellerViews = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div>
           <label class="form-label" style="font-size:11px;">Telebirr Number</label>
-          <input class="form-input" id="telebirrMerchantId" value="${store.telebirr_merchant_id || ''}" placeholder="+251 9XX XXX XXX"/>
+          <input class="form-input" id="telebirrMerchantId" value="${escAttr(store.telebirr_merchant_id || '')}" placeholder="+251 9XX XXX XXX"/>
         </div>
         <div>
           <label class="form-label" style="font-size:11px;">Telebirr Account Name</label>
-          <input class="form-input" id="telebirrAccountName" value="${store.telebirr_account_name || ''}" placeholder="Account holder name"/>
+          <input class="form-input" id="telebirrAccountName" value="${escAttr(store.telebirr_account_name || '')}" placeholder="Account holder name"/>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
         <div>
           <label class="form-label" style="font-size:11px;">CBE Account Number</label>
-          <input class="form-input" id="cbeAccountNumber" value="${store.cbe_account_number || ''}" placeholder="1000XXXXXXX"/>
+          <input class="form-input" id="cbeAccountNumber" value="${escAttr(store.cbe_account_number || '')}" placeholder="1000XXXXXXX"/>
         </div>
         <div>
           <label class="form-label" style="font-size:11px;">CBE Account Name</label>
-          <input class="form-input" id="cbeAccountName" value="${store.cbe_account_name || ''}" placeholder="Account holder name"/>
+          <input class="form-input" id="cbeAccountName" value="${escAttr(store.cbe_account_name || '')}" placeholder="Account holder name"/>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
         <div>
           <label class="form-label" style="font-size:11px;">M-Pesa Till Number</label>
-          <input class="form-input" id="mpesaTillNumber" value="${store.mpesa_till_number || ''}" placeholder="123456"/>
+          <input class="form-input" id="mpesaTillNumber" value="${escAttr(store.mpesa_till_number || '')}" placeholder="123456"/>
         </div>
         <div>
           <label class="form-label" style="font-size:11px;">M-Pesa Short Code</label>
-          <input class="form-input" id="mpesaShortCode" value="${store.mpesa_short_code || ''}" placeholder="600123"/>
+          <input class="form-input" id="mpesaShortCode" value="${escAttr(store.mpesa_short_code || '')}" placeholder="600123"/>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:12px;">
         <div>
           <label class="form-label" style="font-size:11px;">M-Pesa Account Name</label>
-          <input class="form-input" id="mpesaAccountName" value="${store.mpesa_account_name || ''}" placeholder="Business name"/>
+          <input class="form-input" id="mpesaAccountName" value="${escAttr(store.mpesa_account_name || '')}" placeholder="Business name"/>
         </div>
       </div>
 
@@ -933,10 +933,10 @@ const SellerViews = {
     return `
       <div class="dispatch-card">
         <div class="dispatch-order-ref">${o.order_ref} · ${new Date(o.created_at).toLocaleDateString()} · ${statusBadge}</div>
-        <div class="dispatch-buyer">👤 ${o.first_name} ${o.last_name || ''} (@${o.buyer_username || 'user'})</div>
-        <div class="dispatch-address">📍 ${addrStr}<br>📞 ${addr.phone || 'N/A'}</div>
+        <div class="dispatch-buyer">👤 ${esc(o.first_name)} ${esc(o.last_name || '')} (@${esc(o.buyer_username || 'user')})</div>
+        <div class="dispatch-address">📍 ${esc(addrStr)}<br>📞 ${esc(addr.phone || 'N/A')}</div>
         <div style="margin-top:8px;font-size:14px;font-weight:900;color:var(--accent);">${State.formatETB(o.total_etb)} — ${o.payment_method.toUpperCase()}</div>
-        <div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">💳 TX ID: <span style="font-family:monospace;color:#1A1A2E;font-weight:800;">${o.transaction_code || o.payment_tx_ref || 'Cash on Delivery'}</span></div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">💳 TX ID: <span style="font-family:monospace;color:#1A1A2E;font-weight:800;">${esc(o.transaction_code || o.payment_tx_ref || 'Cash on Delivery')}</span></div>
         ${Number(o.discount_etb) > 0 ? `<div style="font-size:11px;color:var(--success);font-weight:800;margin-top:2px;">🎟️ Coupon Discount Applied: -${State.formatETB(o.discount_etb)}</div>` : ''}
         ${providerBadge}
         ${o.delivery_otp ? `
@@ -955,7 +955,8 @@ const SellerViews = {
             <button class="btn-dispatch" onclick="App.settleOrder('${o.order_id}')">✅ Settled</button>
           ` : ''}
           ${o.payment_status === 'paid' && o.order_status === 'confirmed' ? `<button class="btn-danger" style="padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);color:var(--danger);" onclick="App.markOrderRefunded('${o.order_id}')">💰 Mark Refunded</button>` : ''}
-          <button class="btn-call" onclick="window.open('tel:${addr.phone}')">📞 Call Buyer</button>
+          <button class="btn-call" data-v="${escAttr(addr.phone || '')}" onclick="if(this.dataset.v)window.open('tel:'+this.dataset.v)">📞 Call Buyer</button>
+          ${o.payment_method === 'cash' && o.payment_status !== 'paid' && ['confirmed','dispatched'].includes(o.order_status) ? `<button style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--success);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.markCashCollected('${o.order_id}')">💵 Cash Collected</button>` : ''}
           ${['pending','confirmed'].includes(o.order_status) ? `<button style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);color:var(--danger);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;" onclick="App.confirmCancelOrder('${o.order_id}','${o.order_ref}')">✕ Cancel</button>` : ''}
         </div>
       </div>

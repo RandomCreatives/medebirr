@@ -14,7 +14,13 @@
     if (!vars || typeof str !== 'string') return str;
     return str.replace(/\$\{[\s]*([\w.]+)[\s]*\}/g, (m, path) => {
       const val = path.split('.').reduce((o, k) => (o == null ? o : o[k]), vars);
-      return val != null ? val : m;
+      // Escape interpolated VALUES by default — catalog templates own their
+      // markup (<strong> etc.), but variables are often user-controlled
+      // (store names, cancel reasons, tx codes, server error messages).
+      // Numbers/booleans pass through unchanged.
+      if (val == null) return m;
+      if (typeof val === 'number' || typeof val === 'boolean') return val;
+      return (typeof esc === 'function') ? esc(String(val)) : String(val);
     });
   }
 

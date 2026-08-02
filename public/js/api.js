@@ -108,8 +108,11 @@ const Api = {
 
   // ── Payments ───────────────────────────────────────
   payments: {
-    confirmCash:      (orderId) => Api.post('/payments/cash/confirm',      { order_id: orderId }),
-    confirmTx:        (orderId, transactionCode, paymentProof) => Api.post('/payments/confirm-tx', { order_id: orderId, transaction_code: transactionCode, payment_proof: paymentProof })
+    // Submit a manual payment claim for SELLER verification (order is NOT
+    // marked paid by this — the seller confirms in the bot).
+    confirmTx: (orderId, transactionCode, paymentProof) => Api.post('/payments/confirm-tx', { order_id: orderId, transaction_code: transactionCode, payment_proof: paymentProof }),
+    // Seller-side: attest cash collected for a COD order.
+    confirmCashCollected: (orderId) => Api.post('/payments/cash/confirm', { order_id: orderId })
   },
 
   // ── Bot / Telegram Group ───────────────────────────

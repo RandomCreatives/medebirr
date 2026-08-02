@@ -107,6 +107,8 @@ async function releaseReservedStock(orderId) {
  * Finalize a delivered order's inventory + store stats:
  *   - products: +order_count, -reserved_stock
  *   - stores:   +total_orders, +total_revenue
+ *   - COD orders: payment_status flips to 'paid' (cash changes hands at
+ *     delivery) with a ledger row in payment_transactions
  * Used by both the QR-scan, OTP-verify, and manual-settle paths so the
  * sales numbers can never be double-counted if two flows fire.
  *
@@ -141,6 +143,27 @@ async function completeDelivery(orderId, totalEtb, storeId) {
        WHERE store_id = $2`,
       [totalEtb, storeId]
     );
+
+    // COD settlement: cash is collected at handover, so completing the
+    // delivery is the moment the payment becomes real. The FOR UPDATE +
+    // status check makes concurrent payment/delivery flows single-fire.
+    const ord = await client.query(
+      'SELECT payment_method, payment_status FROM orders WHERE order_id = $1 FOR UPDATE',
+      [orderId]
+    );
+    if (ord.rows[0] && ord.rows[0].payment_method === 'cash' && ord.rows[0].payment_status !== 'paid') {
+      await client.query(
+        `UPDATE orders SET payment_status = 'paid', updated_at = NOW() WHERE order_id = $1`,
+        [orderId]
+      );
+      await client.query(
+        `INSERT INTO payment_transactions (order_id, gateway, gateway_tx_ref, amount_etb, status, settled_at)
+         VALUES ($1, 'cash', $2, $3, 'completed', NOW())
+         ON CONFLICT DO NOTHING`,
+        [orderId, `CASH-${orderId}`, totalEtb]
+      );
+    }
+
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {});

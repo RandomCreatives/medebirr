@@ -85,8 +85,8 @@ window.NotificationFeed = (function () {
           <div style="display:flex;align-items:flex-start;gap:10px;">
             <div class="menu-icon" style="color:${meta.color};">${meta.icon()}</div>
             <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">${n.title || meta.label}</div>
-              <div style="font-size:12px;color:var(--text-secondary);line-height:1.4;">${n.body || ''}</div>
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">${esc(n.title || meta.label)}</div>
+              <div style="font-size:12px;color:var(--text-secondary);line-height:1.4;">${esc(n.body || '')}</div>
               <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${time}${n.derived ? ' · estimated' : ''}</div>
             </div>
             ${!n.is_read ? '<div class="notif-dot"></div>' : ''}

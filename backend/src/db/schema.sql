@@ -181,9 +181,15 @@ CREATE TABLE IF NOT EXISTS orders (
     delivered_at        TIMESTAMP,
     cancelled_at        TIMESTAMP,
     cancel_reason       TEXT,
+    idempotency_key     VARCHAR(100),                 -- client-supplied checkout dedupe key (see migration 2.5)
+    cancel_requested_at TIMESTAMP,                    -- last buyer cancel-request DM throttle
     created_at          TIMESTAMP DEFAULT NOW(),
     updated_at          TIMESTAMP DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_idempotency
+    ON orders(buyer_tg_user_id, idempotency_key)
+    WHERE idempotency_key IS NOT NULL;
 
 -- ============================================================
 -- ORDER ITEMS TABLE

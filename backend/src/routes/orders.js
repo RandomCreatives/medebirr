@@ -58,7 +58,7 @@ router.post(
       // Idempotency: if a key was provided, check for existing order
       if (idempotency_key) {
         const existing = await query(
-          'SELECT order_id, order_ref FROM orders WHERE payment_tx_ref = $1 AND buyer_tg_user_id = $2',
+          'SELECT order_id, order_ref FROM orders WHERE idempotency_key = $1 AND buyer_tg_user_id = $2',
           [idempotency_key, req.user.tg_user_id]
         );
         if (existing.rows.length > 0) {
@@ -227,21 +227,26 @@ router.post(
       };
 
       // Create order
+      // Cash-on-delivery orders are confirmed immediately (no funds to verify
+      // upfront — payment_status stays 'pending' until cash is collected at
+      // handover). Manual transfer methods stay 'pending' until the seller
+      // verifies; Telebirr until the signed webhook arrives.
       const orderRef = generateOrderRef();
       const deliveryOtp = generateOTP(4);
       const ik = idempotency_key || null;
+      const initialStatus = payment_method === 'cash' ? 'confirmed' : 'pending';
       const orderResult = await client.query(
         `INSERT INTO orders (
           order_ref, buyer_tg_user_id, store_id, address_id, delivery_address,
           subtotal_etb, delivery_fee_etb, total_etb, payment_method,
           payment_status, order_status, policy_snapshot, delivery_method,
           coupon_code, discount_etb, delivery_otp,
-          delivery_latitude, delivery_longitude, payment_tx_ref
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending','pending',$10,$11,$12,$13,$14,$15,$16,$17)
+          delivery_latitude, delivery_longitude, idempotency_key
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending',$10,$11,$12,$13,$14,$15,$16,$17,$18)
         RETURNING *`,
         [orderRef, req.user.tg_user_id, store_id, address_id || null,
          JSON.stringify(delivery_address), subtotal, deliveryFee, total,
-         payment_method, JSON.stringify(policySnapshot), delivery_method || 'delivery',
+         payment_method, initialStatus, JSON.stringify(policySnapshot), delivery_method || 'delivery',
          appliedCoupon ? appliedCoupon.code : null, discountAmount,
          deliveryOtp,
          delivery_latitude != null ? Number(delivery_latitude) : null,
@@ -276,6 +281,24 @@ router.post(
         await notif.notifyOrderStatus(order, 'pending', { store_name: store.store_name });
       } catch (_) {}
 
+      // Cash orders are confirmed at placement (no verification step) — tell
+      // the seller right away so they can prepare. Manual/Telebirr orders
+      // notify the seller at payment-confirmation time instead.
+      if (payment_method === 'cash') {
+        try {
+          const notif = require('../services/notifications');
+          await notif.notifyNewOrder({ store_id }, order, req.user);
+        } catch (_) {}
+        try {
+          const tgService = require('../services/telegram');
+          if (store.admin_tg_user_id) {
+            await tgService.sendSafeMessage(store.admin_tg_user_id,
+              `💵 *New Cash Order!*\n\nOrder *${order.order_ref}* — Br ${Number(total).toLocaleString()}\n` +
+              `Buyer pays on delivery/collection.\n\nPlease prepare the order, then assign delivery from Seller Studio → Dispatch.`);
+          }
+        } catch (_) {}
+      }
+
       res.status(201).json({
         order: {
           ...order,
@@ -306,7 +329,8 @@ router.post(
  */
 router.get('/', requireAuth, async (req, res, next) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
+    const { status, page = 1, limit: rawLimit = 20 } = req.query;
+    const limit = Math.min(Math.max(parseInt(rawLimit) || 20, 1), 100);
     const offset = (page - 1) * limit;
     const params = [req.user.tg_user_id];
     const conditions = ['o.buyer_tg_user_id = $1'];
@@ -320,7 +344,7 @@ router.get('/', requireAuth, async (req, res, next) => {
     const result = await query(
       `SELECT o.order_id, o.order_ref, o.total_etb, o.order_status, o.payment_status,
               o.payment_method, o.delivery_address, o.created_at, o.rider_name, o.rider_phone,
-              o.delivery_provider, o.delivery_otp, o.payment_proof,
+              o.delivery_provider, o.delivery_otp,
               o.qr_scan_attempts, o.qr_verified_by_rider, o.qr_verified_by_buyer, o.receipt_pdf_url,
               s.store_name, s.store_slug, s.tg_channel_username
        FROM orders o
@@ -374,7 +398,8 @@ router.get('/:orderId', requireAuth, async (req, res, next) => {
  */
 router.get('/store/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res, next) => {
   try {
-    const { status, page = 1, limit = 20 } = req.query;
+    const { status, page = 1, limit: rawLimit = 20 } = req.query;
+    const limit = Math.min(Math.max(parseInt(rawLimit) || 20, 1), 200);
     const offset = (page - 1) * limit;
     const params = [req.params.storeId];
     const conditions = ['o.store_id = $1'];
@@ -617,7 +642,7 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
 
     // Verify seller owns the store
     const orderCheck = await query(
-      `SELECT o.order_id, o.buyer_tg_user_id, o.payment_status, o.total_etb,
+      `SELECT o.order_id, o.buyer_tg_user_id, o.payment_status, o.payment_method, o.total_etb,
               o.store_id, s.admin_tg_user_id, s.store_name, s.business_phone
        FROM orders o JOIN stores s ON o.store_id = s.store_id
        WHERE o.order_id = $1`,
@@ -629,7 +654,8 @@ router.put('/:orderId/dispatch', requireAuth, async (req, res, next) => {
     if (ord.admin_tg_user_id !== req.user.tg_user_id) {
       return res.status(403).json({ error: 'Not authorized' });
     }
-    if (ord.payment_status !== 'paid') {
+    // COD orders dispatch unpaid — cash is collected at handover.
+    if (ord.payment_status !== 'paid' && ord.payment_method !== 'cash') {
       return res.status(400).json({ error: 'Cannot dispatch unpaid order' });
     }
 
@@ -764,7 +790,7 @@ router.put('/:orderId/confirm-delivery', requireAuth, retryOnDeadlock(async (req
 router.patch('/:orderId/cancel', requireAuth, retryOnDeadlock(async (req, res, next) => {
   try {
     const orderCheck = await query(
-      'SELECT order_id, buyer_tg_user_id, order_status FROM orders WHERE order_id = $1',
+      'SELECT order_id, buyer_tg_user_id, order_status, payment_status FROM orders WHERE order_id = $1',
       [req.params.orderId]
     );
     if (orderCheck.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
@@ -775,6 +801,11 @@ router.patch('/:orderId/cancel', requireAuth, retryOnDeadlock(async (req, res, n
     }
     if (!['pending', 'confirmed'].includes(ord.order_status)) {
       return res.status(400).json({ error: 'Only pending or confirmed orders can be cancelled' });
+    }
+    // Paid orders must go through cancel-request so the seller can reconcile
+    // the refund — self-cancelling would release the goods with no money trail.
+    if (ord.payment_status === 'paid') {
+      return res.status(400).json({ error: 'This order is already paid. Use "Request Cancellation" so the seller can arrange your refund.' });
     }
 
     const result = await query(
@@ -878,16 +909,19 @@ router.post('/:orderId/cancel-request', requireAuth, async (req, res, next) => {
     if (o.buyer_tg_user_id !== req.user.tg_user_id) return res.status(403).json({ error: 'Not authorized' });
     if (o.payment_method === 'cash') return res.status(400).json({ error: 'Use cancel for cash orders' });
 
-    // Notify seller via Telegram
+    // Anti-spam: one cancel request per order per 24h - this route DMs the
+    // seller on Telegram, so unlimited repeats would be a harassment vector.
+    if (o.cancel_requested_at && (Date.now() - new Date(o.cancel_requested_at).getTime()) < 24 * 3600 * 1000) {
+      return res.status(429).json({ error: 'A cancel request was already sent for this order. Please wait for the seller to respond.' });
+    }
+    await query('UPDATE orders SET cancel_requested_at = NOW() WHERE order_id = $1', [req.params.orderId]);
+
+    // Notify seller via Telegram (HTML mode via sendSafeMessage)
     try {
       const tgService = require('../services/telegram');
-      await tgService.tgCall('sendMessage', {
-        chat_id: o.admin_tg_user_id,
-        text: `📞 *Cancel Request*\n\n Buyer requested to cancel order *${o.order_ref}*.\n\n Please contact them to arrange a refund.\n\n Order: ${req.params.orderId}`,
-        parse_mode: 'MarkdownV2'
-      });
+      await tgService.sendSafeMessage(o.admin_tg_user_id,
+        `📞 *Cancel Request*\n\nBuyer requested to cancel order *${o.order_ref}*.\n\nPlease contact them to arrange a refund.\n\nOrder: ${req.params.orderId}`);
     } catch (_) {}
-
     res.json({ message: 'Seller notified of cancel request' });
   } catch (err) {
     next(err);
@@ -910,6 +944,14 @@ router.patch('/:orderId/mark-refunded', requireAuth, async (req, res, next) => {
       [req.params.orderId]
     );
     if (result.rows.length === 0) return res.status(400).json({ error: 'Order is not in paid status' });
+
+    // Ledger row so refunds show up in any payment reconciliation
+    await query(
+      `INSERT INTO payment_transactions (order_id, gateway, gateway_tx_ref, amount_etb, status, settled_at)
+       VALUES ($1, $2, $3, $4, 'refunded', NOW())
+       ON CONFLICT DO NOTHING`,
+      [req.params.orderId, result.rows[0].payment_method || 'unknown', `REFUND-${req.params.orderId}`, result.rows[0].total_etb]
+    );
 
     // Release stock
     await inventory.releaseReservedStock(req.params.orderId);
