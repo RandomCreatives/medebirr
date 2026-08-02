@@ -56,7 +56,7 @@ const BuyerViews = {
 
   _itemCard(p) {
     const gradient = this._categoryGradient(p.category);
-    const thumbStyle = (p.image_urls && p.image_urls[0]) ? `background:url('${p.image_urls[0]}') center/cover no-repeat,${gradient};` : `background:${gradient};`;
+    const thumbStyle = (p.image_urls && p.image_urls[0]) ? `background:url('${escUrl(p.image_urls[0])}') center/cover no-repeat,${gradient};` : `background:${gradient};`;
     const compare = p.compare_price ? `<span class="item-compare">${State.formatETB(p.compare_price)}</span>` : '';
     const saved = State.wishlist.has(p.product_id);
     return `
@@ -65,12 +65,12 @@ const BuyerViews = {
           ${p.return_policy_type ? `<span class="item-policy-tag">${State.policyLabel(p.return_policy_type).split('-')[0]}</span>` : ''}
           <button class="item-heart-btn ${saved ? 'saved' : ''}" data-pid="${p.product_id}" aria-label="Save for later" title="Save for later"
                   onclick="event.stopPropagation();App.toggleWishlist('${p.product_id}')">${saved ? '♥' : '♡'}</button>
-          <div class="item-store-badge" onclick="event.stopPropagation();App.openStorePage('${p.store_id}')">🏪 ${p.store_name}</div>
+          <div class="item-store-badge" onclick="event.stopPropagation();App.openStorePage('${p.store_id}')">🏪 ${esc(p.store_name)}</div>
         </div>
         <div class="item-body">
           <div>
-            <div class="item-title">${p.title}</div>
-            <div class="item-location">📍 ${p.location_sub_city || 'Addis Ababa'} ${p.verified_badge ? '<span class="verified-check">✓</span>' : ''}</div>
+            <div class="item-title">${esc(p.title)}</div>
+            <div class="item-location">📍 ${esc(p.location_sub_city || 'Addis Ababa')} ${p.verified_badge ? '<span class="verified-check">✓</span>' : ''}</div>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <div style="display:flex;align-items:baseline;gap:4px;">
@@ -86,7 +86,7 @@ const BuyerViews = {
 
   _wishlistCard(p) {
     const gradient = this._categoryGradient(p.category);
-    const thumbStyle = (p.image_urls && p.image_urls[0]) ? `background:url('${p.image_urls[0]}') center/cover no-repeat,${gradient};` : `background:${gradient};`;
+    const thumbStyle = (p.image_urls && p.image_urls[0]) ? `background:url('${escUrl(p.image_urls[0])}') center/cover no-repeat,${gradient};` : `background:${gradient};`;
     const compare = p.compare_price ? `<span class="item-compare">${State.formatETB(p.compare_price)}</span>` : '';
     const saved = State.wishlist.has(p.product_id);
     return `
@@ -95,12 +95,12 @@ const BuyerViews = {
           ${p.return_policy_type ? `<span class="item-policy-tag">${State.policyLabel(p.return_policy_type).split('-')[0]}</span>` : ''}
           <button class="item-heart-btn ${saved ? 'saved' : ''}" data-pid="${p.product_id}" aria-label="Save for later" title="Save for later"
                   onclick="event.stopPropagation();App.toggleWishlist('${p.product_id}')">${saved ? '♥' : '♡'}</button>
-          <div class="item-store-badge" onclick="event.stopPropagation();App.openStorePage('${p.store_id}')">🏪 ${p.store_name}</div>
+          <div class="item-store-badge" onclick="event.stopPropagation();App.openStorePage('${p.store_id}')">🏪 ${esc(p.store_name)}</div>
         </div>
         <div class="item-body">
           <div>
-            <div class="item-title">${p.title}</div>
-            <div class="item-location">📍 ${p.location_sub_city || 'Addis Ababa'} ${p.verified_badge ? '<span class="verified-check">✓</span>' : ''}</div>
+            <div class="item-title">${esc(p.title)}</div>
+            <div class="item-location">📍 ${esc(p.location_sub_city || 'Addis Ababa')} ${p.verified_badge ? '<span class="verified-check">✓</span>' : ''}</div>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <div style="display:flex;align-items:baseline;gap:4px;">
@@ -170,10 +170,10 @@ const BuyerViews = {
           <div style="width:48px;height:48px;border-radius:14px;background:${grad};display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#111;flex-shrink:0;">${initial}</div>
           <div style="flex:1;min-width:0;">
             <div style="display:flex;align-items:center;gap:6px;">
-              <div style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.store_name}</div>
+              <div style="font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(s.store_name)}</div>
               ${s.verified_badge ? '<span style="font-size:10px;color:var(--success);">✓</span>' : ''}
             </div>
-             <div style="font-size:11px;color:var(--text-secondary);">📍 ${s.location_sub_city || 'Addis Ababa'} · ${s.rating ? `⭐ ${Number(s.rating).toFixed(1)}` : State.t('buyer.shops.new')}</div>
+             <div style="font-size:11px;color:var(--text-secondary);">📍 ${esc(s.location_sub_city || 'Addis Ababa')} · ${s.rating ? `⭐ ${Number(s.rating).toFixed(1)}` : State.t('buyer.shops.new')}</div>
             ${s.return_policy_type ? `<div style="font-size:10px;color:var(--success);margin-top:2px;">🛡️ ${policyLabel[s.return_policy_type]||''}</div>` : ''}
           </div>
           <div style="text-align:right;flex-shrink:0;">
@@ -185,7 +185,7 @@ const BuyerViews = {
               : ''}
           </div>
         </div>
-        ${s.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${s.description}</div>` : ''}
+        ${s.description ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${esc(s.description)}</div>` : ''}
       </div>
     `;
   },
@@ -229,11 +229,11 @@ const BuyerViews = {
       <!-- Profile Header Card -->
       <div class="profile-hub-header">
         <div class="profile-avatar-lg" style="background:linear-gradient(135deg,#C8980A,#FCCD04);width:72px;height:72px;font-size:28px;border:3px solid var(--accent);">
-          ${(u.firstName||'U')[0].toUpperCase()}
+          ${esc((u.firstName||'U')[0].toUpperCase())}
         </div>
         <div class="profile-identity">
-          <div class="profile-name">${u.firstName} ${u.lastName||''}</div>
-          <div class="profile-email">${u.email || u.username ? '@'+(u.username||u.email) : 'Telegram User'}</div>
+          <div class="profile-name">${esc(u.firstName)} ${esc(u.lastName||'')}</div>
+          <div class="profile-email">${u.email || u.username ? '@'+esc(u.username||u.email) : 'Telegram User'}</div>
           <div class="profile-badges">
             <span class="profile-badge ${isSeller?'badge-seller':'badge-buyer'}">${isSeller ? '🏪 Seller' : '🛒 Buyer'}</span>
             ${u.tier && u.tier !== 'standard' ? `<span class="profile-badge badge-tier">${u.tier}</span>` : ''}
@@ -271,7 +271,7 @@ const BuyerViews = {
         ${State.stores.map(s => `
           <div class="profile-store-card">
             <div>
-              <div style="font-size:13px;font-weight:800;">${s.store_name}</div>
+              <div style="font-size:13px;font-weight:800;">${esc(s.store_name)}</div>
               <div style="font-size:11px;color:${s.status==='verified'?'var(--success)':'var(--warning)'};">${s.status==='verified'?State.t('buyer.profile.verified'):State.t('buyer.profile.pending')}</div>
             </div>
             <button onclick="App.toggleRole();App.switchTab('dashboard');" class="profile-store-btn">${State.t('buyer.profile.studio')}</button>
@@ -305,11 +305,11 @@ const BuyerViews = {
       <!-- Avatar Card -->
       <div class="profile-detail-avatar-card">
         <div class="profile-avatar-xl" style="background:${grad};">
-          ${(u.firstName||'U')[0].toUpperCase()}
+          ${esc((u.firstName||'U')[0].toUpperCase())}
         </div>
-        <div class="profile-detail-name">${u.firstName} ${u.lastName||''}</div>
+        <div class="profile-detail-name">${esc(u.firstName)} ${esc(u.lastName||'')}</div>
         <div class="profile-detail-meta">
-          ${u.username ? `<span>@${u.username}</span>` : ''}
+          ${u.username ? `<span>@${esc(u.username)}</span>` : ''}
           <span class="profile-badge badge-buyer">${State.t('buyer.profile.buyer')}</span>
         </div>
       </div>
@@ -318,15 +318,15 @@ const BuyerViews = {
       <div class="profile-detail-fields">
         <div class="form-group">
           <label class="form-label">${State.t('buyer.profile.fullName')}</label>
-          <input class="form-input" id="profileEditName" type="text" value="${u.firstName||''} ${u.lastName||''}" placeholder="${State.t('buyer.profile.fullNamePlaceholder')}"/>
+          <input class="form-input" id="profileEditName" type="text" value="${escAttr(u.firstName||'')} ${escAttr(u.lastName||'')}" placeholder="${State.t('buyer.profile.fullNamePlaceholder')}"/>
         </div>
         <div class="form-group">
           <label class="form-label">${State.t('buyer.profile.email')}</label>
-          <input class="form-input" id="profileEditEmail" type="email" value="${u.email||''}" placeholder="${State.t('buyer.profile.emailPlaceholder')}"/>
+          <input class="form-input" id="profileEditEmail" type="email" value="${escAttr(u.email||'')}" placeholder="${State.t('buyer.profile.emailPlaceholder')}"/>
         </div>
         <div class="form-group">
           <label class="form-label">${State.t('buyer.profile.phone')}</label>
-          <input class="form-input" id="profileEditPhone" type="tel" value="${u.phone||''}" placeholder="${State.t('buyer.profile.phonePlaceholder')}"/>
+          <input class="form-input" id="profileEditPhone" type="tel" value="${escAttr(u.phone||'')}" placeholder="${State.t('buyer.profile.phonePlaceholder')}"/>
         </div>
       </div>
 
@@ -411,11 +411,11 @@ const BuyerViews = {
             <div class="address-card-icon">${a.label === 'Home' ? '🏠' : a.label === 'Work' ? '🏢' : '📍'}</div>
             <div class="address-card-info">
               <div class="address-card-label">
-                ${a.label === 'Home' ? State.t('buyer.address.home') : a.label === 'Work' ? State.t('buyer.address.work') : a.label}
+                ${a.label === 'Home' ? State.t('buyer.address.home') : a.label === 'Work' ? State.t('buyer.address.work') : esc(a.label)}
                 ${a.is_default ? `<span class="address-default-tag">${State.t('buyer.address.default')}</span>` : ''}
               </div>
-              <div class="address-card-detail">${a.sub_city}${a.woreda ? ', '+a.woreda : ''} ${a.house_number ? '· '+a.house_number : ''}</div>
-              <div class="address-card-phone">📞 ${a.phone}</div>
+              <div class="address-card-detail">${esc(a.sub_city)}${a.woreda ? ', '+esc(a.woreda) : ''} ${a.house_number ? '· '+esc(a.house_number) : ''}</div>
+              <div class="address-card-phone">📞 ${esc(a.phone)}</div>
             </div>
             <div class="address-card-actions">
               <button class="address-action-btn" onclick="event.stopPropagation();BuyerViews._editAddress('${a.address_id}')">
@@ -790,7 +790,7 @@ const BuyerViews = {
         <div class="order-detail-top">
           <div>
             <div class="order-detail-ref">${o.order_ref}</div>
-            <div class="order-detail-store">${o.store_name}</div>
+            <div class="order-detail-store">${esc(o.store_name)}</div>
             <div class="order-detail-date">${date}</div>
           </div>
           <div class="order-detail-right">
@@ -798,9 +798,9 @@ const BuyerViews = {
             <span class="order-status-badge status-${o.order_status}">${o.order_status}</span>
           </div>
         </div>
-        <div style="font-size:11px;color:var(--text-secondary);margin:4px 0 2px 0;">💳 ${o.payment_method.toUpperCase()}: <span style="font-family:monospace;color:white;">${o.transaction_code || o.payment_tx_ref || 'Cash on Delivery'}</span></div>
+        <div style="font-size:11px;color:var(--text-secondary);margin:4px 0 2px 0;">💳 ${o.payment_method.toUpperCase()}: <span style="font-family:monospace;color:white;">${esc(o.transaction_code || o.payment_tx_ref || 'Cash on Delivery')}</span></div>
          ${Number(o.discount_etb) > 0 ? `<div style="font-size:11px;color:var(--success);font-weight:700;margin-bottom:4px;">🎟️ Promo Coupon Saved: -${State.formatETB(o.discount_etb)}</div>` : ''}
-         ${o.rider_name ? `<div class="order-detail-rider">🛵 ${o.rider_name} · ${o.rider_phone}</div>` : ''}
+         ${o.rider_name ? `<div class="order-detail-rider">🛵 ${esc(o.rider_name)} · ${esc(o.rider_phone || '')}</div>` : ''}
          ${o.delivery_otp && ['confirmed','dispatched'].includes(o.order_status) ? `
            <div class="order-detail-rider" style="border-color:rgba(252,205,4,0.4);color:var(--accent);">
              🔑 Delivery code: <strong style="font-family:monospace;letter-spacing:2px;">${o.delivery_otp}</strong> — give this to the ${o.delivery_provider === 'self' ? 'seller' : 'rider'} at handover
@@ -892,7 +892,7 @@ const BuyerViews = {
         </div>
         <div class="coupon-card-right">
           ${!redeemed ? `
-            <button class="coupon-copy-btn" onclick="BuyerViews._copyCoupon('${c.code}')">
+            <button class="coupon-copy-btn" onclick="BuyerViews._copyCoupon('${escAttr(c.code)}')">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                ${State.t('buyer.coupons.copy')}
              </button>
@@ -1270,7 +1270,7 @@ const BuyerViews = {
       <div class="store-package">
         <div class="pkg-header">
           <div>
-            <div class="pkg-store-name">🏪 ${pkg.shopName}</div>
+            <div class="pkg-store-name">🏪 ${esc(pkg.shopName)}</div>
             <div class="pkg-location">📍 ${pkg.location}</div>
           </div>
           <span class="pkg-policy-tag">${State.policyLabel(pkg.returnPolicy)}</span>
@@ -1292,7 +1292,7 @@ const BuyerViews = {
     return `
       <div class="pkg-item">
         <div class="pkg-item-info">
-          <div class="pkg-item-title">${p.title}</div>
+          <div class="pkg-item-title">${esc(p.title)}</div>
           <div class="pkg-item-price">${State.formatETB(p.price_etb)} × ${ci.qty} = ${State.formatETB(p.price_etb * ci.qty)}</div>
         </div>
         <div class="qty-ctrl">
@@ -1348,7 +1348,7 @@ const BuyerViews = {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
           <div>
             <div style="font-size:13px;font-weight:800;">${o.order_ref}</div>
-            <div style="font-size:11px;color:var(--text-secondary);">${o.store_name}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">${esc(o.store_name)}</div>
           </div>
           <span class="order-status-badge status-${o.order_status}">${o.order_status}</span>
         </div>
@@ -1356,7 +1356,7 @@ const BuyerViews = {
           <div style="font-size:14px;font-weight:900;color:var(--accent);">${State.formatETB(o.total_etb)}</div>
           <div style="font-size:11px;color:var(--text-secondary);">${new Date(o.created_at).toLocaleDateString()}</div>
         </div>
-        ${o.rider_name ? `<div style="margin-top:8px;font-size:11px;color:#A78BFA;">🛵 Rider: ${o.rider_name} · ${o.rider_phone}</div>` : ''}
+        ${o.rider_name ? `<div style="margin-top:8px;font-size:11px;color:#A78BFA;">🛵 Rider: ${esc(o.rider_name)} · ${esc(o.rider_phone || '')}</div>` : ''}
         ${o.order_status === 'dispatched' ? `<button class="btn-primary" style="margin-top:10px;padding:9px;" onclick="event.stopPropagation();App.confirmDelivery('${o.order_id}')">✅ Confirm Delivery (QR Handshake)</button>` : ''}
       </div>
     `;

@@ -15,7 +15,8 @@ const router = express.Router();
  */
 router.get('/', async (req, res, next) => {
   try {
-    const { sub_city, search, page = 1, limit = 20 } = req.query;
+    const { sub_city, search, page = 1, limit: rawLimit = 20 } = req.query;
+    const limit = Math.min(Math.max(parseInt(rawLimit) || 20, 1), 100);
     const offset = (page - 1) * limit;
     const params = [];
     const conditions = ["s.status = 'verified'"];
@@ -146,6 +147,17 @@ router.post(
         telebirr_account_name, cbe_account_name,
         mpesa_till_number, mpesa_short_code, mpesa_account_name, seller_password
       } = req.body;
+
+      // Cap stores per account — storefronts are instant-verified today, so an
+      // unbounded count lets one actor flood the hub with throwaway shops.
+      const MAX_STORES_PER_USER = 3;
+      const countCheck = await query(
+        'SELECT COUNT(*)::int AS n FROM stores WHERE admin_tg_user_id = $1',
+        [req.user.tg_user_id]
+      );
+      if (countCheck.rows[0].n >= MAX_STORES_PER_USER) {
+        return res.status(400).json({ error: `You can register at most ${MAX_STORES_PER_USER} stores. Contact support to add more.` });
+      }
 
       // Generate unique 16-char store code
       const storeCode = crypto.randomBytes(8).toString('hex').toUpperCase();

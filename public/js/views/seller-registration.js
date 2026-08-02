@@ -540,8 +540,8 @@ App._verifyGroupLink = async function() {
     const hint = err.data?.hint || 'Make sure the bot is added as admin first.';
     if (resultEl) resultEl.innerHTML = `
       <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;font-size:12px;color:var(--danger);margin-bottom:10px;">
-        ❌ ${err.message}<br/>
-        <span style="color:var(--text-secondary);margin-top:4px;display:block;">${hint}</span>
+        ❌ ${esc(err.message)}<br/>
+        <span style="color:var(--text-secondary);margin-top:4px;display:block;">${esc(hint)}</span>
       </div>`;
     if (verifyBtn) { verifyBtn.disabled = false; verifyBtn.textContent = State.t('seller.register.tryAgain'); }
   }

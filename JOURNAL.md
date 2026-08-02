@@ -300,3 +300,117 @@ Use a tiny inline chart lib (e.g. Chart.js from CDN, or hand-rolled SVG). No hea
 ### Next Step for VS Code Session
 
 Pull latest `JOURNAL.md`, then start at **Step 1** above. Build in this order — each step is independently testable before moving to the next.
+
+---
+
+## 2026-07-29: Phase 1 Hardening Deployed — Production 500 Hotfix
+
+### What Was Deployed (commit `4d8434e` by VS Code session)
+
+Full-text search, TTL cache, and structured logging — 12 files, +448/-100 lines:
+
+| File | What |
+|------|------|
+| `backend/src/db/migration_2.2.sql` | `tsvector` + GIN indexes on `products` and `stores`, auto-update triggers, backfill |
+| `backend/src/utils/cache.js` | `TTLCache` class + 5 singleton caches (product 30s, store 60s, featured 120s, search 15s, stats 60s) |
+| `backend/src/utils/logger.js` | Pino structured logger, request ID middleware (`X-Request-ID`), audit logging |
+| `backend/src/routes/products.js` | Search switched from `ILIKE '%query%'` to `websearch_to_tsquery('english')`; cache wired for featured + product detail; cache invalidation on write |
+| `backend/src/routes/stores.js` | Cache wired for store detail + stats; invalidation on write |
+| `backend/src/app.js` | `morgan` replaced with `requestLogger` middleware; `console.warn` → `logger.warn` in CORS |
+| `backend/src/server.js` | `console.*` → `logger.*` |
+| `backend/src/db/index.js` | DB query logging via pino; pool creation log |
+| `backend/src/middleware/errorHandler.js` | Error logging via `req.log` instead of `console.error` |
+| `api/index.js` | `console.*` → `logger.*` in webhook auto-registration and startup |
+| `backend/package.json` | Added `pino@^10.3.1`, `pino-pretty@^13.1.3` |
+
+### Production Outage — Root Cause
+
+After `4d8434e` deployed, **every API call returned 500 `FUNCTION_INVOCATION_FAILED`**.
+
+**Root cause:** The VS Code session added `pino`, `pino-pretty` to `backend/package.json`, but Vercel reads dependencies from the **root** `package.json` — because the serverless entry point is `api/index.js` at the repo root, not inside `backend/`. Node's module resolution from `api/index.js` walks up the directory tree and finds `D:\DEV_TRIAL\IdeaTesting\medebirr_repo\package.json`, not `backend/package.json`.
+
+Vercel's build installs from the root `package.json`. Since `pino` wasn't listed there, the require chain (`api/index.js` → `backend/src/app.js` → `backend/src/utils/logger.js` → `pino`) failed with `Cannot find module 'pino'`.
+
+### Fix Applied (commit `0573187`)
+
+Added the three missing deps to root `package.json`:
+
+```diff
++    "pino": "^10.3.1",
++    "pino-pretty": "^13.1.3",
++    "uuid": "^11.1.1",
+-    "morgan": "^1.11.0",   (still present, removal optional)
+```
+
+**Important lesson for future:**
+- **Root `package.json`** = Vercel production dependencies (what runs in serverless)
+- **`backend/package.json`** = local dev backend dependencies (+ any backend-only tools)
+- Any new npm package MUST be added to **both** files, or Vercel will crash at cold start
+- Consider adding a `"preinstall": "cd backend && npm install"` script to root `package.json`, or better yet, consolidate to root and symlink. But cross that bridge when it becomes a recurring issue.
+
+### Code Review Notes (from 4d8434e)
+
+**Issues to address (non-blocking):**
+
+1. **`searchCache` exported but never wired** — `cache.js` exports `searchCache` but no route uses it. Either wire it into the search route in `products.js` or remove it.
+
+2. **`db/index.js` creates its own pino instance** — separate from the one in `logger.js`. DB logs have different format/level than request logs. Should import and reuse the shared logger.
+
+3. **`morgan` still in root `package.json`** — no longer used in code (replaced by `requestLogger`). Dead dep, safe to remove.
+
+4. **`logger.js` uses `bindings()`** — `req.requestId = req.log.bindings().requestId` works on pino child loggers. Verified compatible with pino 10.3.1.
+
+5. **Cache TTLs are reasonable** for current scale. No stale-data issues expected.
+
+### Next Steps
+
+1. Verify production is green after `0573187` auto-deploys (check `/api/health` and `/api/health/db`)
+2. Start building admin analytics dashboard (see design spec above)
+3. Optionally add bot commands (`/donate`, `/manual`, delivery confirmation) as discussed
+
+## 2026-08-02: P0 Security Hardening — Full Review Fixes Deployed
+
+### Context
+Follow-on to `REVIEW-2026-08-02.md` (full-stack review). User asked to fix **all** issues found. Every P0 and the contained P1s are now implemented and verified: **55/55 tests green** (28 logic + 4 inventory + 3 app + 20 new security), every file parses (`node --check` over `public/`, `api/`, `backend/src/`), boot smoke passes, i18n validator passes (549 keys).
+
+### ⚠️ Deploy Blocker — run this FIRST
+`backend/src/db/migration_2.5.sql` **must be run against the database** before/with the next deploy (direct connection via `SUPABASE_DB_URL`/`DATABASE_URL` port 5432, **not** the pgbouncer port). It adds `orders.idempotency_key` (+ partial unique index) and `orders.cancel_requested_at`. `orders.js` now writes/reads both columns — without the migration, checkout and cancel-request will 500. The unique index will fail if duplicate `(buyer_tg_user_id, idempotency_key)` rows already exist; dedupe first if so.
+
+### What was fixed (mapped to the review's evidence index)
+
+1. **Boot-breaking syntax** (`stores.js:226`) — was already fixed during the review session; now protected by CI (see #13).
+2. **Buyer-fabricated payment confirmation** — frontend no longer invents `TXN-${Date.now()}`; `/confirm-tx` never calls `markOrderPaid`. It sets `payment_status='verifying'`, upserts a `payment_verifications` row (`pending_seller_confirm`), and Telegram-DMs the seller with `confirm_pay_<orderId>` / `reject_pay_<orderId>` inline buttons (existing bot callbacks). Only the **signed Telebirr webhook** or a **seller button tap** can mark an order paid.
+3. **Buyer self-confirming cash** — `/cash/confirm` is now seller-only (403 for buyers) and idempotent (`markCashCollected` writes the `CASH-<orderId>` ledger row only on the unpaid→paid flip). COD orders are born `order_status='confirmed'`, may dispatch while `payment_status='pending'`, and `inventory.completeDelivery` flips them to `paid` + ledger row inside the delivery transaction.
+4. **Delivery IDOR (all 7 `/delivery/*` routes)** — every route now gates on `orderParties(order, tgUserId)` (buyer = `buyer_tg_user_id`, rider side = `admin_tg_user_id`; `/settle` keeps its owner-only check). One user can no longer sign both QR sides of someone else's order.
+5. **OTP brute force** — delivery `/verify-otp` and `/verify-code` cap at 10 attempts per order (429 + locked); `services/otp.js verifyOtp` finally increments `attempts` on wrong guesses and locks at 3 (the counter was dead — lookup matched on the code value itself).
+6. **Stored XSS (~110 sinks)** — new `public/js/utils/escape.js` (global `esc`/`escAttr`/`escUrl`, loaded first); codemod over buyer/seller/checkout/modals/order-actions/notification-feed/seller-registration views (titles, store names, usernames, addresses, chat messages, review comments, rider info, tx codes, Telegram-scraped draft captions); `i18n.js interpolate()` now escapes interpolated *values* by default; `_colorToHex` allowlist; `_copyText` uses `data-v`/`data-m` attrs instead of interpolated JS args; QR/receipt iframes go through `escUrl` (blocks `javascript:`).
+7. **CORS wildcard vs Express CORS** — deleted the `vercel.json` `headers` block entirely; Express CORS is the single layer now.
+8. **Telebirr webhook signature bypass** — new `backend/src/utils/telebirr.js` (`sign`/`verifySignature` timing-safe + non-mutating, `amountsMatch` epsilon compare). Webhook **always** verifies the signature (503 if `TELEBIRR_APP_SECRET` unset — no `isTesting`/`BYPASS_TELEGRAM_AUTH` escape hatch) and compares amount vs order total.
+9. **Idempotency key overwritten by payments** — dedicated `orders.idempotency_key` column (migration_2.5) instead of abusing `payment_tx_ref`; checkout retries return the existing order.
+10. **Paid-order buyer-cancel with no refund trail** — buyer cancel blocked once `payment_status='paid'` (must use cancel-request); cancel-request has a 24h dedupe (`cancel_requested_at`) so sellers aren't DM-spammed; new `/mark-refunded` writes a `REFUND-<orderId>` ledger row.
+11. **Trust/model gaps** — image upload now checks store ownership; reviews require the product to be a line item of a non-cancelled order by that buyer; store creation capped at 3 per user; list endpoints have pagination caps (buyer 100, seller 200, products).
+12. **Health endpoint info leak** — `dbConfigured`/`bypassAuth` only exposed outside production.
+13. **CI was permanently red / never gated** — lockfiles were gitignored while CI ran `npm ci`. Both lockfiles now committed; `.github/workflows/ci.yml` adds: syntax check over `api/` + `backend/src/` (the missing half that would have caught the `stores.js` boot-break), a **boot smoke** step (`createApp()` must construct, asserts version), i18n validation, and `npm test`.
+14. **Dependency split-brain** — `tesseract.js` added to `backend/package.json` (same missing-dep pattern as the documented pino outage); `morgan` removed from both manifests; `backend npm ci` verified (`tesseract.js loads OK`).
+15. **PII in git** — `uploads/` (13 payment screenshots) removed from git and disk, path gitignored.
+
+### Payment lifecycle contract (now enforced server-side)
+| Method | At checkout | Path to `paid` |
+|---|---|---|
+| Cash (COD) | `pending` / `confirmed` (+seller DM) | Cash at handover → `completeDelivery` flips to `paid` + `CASH-` ledger row; or seller taps "Cash Collected" first |
+| Manual transfer (Telebirr manual / CBE) | `pending` / `pending` | Buyer submits TX code → `verifying` → seller taps ✅ in Telegram → `paid` |
+| Telebirr gateway | `pending` / `pending` | Signed webhook (signature **always** verified + amount match) → `paid` |
+
+### Deferred (needs product decision or the migration first)
+- Store onboarding `pending→verified` gating (no admin verify UI exists — flipping it would break all selling today)
+- OCR/PDF async off webhook hot path; `express.json` 10MB + base64 screenshots in `orders.payment_proof`
+- DAL migration completion, rider entity/role, OpenAPI, multi-store switcher, Amharic translation fill-in, Afaan Oromoo locale
+- JWT moved from `localStorage` to httpOnly cookie (needs web-session work; XSS sink cleanup above shrinks the theft surface)
+
+### Verification
+```
+cd backend && npm test   # 55 passed, 0 failed (28 logic + 4 inventory + 3 app + 20 security)
+node --check over public/, api/, backend/src/   # clean
+createApp() boot smoke with CI env vars          # OK, version 1.4.0
+node scripts/validate-i18n.js                    # 549 State.t() keys resolve
+```

@@ -66,7 +66,12 @@ async function sendOtp(tgUserId, phone) {
 }
 
 /**
- * Verify OTP code for a phone number
+ * Verify OTP code for a phone number.
+ *
+ * Attempt counting looks up the latest ACTIVE code for (user, phone) —
+ * NOT the code value itself. (The old query matched on `code = $3`, so a
+ * wrong guess never touched a row and `attempts` could never increment,
+ * leaving the 16.7M-code space brute-forceable except by rate limit.)
  */
 async function verifyOtp(tgUserId, phone, code) {
   if (!code || code.length !== OTP_LENGTH) {
@@ -74,11 +79,11 @@ async function verifyOtp(tgUserId, phone, code) {
   }
 
   const result = await query(
-    `SELECT id, attempts FROM verification_codes
-     WHERE tg_user_id = $1 AND phone = $2 AND code = $3
+    `SELECT id, code, attempts FROM verification_codes
+     WHERE tg_user_id = $1 AND phone = $2
        AND used = FALSE AND expires_at > NOW()
      ORDER BY created_at DESC LIMIT 1`,
-    [tgUserId, phone, code.toUpperCase()]
+    [tgUserId, phone]
   );
 
   if (result.rows.length === 0) {
@@ -89,6 +94,16 @@ async function verifyOtp(tgUserId, phone, code) {
   if (row.attempts >= MAX_ATTEMPTS) {
     await query('UPDATE verification_codes SET used = TRUE WHERE id = $1', [row.id]);
     return { success: false, error: 'Too many failed attempts. Request a new code.' };
+  }
+
+  if (row.code !== String(code).toUpperCase()) {
+    // Wrong guess — burn one of the MAX_ATTEMPTS tries
+    await query('UPDATE verification_codes SET attempts = attempts + 1 WHERE id = $1', [row.id]);
+    if (row.attempts + 1 >= MAX_ATTEMPTS) {
+      await query('UPDATE verification_codes SET used = TRUE WHERE id = $1', [row.id]);
+      return { success: false, error: 'Too many failed attempts. Request a new code.' };
+    }
+    return { success: false, error: `Invalid code. ${MAX_ATTEMPTS - row.attempts - 1} attempt(s) left.` };
   }
 
   // Mark code as used and update user

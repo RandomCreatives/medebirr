@@ -1,6 +1,15 @@
 /**
  * Delivery Verification routes
  * QR code display, scanning, dual-confirmation, return, settlement
+ *
+ * AUTHORIZATION MODEL (every route):
+ *   - 'buyer' side  → only the order's buyer_tg_user_id
+ *   - 'rider' side  → the store owner (admin_tg_user_id). There is no rider
+ *                     account entity yet; in practice the seller's device (or
+ *                     their rider using it) performs the rider-side scan.
+ *   - anyone else   → 403
+ * Before this was enforced, any authenticated user could fetch any order's
+ * QR token and self-sign both sides of the delivery handshake.
  */
 
 const express = require('express');
@@ -16,10 +25,22 @@ const ordersDal = require('../dal/orders');
 const router = express.Router();
 
 const MAX_SCAN_ATTEMPTS = 5;
+const MAX_OTP_ATTEMPTS = 10;
+
+/**
+ * Resolve the caller's relationship to the order.
+ * @returns {{isBuyer: boolean, isSeller: boolean}}
+ */
+function orderParties(order, tgUserId) {
+  return {
+    isBuyer: order.buyer_tg_user_id === tgUserId,
+    isSeller: order.admin_tg_user_id === tgUserId
+  };
+}
 
 /**
  * GET /api/v1/delivery/:orderId/qr
- * Get QR code data URL for an order (buyer or rider)
+ * Get QR code data URL for an order (buyer or seller only).
  */
 router.get('/:orderId/qr', requireAuth, async (req, res, next) => {
   try {
@@ -27,19 +48,26 @@ router.get('/:orderId/qr', requireAuth, async (req, res, next) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     const order = result.rows[0];
+    const { isBuyer, isSeller } = orderParties(order, req.user.tg_user_id);
+    if (!isBuyer && !isSeller) return res.status(403).json({ error: 'Not authorized for this order' });
+
     if (!order.qr_data) {
       return res.status(400).json({ error: 'QR code not yet generated for this order' });
     }
 
-    const qrUrl = await qrService.generateQRDataURL(order.qr_data);
-    res.json({
-      qr_url: qrUrl,
-      qr_data: order.qr_data,
+    // Both parties may display the QR at handover (buyer presents it to the
+    // rider; the seller-side device may also present it for the buyer to
+    // scan). The scan routes — not token secrecy — enforce which side each
+    // party can sign, so sharing the payload with both is safe.
+    const flags = {
       order_ref: order.order_ref,
       verified_by_rider: order.qr_verified_by_rider,
       verified_by_buyer: order.qr_verified_by_buyer,
       scan_attempts: order.qr_scan_attempts
-    });
+    };
+
+    const qrUrl = await qrService.generateQRDataURL(order.qr_data);
+    res.json({ ...flags, qr_url: qrUrl, qr_data: order.qr_data });
   } catch (err) {
     next(err);
   }
@@ -64,6 +92,15 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     const order = result.rows[0];
+
+    // Party check: buyer-side scans only by the buyer, rider-side only by the seller
+    const { isBuyer, isSeller } = orderParties(order, req.user.tg_user_id);
+    if (scanner_role === 'buyer' && !isBuyer) {
+      return res.status(403).json({ error: 'Only the buyer can confirm the buyer side' });
+    }
+    if (scanner_role === 'rider' && !isSeller) {
+      return res.status(403).json({ error: 'Only the seller (or their rider) can confirm the rider side' });
+    }
 
     // Check if already fully verified
     if (order.qr_verified_by_rider && order.qr_verified_by_buyer) {
@@ -150,7 +187,7 @@ router.post('/:orderId/scan', requireAuth, async (req, res, next) => {
 
 /**
  * POST /api/v1/delivery/:orderId/verify-otp
- * Rider verifies the handover via the buyer's 4-digit delivery OTP.
+ * Seller/rider verifies the handover via the buyer's 4-digit delivery OTP.
  * Body: { otp, rider_latitude, rider_longitude }
  */
 router.post('/:orderId/verify-otp', requireAuth, async (req, res, next) => {
@@ -162,11 +199,30 @@ router.post('/:orderId/verify-otp', requireAuth, async (req, res, next) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
     const order = result.rows[0];
 
+    // Only the seller (or their rider operating the seller's side) verifies OTPs
+    const { isSeller } = orderParties(order, req.user.tg_user_id);
+    if (!isSeller) {
+      return res.status(403).json({ error: 'Only the seller can verify the delivery code' });
+    }
+
     if (!order.delivery_otp) {
       return res.status(400).json({ success: false, message: 'No delivery code set for this order' });
     }
+
+    // Brute-force guard: the 4-digit code space (10k) is small, so cap guesses
+    if ((order.qr_scan_attempts || 0) >= MAX_OTP_ATTEMPTS) {
+      return res.status(429).json({ success: false, locked: true, message: 'Too many failed attempts. Use QR scan or settle manually.' });
+    }
+
     if (String(otp).trim() !== String(order.delivery_otp)) {
-      return res.status(400).json({ success: false, message: 'Invalid delivery code' });
+      const attempts = (order.qr_scan_attempts || 0) + 1;
+      await ordersDal.setField(req.params.orderId, 'qr_scan_attempts', attempts);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid delivery code',
+        attempt: attempts,
+        remaining: Math.max(0, MAX_OTP_ATTEMPTS - attempts)
+      });
     }
 
     const radius = Number(process.env.GEOFENCE_RADIUS_METERS || 200);
@@ -231,12 +287,27 @@ router.post('/:orderId/verify-code', requireAuth, async (req, res, next) => {
     if (result.rows.length === 0) return res.status(404).json({ success: false, message: 'Order not found' });
     const order = result.rows[0];
 
+    // Party check (same mapping as /scan)
+    const { isBuyer, isSeller } = orderParties(order, req.user.tg_user_id);
+    if (scanner_role === 'buyer' && !isBuyer) {
+      return res.status(403).json({ success: false, message: 'Only the buyer can confirm the buyer side' });
+    }
+    if (scanner_role === 'rider' && !isSeller) {
+      return res.status(403).json({ success: false, message: 'Only the seller (or their rider) can confirm the rider side' });
+    }
+
     if (order.qr_verified_by_rider && order.qr_verified_by_buyer) {
       return res.json({ success: true, already_confirmed: true, message: 'Delivery already confirmed by both parties' });
     }
     if (!order.delivery_otp) {
       return res.status(400).json({ success: false, message: 'No delivery code set for this order' });
     }
+
+    // Brute-force guard (shared counter with verify-otp)
+    if ((order.qr_scan_attempts || 0) >= MAX_OTP_ATTEMPTS) {
+      return res.status(429).json({ success: false, locked: true, message: 'Too many failed attempts. Use QR scan or settle manually.' });
+    }
+
     if (String(code).trim() !== String(order.delivery_otp)) {
       const attempts = (order.qr_scan_attempts || 0) + 1;
       await ordersDal.setField(req.params.orderId, 'qr_scan_attempts', attempts);
@@ -244,7 +315,7 @@ router.post('/:orderId/verify-code', requireAuth, async (req, res, next) => {
         success: false,
         message: 'Invalid delivery code',
         attempt: attempts,
-        remaining: Math.max(0, 5 - attempts)
+        remaining: Math.max(0, MAX_OTP_ATTEMPTS - attempts)
       });
     }
 
@@ -309,11 +380,8 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
     await inventory.completeDelivery(req.params.orderId, order.total_etb, order.store_id);
 
     try {
-      await tg.tgCall('sendMessage', {
-        chat_id: order.buyer_tg_user_id,
-        text: `✅ *Order Settled*\n\nOrder *${order.order_ref}* has been settled by the seller.\nThank you for your purchase!`,
-        parse_mode: 'MarkdownV2'
-      });
+      await tg.sendSafeMessage(order.buyer_tg_user_id,
+        `✅ *Order Settled*\n\nOrder *${order.order_ref}* has been settled by the seller.\nThank you for your purchase!`);
     } catch (_) {}
 
     if (order.rider_name) {
@@ -323,11 +391,8 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
           [order.rider_name, order.rider_name]
         );
         if (riderResult.rows.length > 0) {
-          await tg.tgCall('sendMessage', {
-            chat_id: riderResult.rows[0].tg_user_id,
-            text: `✅ *Order Settled*\n\nOrder *${order.order_ref}* has been settled by the seller.\nNo return needed.`,
-            parse_mode: 'MarkdownV2'
-          });
+          await tg.sendSafeMessage(riderResult.rows[0].tg_user_id,
+            `✅ *Order Settled*\n\nOrder *${order.order_ref}* has been settled by the seller.\nNo return needed.`);
         }
       } catch (_) {}
     }
@@ -349,7 +414,8 @@ router.post('/:orderId/settle', requireAuth, async (req, res, next) => {
 
 /**
  * GET /api/v1/delivery/:orderId/receipt
- * Get/download PDF receipt for an order
+ * Get/download PDF receipt for an order (buyer or seller only — receipts
+ * contain the buyer's name, phone and delivery address).
  */
 router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
   try {
@@ -357,6 +423,8 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     const order = result.rows[0];
+    const { isBuyer, isSeller } = orderParties(order, req.user.tg_user_id);
+    if (!isBuyer && !isSeller) return res.status(403).json({ error: 'Not authorized for this order' });
 
     if (order.receipt_pdf_url) {
       return res.json({ receipt_url: order.receipt_pdf_url, cached: true });
@@ -398,7 +466,7 @@ router.get('/:orderId/receipt', requireAuth, async (req, res, next) => {
 
 /**
  * POST /api/v1/delivery/:orderId/return
- * Initiate return (manual or triggered by system)
+ * Initiate return (buyer or seller of this order)
  */
 router.post('/:orderId/return', requireAuth, async (req, res, next) => {
   try {
@@ -407,6 +475,9 @@ router.post('/:orderId/return', requireAuth, async (req, res, next) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     const order = result.rows[0];
+    const { isBuyer, isSeller } = orderParties(order, req.user.tg_user_id);
+    if (!isBuyer && !isSeller) return res.status(403).json({ error: 'Not authorized for this order' });
+
     if (!['dispatched', 'confirmed'].includes(order.order_status)) {
       return res.status(400).json({ error: 'Order cannot be returned in current status' });
     }
@@ -428,37 +499,25 @@ router.post('/:orderId/return', requireAuth, async (req, res, next) => {
 
 async function notifyReturnInitiated(order) {
   try {
-    await tg.tgCall('sendMessage', {
-      chat_id: order.buyer_tg_user_id,
-      text: `❌ *Return Initiated*\n\nOrder *${order.order_ref}* could not be verified.\nA return has been initiated. Your refund will be processed.`,
-      parse_mode: 'MarkdownV2'
-    });
+    await tg.sendSafeMessage(order.buyer_tg_user_id,
+      `❌ *Return Initiated*\n\nOrder *${order.order_ref}* could not be verified.\nA return has been initiated. Your refund will be processed.`);
   } catch (_) {}
 
   try {
-    await tg.tgCall('sendMessage', {
-      chat_id: order.admin_tg_user_id,
-      text: `📦 *Return Initiated*\n\nOrder *${order.order_ref}* failed verification.\nThe product will be returned to you.\n\nIf resolved in person, click "Settled" in your Seller Studio.`,
-      parse_mode: 'MarkdownV2'
-    });
+    await tg.sendSafeMessage(order.admin_tg_user_id,
+      `📦 *Return Initiated*\n\nOrder *${order.order_ref}* failed verification.\nThe product will be returned to you.\n\nIf resolved in person, click "Settled" in your Seller Studio.`);
   } catch (_) {}
 }
 
 async function notifyDeliveryComplete(order) {
   try {
-    await tg.tgCall('sendMessage', {
-      chat_id: order.buyer_tg_user_id,
-      text: `✅ *Delivery Confirmed!*\n\nOrder *${order.order_ref}* has been delivered successfully.\nThank you for shopping with Medebirr!`,
-      parse_mode: 'MarkdownV2'
-    });
+    await tg.sendSafeMessage(order.buyer_tg_user_id,
+      `✅ *Delivery Confirmed!*\n\nOrder *${order.order_ref}* has been delivered successfully.\nThank you for shopping with Medebirr!`);
   } catch (_) {}
 
   try {
-    await tg.tgCall('sendMessage', {
-      chat_id: order.admin_tg_user_id,
-      text: `✅ *Delivery Confirmed!*\n\nOrder *${order.order_ref}* has been delivered and confirmed by both parties.`,
-      parse_mode: 'MarkdownV2'
-    });
+    await tg.sendSafeMessage(order.admin_tg_user_id,
+      `✅ *Delivery Confirmed!*\n\nOrder *${order.order_ref}* has been delivered and confirmed by both parties.`);
   } catch (_) {}
 }
 

@@ -3,7 +3,7 @@
 ## Project
 Ethiopian marketplace (vanilla-JS SPA + Express backend).  
 Version `1.4.0`, cache-bust via `?v=` with git SHA.  
-**446** `State.t()` keys now resolve across the app.
+**549** `State.t()` keys now resolve across the app (`node scripts/validate-i18n.js`).
 
 ## Active Objective
 Translate the app into **Amharic** with context-aware (not literal) translations.  
@@ -62,7 +62,28 @@ Amharic column empty — awaiting translator input.
 
 ---
 
-## Fixed (latest session)
+## Fixed (2026-08-02 — P0 security hardening)
+
+Full finding → fix → verification table: `REVIEW-2026-08-02.md` §14. Deploy narrative: `JOURNAL.md` → "2026-08-02".
+
+> ⚠️ **Before next deploy:** run `backend/src/db/migration_2.5.sql` on the DB (direct port-5432 connection, not pgbouncer). Adds `orders.idempotency_key` (+ unique partial index) and `orders.cancel_requested_at` — checkout and cancel-request 500 without it.
+
+**Payment lifecycle contract (server-enforced):**
+| Method | At checkout | Path to `paid` |
+|---|---|---|
+| Cash (COD) | `pending`/`confirmed` | `inventory.completeDelivery` flips to `paid` + `CASH-` ledger row (or seller taps "Cash Collected" → `markCashCollected`) |
+| Manual transfer | `pending`/`pending` | Buyer submits TX code → `verifying` → seller ✅ button in Telegram (`confirm_pay_<orderId>`) → `markOrderPaid` |
+| Telebirr gateway | `pending`/`pending` | Signed webhook (`utils/telebirr.js`, signature always verified + amount match) → `markOrderPaid` |
+
+- **Only** the signed Telebirr webhook or a seller button tap can mark an order paid. `/confirm-tx` never does; the SPA never fabricates transaction codes.
+- All 7 `/delivery/*` routes gate on `orderParties()` (buyer vs `admin_tg_user_id`); delivery OTP/code endpoints lock after 10 attempts.
+- XSS: `public/js/utils/escape.js` (`esc`/`escAttr`/`escUrl`) loads first in `index.html` — **always** wrap interpolated data in templates; `State.t()` escapes interpolated values by default.
+- `vercel.json` has no `headers` block — Express CORS is the only CORS layer. Don't re-add one.
+- Security regression suite: `backend/src/tests/security.test.js` (20 tests — real HMAC vectors, telebirr sign/verify, XSS payloads, source guards). Run via `npm test`.
+- CI (`.github/workflows/ci.yml`) now: syntax check (`api` + `backend/src`), boot smoke (`createApp()` must construct), i18n validation, `npm test`. Lockfiles are committed — do not gitignore them.
+- `uploads/` was removed from git (PII screenshots); path is gitignored.
+
+## Fixed (previous: search, cache, logging)
 
 ### PostgreSQL full-text search, TTL cache, structured logging
 - **Full-text search**: `migration_2.2.sql` — tsvector column + GIN index on `products` and `stores`, trigger auto-update, backfill. Search uses `to_tsvector @@ websearch_to_tsquery('english')` instead of `ILIKE '%query%'` (~5ms vs ~500ms at 10K products).
@@ -90,6 +111,6 @@ Consider: own tab vs sub-section within Explore.
 ```bash
 node gen_i18n.js          # regenerate CSV + locale files from master catalog
 node scripts/gen-i18n-csv.js  # generate delta CSV of untranslated keys
-npm test                  # unit tests (35 backend tests)
+cd backend && npm test    # 55 backend tests (28 logic + 4 inventory + 3 app + 20 security)
 npm run bump-cache        # update ?v= cache buster from git HEAD
 ```

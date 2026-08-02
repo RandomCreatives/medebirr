@@ -58,9 +58,11 @@ router.get('/', async (req, res, next) => {
     const {
       search, category, sub_city, store_id,
       min_price, max_price, return_policy,
-      sort = 'featured', page = 1, limit = 20
+      sort = 'featured', page = 1, limit: rawLimit = 20
     } = req.query;
 
+    // Hard cap page size — an unbounded ?limit= invites table-scan exfiltration
+    const limit = Math.min(Math.max(parseInt(rawLimit) || 20, 1), 100);
     const offset = (page - 1) * limit;
     const params = [];
     const conditions = ['p.is_published = TRUE', "s.status = 'verified'"];
@@ -163,7 +165,8 @@ router.get('/', async (req, res, next) => {
  */
 router.get('/seller/:storeId', requireAuth, requireSellerOf('storeId'), async (req, res, next) => {
   try {
-    const { page = 1, limit = 200 } = req.query;
+    const { page = 1, limit: rawLimit = 200 } = req.query;
+    const limit = Math.min(Math.max(parseInt(rawLimit) || 50, 1), 200);
     const offset = (page - 1) * limit;
     const result = await query(
       `SELECT p.*, s.store_name, s.store_slug, s.location_sub_city, s.verified_badge,

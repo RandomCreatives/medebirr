@@ -24,10 +24,10 @@ const tests = [];
 
 console.log('\n🧩 App Factory');
 
-test('app reports a single unified version (1.3.0)', () => {
+test('app reports a single unified version (1.4.0)', () => {
   const app = createApp();
-  assert(app.get('version') === '1.3.0', 'app version should be 1.3.0');
-  assert(APP_VERSION === '1.3.0', 'exported APP_VERSION should be 1.3.0');
+  assert(app.get('version') === '1.4.0', 'app version should be 1.4.0');
+  assert(APP_VERSION === '1.4.0', 'exported APP_VERSION should be 1.4.0');
 });
 
 test('pending-products routes are wired', () => {

@@ -34,7 +34,9 @@ const pendingProductRoutes = require('./routes/pending-products');
 const otpRoutes = require('./routes/otp');
 const errorHandler = require('./middleware/errorHandler');
 
-const APP_VERSION = '1.3.0';
+// Single source of truth for the API version (asserted by tests/app.test.js
+// and shown in the frontend footer — keep all three in sync).
+const APP_VERSION = '1.4.0';
 
 /**
  * Build and return the configured Express app.
@@ -147,16 +149,21 @@ function createApp(opts = {}) {
 
   // ─── Health ─────────────────────────────────────────────────────────────────
   app.get('/api/health', (req, res) => {
-    res.json({
+    const payload = {
       status: 'ok',
       service: 'e-Merkato API',
       version: APP_VERSION,
       timestamp: new Date().toISOString(),
       env: process.env.NODE_ENV || 'production',
-      region: process.env.VERCEL_REGION || 'local',
-      dbConfigured: !!process.env.DATABASE_URL,
-      bypassAuth: process.env.BYPASS_TELEGRAM_AUTH === 'true'
-    });
+      region: process.env.VERCEL_REGION || 'local'
+    };
+    // Config internals are only exposed outside production — an open endpoint
+    // advertising whether auth-bypass is enabled is an attacker's checklist.
+    if (!isProd) {
+      payload.dbConfigured = !!process.env.DATABASE_URL;
+      payload.bypassAuth = process.env.BYPASS_TELEGRAM_AUTH === 'true';
+    }
+    res.json(payload);
   });
 
   app.get('/api/health/db', async (req, res) => {
