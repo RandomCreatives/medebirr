@@ -29,11 +29,27 @@ jobs:
           node --check scripts/validate-i18n.js
           node --check gen_i18n.js
 
+      - name: Check JS syntax (api + backend/src)
+        run: |
+          echo "Validating API + backend sources…"
+          find api backend/src -name '*.js' -exec node --check {} \;
+
       - name: Validate i18n keys
         run: node scripts/validate-i18n.js
 
       - name: Install backend deps
         run: cd backend && npm ci
+
+      - name: Boot smoke (createApp must construct)
+        run: |
+          cd backend && node -e "
+            const { createApp } = require('./src/app');
+            const app = createApp();
+            if (!app) { console.error('createApp() returned falsy'); process.exit(1); }
+            const v = app.get('version');
+            if (v !== '1.4.0') { console.error('version mismatch: ' + v); process.exit(1); }
+            console.log('boot smoke OK (version ' + v + ')');
+          "
 
       - name: Run unit tests
         run: npm test
